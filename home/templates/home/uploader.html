@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>MyEMSL Instrument Data Uploader</title>
+	<style type="text/css">
+body
+{
+	padding-top: 0;
+	margin: 0;
+	font: 16px helvetica, arial, san-serif;
+}
+.header
+{
+	background-color: #719500;
+	border-bottom: 3px solid #000;
+	height: 64px;
+	padding: 8px 16px;
+	margin: 0;
+}
+h1
+{
+	font: 24px georgia, Garamond, "Times New Roman", serif;
+}
+.header h1
+{
+	display: inline;
+	color: #fff;
+	padding-left: 16px;
+}
+.header a
+{
+	color: #fff;
+}
+a
+{
+	color: #5381AC;
+}
+.path
+{
+	padding-top: 1em;
+	padding-left: .5em;
+	font-weight: bold;
+	background-color: #eee;
+	border-bottom: 1px solid #333;
+	margin-bottom: .5em;
+}
+table {
+    table-layout:fixed;
+    width: 960px;
+}
+.main {
+	vertical-align: top;
+}
+
+.main td {
+	width: 318px;
+	border: 1px solid #000;
+	margin-top: 8px;
+	padding: 8px;
+	height: 100%;
+	overflow: auto;
+	-ms-word-break: break-all;
+     word-break: break-all;
+}
+.dir
+{
+	background: url({{ MEDIA_URL }}/folder.png) top left no-repeat;
+	padding-left: 18px;
+}
+.file
+{
+	background: url({{ MEDIA_URL }}/file3.png) top left no-repeat;
+	padding-left: 18px;
+}
+
+ul
+{
+	margin-left: 0;
+	padding-left: 0;
+}
+
+li
+{
+	list-style: none;
+	padding-bottom: .3em;
+}
+
+li ul li 
+{
+	font-size: .8em;
+	color: #777;
+}
+.tight
+{
+	margin-bottom: 0;
+}
+.toupload a
+{
+	text-decoration: none;
+	color: black;
+}
+.toupload a:hover
+{	
+	text-decoration: underline;
+	color: red;
+}
+.toupload .dir:hover, .toupload .file:hover
+{
+	background: url({{ MEDIA_URL }}/x_14x14.png) top left no-repeat;
+}
+
+		</style>
+</head>
+<body>
+<table>
+<tr>
+	<td colspan="3" class="header">
+	<span class="logo"><img src="{{ MEDIA_URL }}/emsl_logo-white.png" alt="EMSL Logo" /></span> 
+    <h1>
+		MyEMSL Instrument Data Uploader
+	</h1>
+	</td>
+</tr>
+<tr>
+	<td colspan="3" class="path">
+	<strong>Current Location: </strong>
+    {% for path in directoryHistory %}
+        <a href="/modify?upDir={{forloop.counter}}"> {{ path }}</a>\
+    {% endfor %}
+    </td>
+</tr>
+<tr class="main">
+	<td>
+	<strong>Mark Files for Upload</strong>	
+			<form action="{% url "modify" %}" method="post" enctype="multipart/form-data">
+                
+                {% for path in checkedDirs %}
+                    <li><a href="/modify?toggleDir={{path}}"><img src="{{ MEDIA_URL }}/checkbox-checked.png" alt="checked" height="16" width="16">                     
+                    </a><span class="dir">>{{ path }}</span><br /></li> 
+                {% endfor %}
+                
+                {% for path in checkedFiles %}
+                    <li><a href="/modify?toggleFile={{path}}"><img src="{{ MEDIA_URL }}/checkbox-checked.png" alt="checked" height="16" width="16">                        
+                    </a><span class="file">{{ path }}</span><br /></li> 
+                {% endfor %}
+                                
+                {% for path in uncheckedDirs %}
+                    <li><a href="/modify?toggleDir={{path}}"><img src="{{ MEDIA_URL }}/checkbox-unchecked.png" alt="unchecked" height="16" width="16"></a>
+                                           
+                    <a class="dir" href="/modify?enterDir={{path}}">{{ path }}</a><br /></li> 
+                {% endfor %}    
+                
+                {% for path in uncheckedFiles %}
+                    <li><a href="/modify?toggleFile={{path}}"><img src="{{ MEDIA_URL }}/checkbox-unchecked.png" alt="checked" height="16" width="16">                        
+                    </a><span class="file">{{ path }}</span><br /></li> 
+                {% endfor %}
+		
+			</form>
+	</td>
+	<td class="toupload">
+	<strong>Files to Upload</strong>
+			<ul>
+			        {% load app_filters %}
+                    {% for path in selectedDirs %}
+                            <li><a class = "dir" href="/modify?toggleDir={{path}}">{{ path }}</a></li> 
+                            <li><small>{{ dirSizes|get_at_index:forloop.counter0 }}</small></li>
+                    {% endfor %}
+                    
+                    {% for path in selectedFiles %}
+                            <li><a class = "file" href="/modify?toggleFile={{path}}">{{ path }}</a></li>
+                            <li><small>{{ fileSizes|get_at_index:forloop.counter0 }}</small></li>
+                    {% endfor %}
+			</ul>
+	</td>
+	<td>
+	<strong>Metadata</strong>
+			<p>
+				<strong>User:</strong> {{user}}
+				&nbsp;<span><a href="logout">Logout</a></span> 
+			</p>
+			
+			<p class="tight">
+                <strong>Instrument:  {{instrument}}</strong>
+            </p>	
+			
+			<form  action="{% url "modify" %}" method="post" enctype="multipart/form-data">
+			{% csrf_token %}
+			
+			<p class="tight">
+                <strong>Proposal:</strong>
+            </p>
+            
+            <select name = "proposal" >
+            
+            {% for prop in proposalList %}
+                {% if proposal == prop %}
+                    <option selected value="{{prop}}">{{prop}}</option>
+                {% else %}   
+                    <option value="{{prop}}">{{prop}}</option>
+                {% endif %}
+            {% endfor %}
+            
+            </select>
+            
+			{% for meta in metaList %}
+                <p class = "tight">
+                    <strong>{{meta.label}}</strong><br />
+                    <input type="text" size="35" name = "{{meta.name}}" value = "{{meta.value}}">                                           
+                </p>    
+            {% endfor %}
+			
+			<div style="text-align: center; position: relative; margin-top: 2em;">	
+            <input type="submit" name = "Upload Files & Metadata" value="Upload" />            
+                
+			</div>
+			
+			</form>
+
+	</td>
+</tr>
+
+</table>
+</body>
+</html>

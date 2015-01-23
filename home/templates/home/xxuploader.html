@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>MyEMSL Instrument Data Uploader</title>
+	<style type="text/css">
+html
+{
+	position: relative;
+	height: 95%;
+}
+body
+{
+	padding-top: 0;
+	margin: 0;
+	font: 16px helvetica, arial, san-serif;
+	height: 100%;
+	position: relative;
+}
+.header
+{
+	background-color: #719500;
+	border-bottom: 3px solid #000;
+	height: 8%;
+	padding: .5em 1em;
+	margin: 0;
+}
+h1
+{
+	font: 1.5em georgia, Garamond, "Times New Roman", serif;
+}
+.header h1
+{
+	display: inline;
+	color: #fff;
+	padding-left: 1em;
+}
+.header a
+{
+	color: #fff;
+}
+.floatright
+{
+	position: absolute;
+	right: 4%;
+	top: 2.5em;
+}
+.column .floatright
+{
+	right: 2%;
+	top: .5em;
+}
+a
+{
+	color: #5381AC;
+}
+.wrapper
+{
+	position: absolute;
+	top: 12%;
+	bottom: 0;
+	height: 80%;
+}
+.column
+{
+	width: 30%;
+	border: 0px solid #000;
+	float: left;
+	margin-right: 2%;
+	padding: .5em;
+	position: relative;
+	height: 100%;
+}
+.column form
+{
+    display: inline;
+}
+
+.uploadbox
+{
+	margin-right: 0;
+}
+.uploadbox .listbox
+{
+	background-color: #a6b2cb;
+}
+.filelist
+{
+	background-color: #fff;
+	border: 1px solid #333;
+	padding: 0 .5em;
+	margin-bottom: 1em;
+	height: 60%;
+	overflow: auto;
+}
+.listbox
+{
+	border: 1px solid #000;
+	margin-top: .5em;
+	padding: 0 .5em;
+	height: 100%;
+	overflow: auto;
+}
+ul
+{
+	margin-left: 0;
+	padding-left: 0;
+}
+li
+{
+	list-style: none;
+	padding-bottom: .3em;
+}
+.tight
+{
+	margin-bottom: 0;
+}
+.path
+{
+	font-weight: bold;
+}
+
+	</style>
+</head>
+<body>
+<div class="header">
+	<span class="logo"><img src="{{ MEDIA_URL }}/emsl_logo-white.png" alt="EMSL Logo" /></span> 
+	<h1>
+		MyEMSL Instrument Data Uploader
+	</h1>
+	<span class="floatright"><a href="#">Logout</a></span> 
+</div><!-- end .header -->
+
+<div class="wrapper">
+	<div class="column">
+		<span class="path">{{rootDir}}</span>
+        <form action="{% url "modify" %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}            
+            <input class="floatright"  type="submit" name = "Up" value="Up" />            
+        </form>
+		<div class="listbox">
+			{% if dirs %}
+                <ul>
+                {% for path in dirs %}
+                    <li><img src="{{ MEDIA_URL }}/folder.ico" alt="folder icon" height="16" width="16"><a href="/modify?dir={{path}}">{{ path }}</a></li>                
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>No documents.</p>
+            {% endif %}
+		</div><!-- end .listbox -->
+	</div><!-- end left column -->
+
+	<div class="column">
+		<form action="{% url "modify" %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input class="floatright"  type="submit" name = "Select All" value="Select All" />            
+        </form>
+		<div class="listbox">
+			{% if files %}
+                <ul>
+                {% for path in files %}
+                    <li><a href="/modify?file={{path}}">{{ path }}</a></li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>No documents.</p>
+            {% endif %}
+		</div><!-- end .listbox -->
+	</div><!-- end middle column -->
+
+	<div class="column uploadbox">
+		&nbsp; 
+		
+		<form action="{% url "modify" %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input class="floatright"  type="submit" name = "Clear" value="Clear" />
+        </form>
+		
+		<div class="listbox">
+			<p>
+				<strong>Project:</strong> 987654 Project name that might be long enough to wrap
+			</p>
+			<p>
+				<strong>Instrument:</strong> Thunderbolt 2000
+			</p>
+			<p class="tight">
+				<strong>Files to upload:</strong>
+			</p>
+			<div class="filelist">
+				{% if selected %}
+                <ul>
+                {% for path in selected %}
+                    <li><a href="/modify?remove={{path}}">{{ path }}</a></li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>No documents selected.</p>
+            {% endif %}
+			</div><!-- end filelist -->
+
+			<div style="text-align: center; position: relative;">
+				<form action="{% url "modify" %}" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="submit" name = "Upload" value="Upload" />            
+                </form>
+			</div>
+		</div><!-- end .listbox -->
+	</div><!-- end right column -->
+
+</div> <!-- end wrapper -->
+</body>
+</html>

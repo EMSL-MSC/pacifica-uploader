@@ -1,0 +1,10 @@
+
+multi-threading offers no advantage in speed and may cause significant degradation.
+	all threads run on one core
+	advantages are not blocking the Server while the upload is in progress
+
+Multi-Processing can run on multiple cores
+	disadvantage is difficulty in sharing information
+
+Dave B, explain what is going on in the ingestion process that is causing the upload to be processor bound.
+

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>MyEMSL Manual Uploader</title>  
+    </head>
+
+    <body>
+        {% if rootDir %}
+            <p><b>{{rootDir}}</b></p>
+        {% endif %}
+        
+        <form action="{% url "modify" %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <input type="submit" name = "Up" value="Up" />
+            <input type="submit" name = "Select All" value="Select All" />
+            <input type="submit" name = "Clear" value="Clear" />
+            <input type="submit" name = "Upload" value="Upload" />
+            
+        </form>
+        
+        <div style="float:left;margin-left: 0px">   
+            <p><b>Directories</b></p>
+            <!-- List of subdirectories -->
+            {% if dirs %}
+                <ul>
+                {% for path in dirs %}
+                    <li><img src="{{ MEDIA_URL }}/folder.ico" alt="folder icon" height="16" width="16"><a href="/modify?dir={{path}}">{{ path }}</a></li>                
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>No documents.</p>
+            {% endif %}
+        </div>
+        
+        <!-- List of files in directory -->
+        <div style="float:left;margin-left: 15px">   
+            <p><b>Files</b></p>
+            {% if files %}
+                <ul>
+                {% for path in files %}
+                    <li><a href="/modify?file={{path}}">{{ path }}</a></li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>No documents.</p>
+            {% endif %}
+        </div>
+        
+        <div style="float:left;margin-left: 15px">   
+            <p><b>Selected</b></p>
+            {% if selected %}
+                <ul>
+                {% for path in selected %}
+                    <li><a href="/modify?remove={{path}}">{{ path }}</a></li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>No documents selected.</p>
+            {% endif %}
+        </div>
+        
+        
+    </body>
+
+</html> 

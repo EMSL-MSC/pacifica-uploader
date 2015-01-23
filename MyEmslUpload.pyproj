@@ -1,0 +1,163 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <Name>MyEmslUpload</Name>
+    <RootNamespace>MyEmslUpload</RootNamespace>
+    <IsWindowsApplication>False</IsWindowsApplication>
+    <InterpreterId>{9a7a9026-48c1-4688-9d5d-e5699d47d074}</InterpreterId>
+    <InterpreterVersion>2.7</InterpreterVersion>
+    <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
+    <DjangoSettingsModule>UploadServer.settings</DjangoSettingsModule>
+    <PythonRunWebServerCommandArguments>runserver --settings $(DjangoSettingsModule) %SERVER_PORT% $(CommandLineArguments)</PythonRunWebServerCommandArguments>
+    <WebBrowserUrl>
+    </WebBrowserUrl>
+    <WebBrowserPort>9999</WebBrowserPort>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>df27394f-b873-49e1-bce6-b03b40acfe78</ProjectGuid>
+    <ProjectHome>.</ProjectHome>
+    <ProjectTypeGuids>{5F0BE9CA-D677-4A4D-8806-6076C0FAAD37};{349c5851-65df-11da-9384-00065b846f21};{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <StartupFile>manage.py</StartupFile>
+    <SearchPath>
+    </SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <LaunchProvider>Django launcher</LaunchProvider>
+    <OutputPath>.</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="bundler\__init__.py" />
+    <Compile Include="home\admin.py" />
+    <Compile Include="home\forms.py" />
+    <Compile Include="home\migrations\0001_initial.py" />
+    <Compile Include="home\migrations\0002_auto_20141103_1321.py" />
+    <Compile Include="home\migrations\0003_delete_filepath.py" />
+    <Compile Include="home\migrations\0004_filepath.py" />
+    <Compile Include="home\migrations\0005_auto_20141103_1337.py" />
+    <Compile Include="home\migrations\0006_metadata.py" />
+    <Compile Include="home\migrations\0007_remove_metadata_value.py" />
+    <Compile Include="home\migrations\0008_metadata_name.py" />
+    <Compile Include="home\migrations\__init__.py" />
+    <Compile Include="home\models.py" />
+    <Compile Include="home\tasks.py" />
+    <Compile Include="home\templatetags\app_filters.py" />
+    <Compile Include="home\templatetags\__init__.py" />
+    <Compile Include="home\tests.py" />
+    <Compile Include="home\views.py" />
+    <Compile Include="home\__init__.py" />
+    <Compile Include="manage.py" />
+    <Compile Include="uploader\auth.py" />
+    <Compile Include="uploader\Session.py" />
+    <Compile Include="uploader\__init__.py" />
+    <Compile Include="UploadServer\celery.py" />
+    <Compile Include="UploadServer\settings.py" />
+    <Compile Include="UploadServer\urls.py" />
+    <Compile Include="UploadServer\wsgi.py" />
+    <Compile Include="UploadServer\__init__.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="bundler\" />
+    <Folder Include="home\" />
+    <Folder Include="home\migrations\" />
+    <Folder Include="home\templates\" />
+    <Folder Include="home\templates\home\" />
+    <Folder Include="home\templates\home\css\" />
+    <Folder Include="home\templates\home\images\" />
+    <Folder Include="home\templatetags\" />
+    <Folder Include="uploader\" />
+    <Folder Include="UploadServer\" />
+    <Folder Include="UploadServer\static\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="home\forms.pyc" />
+    <Content Include="home\migrations\0001_initial.pyc" />
+    <Content Include="home\migrations\0002_auto_20141015_1046.pyc" />
+    <Content Include="home\migrations\0002_auto_20141103_1321.pyc" />
+    <Content Include="home\migrations\0003_delete_filepath.pyc" />
+    <Content Include="home\migrations\0003_document.pyc" />
+    <Content Include="home\migrations\0004_filepath.pyc" />
+    <Content Include="home\migrations\0005_auto_20141103_1231.pyc" />
+    <Content Include="home\migrations\0005_auto_20141103_1337.pyc" />
+    <Content Include="home\migrations\0006_auto_20141103_1243.pyc" />
+    <Content Include="home\migrations\0006_metadata.pyc" />
+    <Content Include="home\migrations\0007_auto_20141103_1246.pyc" />
+    <Content Include="home\migrations\0007_remove_metadata_value.pyc" />
+    <Content Include="home\migrations\0008_delete_filepath.pyc" />
+    <Content Include="home\migrations\0008_metadata_name.pyc" />
+    <Content Include="home\migrations\0009_filepath.pyc" />
+    <Content Include="home\migrations\__init__.pyc" />
+    <Content Include="home\templates\home\css\bunny.jpg" />
+    <Content Include="home\templates\home\css\style.css" />
+    <Content Include="home\templates\home\error.html" />
+    <Content Include="home\templates\home\images\bunny.jpg" />
+    <Content Include="home\templates\home\images\checkbox-checked.png" />
+    <Content Include="home\templates\home\images\checkbox-unchecked.png" />
+    <Content Include="home\templates\home\images\emsl_logo-white.png" />
+    <Content Include="home\templates\home\images\file3.png" />
+    <Content Include="home\templates\home\images\folder.png" />
+    <Content Include="home\templates\home\images\services.html" />
+    <Content Include="home\templates\home\images\x_14x14.png" />
+    <Content Include="home\templates\home\index.html" />
+    <Content Include="home\templates\home\login.html" />
+    <Content Include="home\templates\home\status.html" />
+    <Content Include="home\templates\home\uploader.html" />
+    <Content Include="db.sqlite3" />
+    <Content Include="ToDo.txt" />
+    <Content Include="uploader\cookie.txt" />
+    <Content Include="uploader\cookies.txt" />
+    <Content Include="UploadServer\paths.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="{9a7a9026-48c1-4688-9d5d-e5699d47d074}\2.7" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.Django.targets" />
+  <!-- Specify pre- and post-build commands in the BeforeBuild and 
+       AfterBuild targets below. -->
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <AutoAssignPort>True</AutoAssignPort>
+          <UseCustomServer>True</UseCustomServer>
+          <CustomServerUrl>http://localhost</CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}" User="">
+        <WebProjectProperties>
+          <StartPageUrl>
+          </StartPageUrl>
+          <StartAction>CurrentPage</StartAction>
+          <AspNetDebugging>True</AspNetDebugging>
+          <SilverlightDebugging>False</SilverlightDebugging>
+          <NativeDebugging>False</NativeDebugging>
+          <SQLDebugging>False</SQLDebugging>
+          <ExternalProgram>
+          </ExternalProgram>
+          <StartExternalURL>
+          </StartExternalURL>
+          <StartCmdLineArguments>
+          </StartCmdLineArguments>
+          <StartWorkingDirectory>
+          </StartWorkingDirectory>
+          <EnableENC>False</EnableENC>
+          <AlwaysStartWebServerOnDebug>False</AlwaysStartWebServerOnDebug>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>
