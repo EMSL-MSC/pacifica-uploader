@@ -18,6 +18,7 @@ from optparse import OptionParser
 
 from celery import current_task
 
+# I'm a thing!
 
 class Bundler_Error( Exception ):
     """
