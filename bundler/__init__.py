@@ -330,133 +330,7 @@ class Tar_Bundler( File_Bundler ):
         metadata_file.close()
         tarball.close()
 
-
-def _add_file_cb( option, opt, value, parser ):
-    """
-    A Callback function for an OptionParser that adds a file into the file list
-    
-    :Parameters:
-        option
-        opt
-        value
-            The filename that was passed to this callback
-        parser
-            The OptionParser that calls the callback
-            
-    @note: The file_list is a list of tuples formatted as [ (file_path, file_arcname) ... ]
-    """
-
-    # Try to expand the value argument using wildcards.
-    if value[:1] != '/':
-        value = os.path.abspath( os.path.join( parser.values.work_dir, value ) )
-    file_glob = glob( value )
-    
-    # If the file doesn't exist, or the wildcards don't match any files, the glob will be empty
-    if len( file_glob ) == 0:
-        parser.error( "File argument resolved to 0 existing files: %s" % value )
-                
-    # Each entry in the file list is a tuple of the file's absolute path and the relative file name
-    file_tuples = []
-    abspath = os.path.abspath( parser.values.work_dir )
-    for file_name in file_glob:
-        if file_name[:1] != '/':
-            file_name = os.path.abspath( os.path.join( parser.values.work_dir, file_name ) )
-        altname = None
-        lap = len( abspath )
-        if file_name == abspath:
-            altname = ""
-        elif file_name[:lap+1] == "%s/" %(abspath):
-            altname = file_name[lap+1:]
-        file_tuples.append( ( file_name, altname ) )
-        #logger.debug( "Abspath = %s" %( abspath ) )
-        #logger.debug( "Adding file %s as %s" %( file_name, altname ) )
-                       
-    # If the glob has only one entry and an arcname argument was supplied, use it
-    if len( file_glob ) == 1 and parser.values.alt_name != None:
-        file_tuples[0] = ( file_tuples[0][0], parser.values.alt_name )
-        
-    # No matter what happens, the alt name is cleared
-    parser.values.alt_name = None
-    
-    # Add the new file names to the parser's file name list
-    parser.values.file_list.extend( file_tuples )
-    
-    
-
-def add_usage( parser ):
-    """
-    Adds a custom usage description string for this module to an OptionParser
-    """
-    parser.set_usage( "usage: %prog [options] [-c DIR1 -f FILE1 -f FILE2 -c DIR2 -f FILE3]..." )
-
-def _parser_add_group(option, opt, value, parser):
-    (type, name) = value.split('=',1)
-    parser.groups[type] = name
-
-def add_options( parser ):
-    """
-    Adds custom command line options for this module to an OptionParser
-    """
-    parser.groups = {}
-
-    # Set the directory in which to work
-    parser.add_option( '-c', '--cwd', type='string', action='store', dest='work_dir', default=os.getcwd(),
-                       help="Change the bundler's working directory to DIR", metavar='DIR' )
-
-    # Set the file name for the bundle
-    parser.add_option( '-b', '--bundle', type='string', action='store', dest='bundle_name', default='',
-                       help="Set the name for the target bundle to NAME", metavar='NAME' )
-
-    # Set the instrument to use
-    parser.add_option( '-i', '--instrument', type='string', action='store', dest='instrument', default='',
-                       help="Set used instrument to INST", metavar='INST' )
-
-    # Set the name of the proposal
-    parser.add_option( '-p', '--proposal', type='string', action='store', dest='proposal', default='',
-                       help="Set the Proposal number number to PNUM", metavar='PNUM' )
-
-    # Set the group-type/names
-    parser.add_option( '-g', '--group', type='string', action='callback', callback=_parser_add_group,
-                       help="Make files a member of the specified type=name group", metavar='T=N' )
-
-    # Enable verbose output
-    parser.add_option( '-v', '--verbose', dest='verbose', default=False, action='store_true',
-                       help="Print detailed information for this run" )
-
-    # Enable zipfile bundling
-    parser.add_option( '-z', '--zip', dest='zip', default=False, action='store_true',
-                       help="Bundle files in zip format ( tar is the default )" )
-
-    # Set an alternative name for the file in the bundle
-    parser.add_option( '-a', '--altname', type='string', action='store', dest='alt_name', default=None,
-                       help="Use the alternative name NAME for the next file", metavar='NAME' )
-
-    # Add a file to the list to be bundled
-    parser.add_option( '-f', '--file', type='string', action='callback', callback=_add_file_cb,
-                       dest='file_list', default=[],
-                       help="Add the file or directory FILE to the list to be bundled", metavar='FILE' )
-                       
-    # Disable recursive directory bundling
-    parser.add_option( '--nonrecursive', dest='recursive', default=True, action='store_false',
-                       help="Disable recursive directory bundling" )
-
-def check_options( parser, bundle_name_optional=False ):
-    """
-    Performs custom option checks for this module given an OptionParser
-    """
-    bundle_handle = None
-    if bundle_name_optional:
-        if parser.values.bundle_name == '':
-            bundle_handle = tempfile.NamedTemporaryFile(mode='w+b')
-            parser.values.bundle_name = bundle_handle.name
-    else:
-        if parser.values.bundle_name == '':
-            print >> sys.stderr, "Failed to specify bundle name"
-            sys.exit(0)
-    return bundle_handle
-
-
-def bundle( bundle_name='', instrument_name='chinook', tarfile=True, proposal='',
+def bundle( bundle_name='', instrument_name='chinook', proposal='',
             file_list=[], recursive=True, verbose=False, groups=None ):
     """
     Bundles a list of files into a single aggregated bundle file
@@ -480,10 +354,7 @@ def bundle( bundle_name='', instrument_name='chinook', tarfile=True, proposal=''
             If true, lots of status messages about the bundling process will be printed to stderr
     """
     if bundle_name == None or bundle_name == '':
-        if tarfile:
-            bundle_name = 'bundle.tar'
-        else:
-            bundle_name = 'bundle.zip'
+        bundle_name = 'bundle.tar'
 
     if verbose:
         print >> sys.stderr, "Start bundling %s" % bundle_name
@@ -501,12 +372,7 @@ def bundle( bundle_name='', instrument_name='chinook', tarfile=True, proposal=''
 
     # Set up the bundler object
     bundler = None
-    if tarfile:
-        bundler = Tar_Bundler( bundle_path, proposal_ID=proposal,
-                               instrument_name=instrument_name, instrument_ID=instrument_ID,
-                               recursive=recursive, verbose=verbose, groups=groups )
-    else:
-        bundler = Zip_Bundler( bundle_path, proposal_ID=proposal,
+    bundler = Tar_Bundler( bundle_path, proposal_ID=proposal,
                                instrument_name=instrument_name, instrument_ID=instrument_ID,
                                recursive=recursive, verbose=verbose, groups=groups )
 
@@ -543,40 +409,8 @@ def bundle( bundle_name='', instrument_name='chinook', tarfile=True, proposal=''
     if verbose:
         print >> sys.stderr, "Finished bundling"
 
-def bundle_from_options( parser ):
-    """
-    Bundle files based upon command line options supecified in an OptionParser
-    """
-    bundle( bundle_name=parser.values.bundle_name,
-            instrument_name=parser.values.instrument,
-            tarfile=(not parser.values.zip),
-            proposal=parser.values.proposal,
-            file_list=parser.values.file_list,
-            recursive=parser.values.recursive,
-            verbose=parser.values.verbose,
-            groups=parser.groups
-            )
-
-
 def main():
-    try:
-        parser = OptionParser()
-        add_usage( parser )
-        add_options( parser )
-        parser.parse_args()
-        if parser.values.verbose:
-            print >> sys.stderr, "Begining Bundling process"
-        check_options( parser )
-        bundle_from_options( parser )
-        if parser.values.verbose:
-            print >> sys.stderr, "Bundled %s successfully" % parser.values.bundle_name
-
-    
-    
-    
-    except Bundler_Error, err:
-        print >> sys.stderr, "Bundler failed: %s" % err.msg
-
+    print 'empty'
 
 if __name__ == '__main__':
     main()
