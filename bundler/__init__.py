@@ -18,8 +18,6 @@ from optparse import OptionParser
 
 from celery import current_task
 
-# I'm a thing!
-
 class Bundler_Error( Exception ):
     """
     A special exception class especially for the uploader module
@@ -332,73 +330,6 @@ class Tar_Bundler( File_Bundler ):
         metadata_file.close()
         tarball.close()
 
-
-
-class Zip_Bundler( File_Bundler ):
-    """
-    A Derived Class that bundles files in a zipfile format
-    """
-
-    def __init__( self, bundle_path, proposal_ID='', instrument_name='', instrument_ID='',
-                  recursive=True, verbose=False, groups=None ):
-        """
-        Initializes a Zip_Bundler
-        
-        :Parameters:
-            bundle_path
-                The path to the target bundle file
-            proposal_ID
-                An optional string describing the proposal associated with this bundle
-            instrument_name
-                The name of the instrument that produced the data packaged in the bundle
-            recursive
-                If true, directories named in the file list will have their contents recursively added
-            verbose
-                Print out lots of status messages about the bundling process
-        """
-
-        if bundle_path == '' or bundle_path == None:
-            bundle_path = 'bundle.zip'
-
-        File_Bundler.__init__( self, bundle_path,
-                               proposal_ID=proposal_ID, instrument_name=instrument_name, instrument_ID=instrument_ID,
-                               recursive=recursive, verbose=verbose, groups=groups )
-
-        zipper = zipfile.ZipFile( self.bundle_path, mode='w' )
-        zipper.close()
-
-        if self.verbose:
-            print >> sys.stderr, "Successfully created zipfile bundle %s" % self.bundle_path
-
-
-
-    def _bundle_file( self, file_path, file_arcname=None ):
-        """
-        Bundles files into a zipfile formatted bundle
-        
-        :Parameters:
-            file_name
-                The name of the file to bundle
-            file_arcname
-                An alternative name to use for the file inside of the bundle
-        """
-
-        zipper = zipfile.ZipFile( self.bundle_path, mode='a' )
-        zipper.write( file_path, file_arcname )
-        zipper.close()
-
-
-
-    def _bundle_metadata( self, metadata ):
-        """
-        Bundles the metadata into a tarfile formatted bundle
-        
-        @param metadata: The metadata string to bundle
-        """
-
-        zipper = zipfile.ZipFile( self.bundle_path, mode='a' )
-        zipper.writestr( "metadata.txt", metadata )
-        zipper.close()
 
 def _add_file_cb( option, opt, value, parser ):
     """
