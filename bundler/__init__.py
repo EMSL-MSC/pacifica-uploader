@@ -11,9 +11,7 @@ import time
 import os.path
 import hashlib
 import tarfile
-import zipfile
 import tempfile
-from glob import glob
 from optparse import OptionParser
 
 from celery import current_task
@@ -191,6 +189,7 @@ class File_Bundler:
 
         h = hashlib.sha1()
         while True:
+            # dfh need define
             data = file_in.read(1024 * 1024)
             if not data:
                 break
@@ -305,9 +304,9 @@ class Tar_Bundler( File_Bundler ):
         
         @param metadata: The metadata string to bundle
         """
-        
-        print "Bundle meta!"
-        print metadata
+        if self.verbose:
+            print >> sys.stderr, "Bundle meta!"
+            print >> sys.stderr, metadata
 
         metadata_file = None
         try:
@@ -330,7 +329,13 @@ class Tar_Bundler( File_Bundler ):
         metadata_file.close()
         tarball.close()
 
-def bundle( bundle_name='', instrument_name='chinook', proposal='',
+def error_handler(err):
+    print >> sys.stderr, err
+    # celery call
+    current_task.update_state(state='FAILURE', meta={'info': err})
+            
+
+def bundle( bundle_name=None, instrument_name=None, proposal=None,
             file_list=[], recursive=True, verbose=False, groups=None ):
     """
     Bundles a list of files into a single aggregated bundle file
@@ -353,8 +358,27 @@ def bundle( bundle_name='', instrument_name='chinook', proposal='',
         verbose
             If true, lots of status messages about the bundling process will be printed to stderr
     """
+
+    # validate parameters
     if bundle_name == None or bundle_name == '':
-        bundle_name = 'bundle.tar'
+        error_handler ("Missing bundle name")
+        return
+
+    if instrument_name == None or instrument_name == '':
+        error_handler ("Missing instrument name")
+        return
+
+    if proposal == None or proposal == '':
+        error_handler ("Missing proposal")
+        return
+
+    if file_list == None or len( file_list ) == 0:
+        error_handler ("Missing file list")
+        return
+
+    if groups == None or groups == '':
+        error_handler ("Missing groups")
+        return
 
     if verbose:
         print >> sys.stderr, "Start bundling %s" % bundle_name
@@ -364,45 +388,38 @@ def bundle( bundle_name='', instrument_name='chinook', proposal='',
     if verbose:
         print >> sys.stderr, "Bundle file set to %s" % bundle_path
 
-    # set the instrument to use 
-    instruments = { "chinook": 34076 }
-    instrument_ID = instruments.get( instrument_name, '' )
-    if verbose:
-        print >> sys.stderr, "Instrument set to %s(%s)" % ( instrument_name, instrument_ID )
-
     # Set up the bundler object
     bundler = None
-    bundler = Tar_Bundler( bundle_path, proposal_ID=proposal,
-                               instrument_name=instrument_name, instrument_ID=instrument_ID,
-                               recursive=recursive, verbose=verbose, groups=groups )
 
-    # @todo:  determine if this is a good default behavior
-    # If the file_list is empty bundle the current working directory
-    if len( file_list ) == 0:
-        file_list = [ ( os.
-                       getcwd(), '' ) ]
+    # dfh note we are setting the instrument name and ID to the same thing, which is being
+    # sent in as the instrument name but is actually the instrument ID.  Fix this.
+    bundler = Tar_Bundler( bundle_path, proposal_ID=proposal,
+                               instrument_name=instrument_name, instrument_ID=instrument_name,
+                               recursive=recursive, verbose=verbose, groups=groups )
     
     bundle_size = 0
     for ( file_path, file_arcname ) in file_list:
         bundle_size += os.path.getsize(file_path)      
 
     
-    print >> sys.stderr, "bundle size %s" % str(bundle_size)
+    if verbose:
+        print >> sys.stderr, "bundle size %s" % str(bundle_size)
 
     fCount = len(file_list)
-    index = 0
     running_size=0
     for ( file_path, file_arcname ) in file_list:
         try:
-            index+=1
             running_size += os.path.getsize(file_path)
             percent_complete = 100.0 * running_size / bundle_size
-            print >> sys.stderr, "percent complete %s" % str(percent_complete)
+
+            if verbose:
+                print >> sys.stderr, "percent complete %s" % str(percent_complete)
+
             bundler.bundle_file( file_path, file_arcname )
-            #current_task.update_state(state='PROGRESS', meta={'info': "Bundling " + str(index), 'percent': percent_complete})
             current_task.update_state(state=str(percent_complete), meta={'Status': "Bundling percent complete: " + str(percent_complete)})
+        
         except Bundler_Error, err:
-            print >> sys.stderr, "Failed to bundle file: %s: %s" % ( file_path, err.msg )
+            error_handler( "Failed to bundle file: %s: %s" % ( file_path, err.msg ))
 
     bundler.bundle_metadata()
 
