@@ -27,8 +27,6 @@ from django.contrib.auth.models import User
 from mhlib import PATH
 
 from uploader import upload
-from uploader import UploadBundle
-from uploader import OpenSession
 from uploader import TestAuth
 from uploader import UserInfo
 
