@@ -412,10 +412,11 @@ def bundle( bundle_name=None, instrument_name=None, proposal=None,
             running_size += os.path.getsize(file_path)
             percent_complete = 100.0 * running_size / bundle_size
 
+            bundler.bundle_file( file_path, file_arcname )
+
             if verbose:
                 print >> sys.stderr, "percent complete %s" % str(percent_complete)
 
-            bundler.bundle_file( file_path, file_arcname )
             current_task.update_state(state=str(percent_complete), meta={'Status': "Bundling percent complete: " + str(percent_complete)})
         
         except Bundler_Error, err:
