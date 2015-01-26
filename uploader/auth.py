@@ -12,7 +12,7 @@ import StringIO
 #url = "https://dev1.my.emsl.pnl.gov/myemsl/cgi-bin/preallocate"
 url = "https://dev1.my.emsl.pnl.gov"
 username = "d3e889"
-password = "12Freakin"
+password = ""
 
 # Set the user name and password for the queries.  Equivalent to --user cli option
 pycurl_userpwd = "%s:%s" % ( username, password )
