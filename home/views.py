@@ -37,15 +37,12 @@ from home import tasks
 
 from celery import shared_task, current_task
 
-
-#from django.db.backends.oracle.creation import PASSWORD
-
 from multiprocessing import Process
 
 class mData(object):
-    label=""
-    value=""
-    name=""
+    label = ""
+    value = ""
+    name = ""
     
     def __init__(self):
         pass
@@ -121,7 +118,7 @@ def getTuplesRecursive(folder, tupleList, rootDir):
         path = os.path.join(folder, item)
         if os.path.isfile(path):
             relPath = path.replace(rootDir, '')
-            tupleList.append( ( path, relPath ) )
+            tupleList.append((path, relPath))
         elif os.path.isdir(path):
             getTuplesRecursive(path, tupleList, rootDir)
             
@@ -132,7 +129,7 @@ def getTuples(selectedList, tupleList, rootDir):
         if os.path.isfile(path):
             # the relative path is the path without the root directory
             relPath = path.replace(rootDir, '')
-            tupleList.append( ( path, relPath ) )
+            tupleList.append((path, relPath))
         elif os.path.isdir(path):
             getTuplesRecursive(path, tupleList, rootDir)
 
@@ -142,15 +139,15 @@ def getSizeString(total_size):
         return str(total_size) + " b"
     # less than an Mb show Kb
     if (total_size < 1048576):
-        kb = float (total_size)/1024.0
+        kb = float(total_size) / 1024.0
         return str(round(kb, 2)) + " Kb"
     # less than a Gb show Mb
     elif (total_size < 1073741824):
-        mb = float(total_size)/1048576.0
+        mb = float(total_size) / 1048576.0
         return str(round(mb, 2)) + " Mb"
     # else show in Gb
     else:
-        gb = float(total_size)/1073741824.0
+        gb = float(total_size) / 1073741824.0
         return str(round(gb, 2)) + " Gb"
    
 def getFolderString(folder):
@@ -196,7 +193,7 @@ def list(request):
     
     rootDir = currentDirectory(directoryHistory)
     
-    if rootDir == "": # first time through, initialize 
+    if rootDir == "": # first time through, initialize
         dataPath = Filepath.objects.get(name="dataRoot")
         if (dataPath is not None):
             rootDir = dataPath.fullpath
@@ -219,7 +216,7 @@ def list(request):
     
     checkedDirs = []
     uncheckedDirs = []
-    checkedFiles  = []
+    checkedFiles = []
     uncheckedFiles = []
     
     contents = os.listdir(rootDir)
@@ -240,8 +237,7 @@ def list(request):
                 uncheckedFiles.append(path)
     
     # Render list page with the documents and the form
-    return render_to_response(
-        'home/uploader.html',
+    return render_to_response('home/uploader.html',
         {'instrument': instrument, 
          'proposalList': proposalList,
          'proposal':proposal,  
@@ -296,7 +292,7 @@ def modify(request):
                 print m.name + ": " + m.value
                 
         proposal = request.POST.get("proposal")  
-        print "proposal:  "       + proposal
+        print "proposal:  " + proposal
         
         split = proposal.split()
         propID = split[0]
@@ -354,17 +350,15 @@ def modify(request):
                    groups = groups,
                    server=sPath,
                    user=user,
-                   password=password
-                   )
+                   password=password)
             
 
             
             #if "http" in res:
             #    print res
-            #    return  HttpResponseRedirect(res)
+            #    return HttpResponseRedirect(res)
             
-            return render_to_response(
-                'home/status.html',
+            return render_to_response('home/status.html',
                 {'instrument': instrument,
                  'status': 'Starting Upload',
                  'proposal':proposal,
@@ -382,9 +376,9 @@ def modify(request):
         path = params[1]
                 
         # spaces
-        path = path.replace ("%20", " ")
+        path = path.replace("%20", " ")
         # backslash
-        path = path.replace ("%5C", "\\")
+        path = path.replace("%5C", "\\")
         
         full = os.path.join(rootDir, path)
         
@@ -410,7 +404,7 @@ def modify(request):
                 selectedDirs.remove(full) 
                 del dirSizes[index]
                 
-        elif (modType =="upDir"):
+        elif (modType == "upDir"):
             index = int(path)
             del directoryHistory[index:]
             print currentDirectory(directoryHistory)
@@ -424,8 +418,7 @@ def LoadUserInfo():
                    insecure=True,
                    password=password,
                    negotiate = False,
-                   verbose=True
-                   )
+                   verbose=True)
     print userInfo
     json_parsed = 0
     try:
@@ -464,8 +457,7 @@ def Login(request):
                    insecure=True,
                    password=password,
                    negotiate = False,
-                   verbose=True
-                   )
+                   verbose=True)
             
         if (not auth):
             password = ""     
@@ -479,8 +471,7 @@ def Login(request):
                    insecure=True,
                    password=password,
                    negotiate = False,
-                   verbose=True
-                   )
+                   verbose=True)
         
         json_parsed = 0
         try:
@@ -528,7 +519,7 @@ def Login(request):
                 proposalList.append(propStr)
                 print propStr
                 
-                #for later          
+                #for later
                 instruments = propBlock.get("instruments") 
                 for i in instruments:
                     for j in i:
@@ -559,7 +550,7 @@ def status(request):
     global bundleProcess
 
     output = bundleProcess.state
-    state =  json.dumps(output)
+    state = json.dumps(output)
     print state
 
     output = bundleProcess.result
@@ -570,8 +561,7 @@ def status(request):
         return HttpResponseRedirect(reverse('home.views.list'))
 
     else:
-        return render_to_response(
-                'home/status.html',
+        return render_to_response('home/status.html',
                 {'instrument': instrument,
                  'status': state + " " + result,
                  'proposal':proposal,
@@ -586,7 +576,7 @@ def incStatus(request):
     global bundleProcess
 
     output = bundleProcess.status
-    state =  output
+    state = output
     print state
 
     output = bundleProcess.result
@@ -599,7 +589,7 @@ def incStatus(request):
     if (result is not None):
         if "http" in result:
             state = 'DONE'
-            result = result.strip('"');
+            result = result.strip('"')
 
     # create json structure
     retval = json.dumps({'state':state, 'result':result})

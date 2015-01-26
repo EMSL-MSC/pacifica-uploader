@@ -10,15 +10,14 @@ from time import sleep
 import sys
 
 @shared_task
-def uploadFiles(bundle_name = '', 
-                   instrument_name = '', 
-                   proposal = '', 
+def uploadFiles(bundle_name='', 
+                   instrument_name='', 
+                   proposal='', 
                    file_list=[], 
-                   groups = [],
+                   groups=[],
                    server='',
                    user='',
-                   password=''
-                   ):
+                   password=''):
 
     current_task.update_state("PROGRESS", meta={'Status': "Starting Bundle/Upload Process"})
         
@@ -42,8 +41,7 @@ def uploadFiles(bundle_name = '',
                    insecure=True,
                    password=password,
                    negotiate = False,
-                   verbose=True
-                   )
+                   verbose=True)
 
     print >> sys.stderr, "upload completed"
 
