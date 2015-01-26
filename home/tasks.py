@@ -19,25 +19,12 @@ def uploadFiles(bundle_name = '',
                    user='',
                    password=''
                    ):
-    
-    #for i in range(0,10):
-    #    sleep(1)
-    #    current_task.update_state(state='PROGRESS',
-    #        meta={'info': 'Bundling', 'percent': i*10})
-    
-    #for i in range(0,10):
-    #    sleep(1)
-    #    current_task.update_state(state='PROGRESS',
-    #        meta={'info': 'Uploading', 'percent': i*10})
-
-    #return
 
     current_task.update_state("PROGRESS", meta={'Status': "Starting Bundle/Upload Process"})
         
 
     bundle(bundle_name = bundle_name, 
-                   instrument_name = instrument_name, 
-                   tarfile = True, 
+                   instrument_name = instrument_name,
                    proposal = proposal, 
                    file_list=file_list, 
                    recursive = False, 
