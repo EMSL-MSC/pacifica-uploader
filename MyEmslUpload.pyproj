@@ -56,7 +56,6 @@
     <Compile Include="home\views.py" />
     <Compile Include="home\__init__.py" />
     <Compile Include="manage.py" />
-    <Compile Include="uploader\Session.py" />
     <Compile Include="uploader\__init__.py" />
     <Compile Include="UploadServer\celery.py" />
     <Compile Include="UploadServer\settings.py" />
@@ -112,8 +111,6 @@
     <Content Include="home\templates\home\uploader.html" />
     <Content Include="db.sqlite3" />
     <Content Include="ToDo.txt" />
-    <Content Include="uploader\cookie.txt" />
-    <Content Include="uploader\cookies.txt" />
     <Content Include="UploadServer\paths.txt" />
   </ItemGroup>
   <ItemGroup>
