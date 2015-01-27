@@ -72,6 +72,7 @@
     <Folder Include="home\templates\home\css\" />
     <Folder Include="home\templates\home\images\" />
     <Folder Include="home\templatetags\" />
+    <Folder Include="Doc\" />
     <Folder Include="uploader\" />
     <Folder Include="UploadServer\" />
     <Folder Include="UploadServer\static\" />

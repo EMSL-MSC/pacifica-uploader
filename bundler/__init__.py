@@ -16,20 +16,20 @@ from optparse import OptionParser
 
 from celery import current_task
 
-class Bundler_Error( Exception ):
+class Bundler_Error(Exception):
     """
     A special exception class especially for the uploader module
     """
 
-    def __init__( self, msg ):
+    def __init__(self, msg):
         """
         Initializes a Bundler_error
-        
+
         @param msg: A custom message packaged with the exception
         """
         self.msg = msg
 
-    def __str__( self ):
+    def __str__(self):
         """
         Produces a string representation of an Bundler_Error
         """
@@ -43,11 +43,11 @@ class File_Bundler:
     specific formats/libraries shall be defined
     """
 
-    def __init__( self, bundle_path, proposal_ID='', instrument_name='', instrument_ID='',
-                  recursive=True, verbose=False, groups=None ):
+    def __init__(self, bundle_path, proposal_ID='', instrument_name='', instrument_ID='',
+                  recursive=True, verbose=False, groups=None):
         """
         Initializes a Bundler
-        
+
         :Parameters:
             bundle_path
                 The path to the target bundle file
@@ -65,8 +65,8 @@ class File_Bundler:
         if groups == None:
             groups = {}
         self.groups = groups
-        self.bundle_path = os.path.abspath( bundle_path )
-        ( self.bundle_dir, self.bundle_name ) = os.path.split( self.bundle_path )
+        self.bundle_path = os.path.abspath(bundle_path)
+        (self.bundle_dir, self.bundle_name) = os.path.split(self.bundle_path)
 
         self.proposal_ID = proposal_ID
         self.instrument_name = instrument_name
@@ -78,7 +78,7 @@ class File_Bundler:
 
 
 
-    def bundle_metadata( self ):
+    def bundle_metadata(self):
 #FIXME handling of metadata file and 0 entry bundles"
         """
         Bundle in the metadata for the bundled files
@@ -108,16 +108,16 @@ class File_Bundler:
             for (type, name) in self.groups.iteritems():
                 if another_need_comma:
                     metadata += ', '
-                metadata += "{\"name\":\"%s\", \"type\":\"%s\"}" %(name, type)
+                metadata += "{\"name\":\"%s\", \"type\":\"%s\"}" % (name, type)
                 another_need_comma = True
             metadata += ']'
             need_comma = True
         metadata += '},"file":[\n'
 
         # Add metadata for each file
-        for ( file_arcname, file_hash ) in self.hash_dict.items():
-            ( file_dir, file_name ) = os.path.split( file_arcname )
-            metadata += '{"sha1Hash":"%s","fileName":"%s","destinationDirectory":"%s"},\n' % ( file_hash, file_name, file_dir )
+        for (file_arcname, file_hash) in self.hash_dict.items():
+            (file_dir, file_name) = os.path.split(file_arcname)
+            metadata += '{"sha1Hash":"%s","fileName":"%s","destinationDirectory":"%s"},\n' % (file_hash, file_name, file_dir)
 
         # Strip the trailing comma off of the end and close the string
         metadata = metadata[:-2] + "]}"
@@ -125,11 +125,11 @@ class File_Bundler:
         if self.verbose:
             print >> sys.stderr, "Preparing Metadata:\n%s" % metadata
 
-        self._bundle_metadata( metadata )
+        self._bundle_metadata(metadata)
 
 
 
-    def bundle_file( self, file_path, file_arcname ):
+    def bundle_file(self, file_path, file_arcname):
         """
         Bundle in a file or directory
         
@@ -140,7 +140,7 @@ class File_Bundler:
                 An alternative name to use for the file inside of the bundle
         """
 
-        file_path = os.path.abspath( file_path )
+        file_path = os.path.abspath(file_path)
 
         if self.verbose:
             print >> sys.stderr, "Preparing to bundle %s" % file_path
@@ -150,30 +150,32 @@ class File_Bundler:
                 print >> sys.stderr, "Skipping bundle file %s" % file_path
             return
             
-        # If the file_arcname argument is None use the base file name as the arc name
+        # If the file_arcname argument is None use the base file name as the
+        # arc name
         if file_arcname == None:
-            file_arcname = os.path.basename( file_path )
+            file_arcname = os.path.basename(file_path)
 
-        if not os.path.exists( file_path ):
-            raise Bundler_Error( "%s doesn't exist" % file_path )
-        if not os.access( file_path, os.R_OK ):
-            raise Bundler_Error( "Can't read from %s" % file_path )
-        if 'metadata' in os.path.basename( file_path ):
-            raise Bundler_Error( "A metadata file may not be explicitly added to the bundle" )
+        if not os.path.exists(file_path):
+            raise Bundler_Error("%s doesn't exist" % file_path)
+        if not os.access(file_path, os.R_OK):
+            raise Bundler_Error("Can't read from %s" % file_path)
+        if 'metadata' in os.path.basename(file_path):
+            raise Bundler_Error("A metadata file may not be explicitly added to the bundle")
 
-        file_mode = os.stat( file_path )[ stat.ST_MODE ]
-        if not stat.S_ISDIR( file_mode ) and not stat.S_ISREG( file_mode ):
-            raise Bundler_Error( "Unknown file type for %s" % file_path )
+        file_mode = os.stat(file_path)[stat.ST_MODE]
+        if not stat.S_ISDIR(file_mode) and not stat.S_ISREG(file_mode):
+            raise Bundler_Error("Unknown file type for %s" % file_path)
 
-        # If the file is a directory and recursing is enabled, recursively add its children
-        if stat.S_ISDIR( file_mode ):
+        # If the file is a directory and recursing is enabled, recursively add
+        # its children
+        if stat.S_ISDIR(file_mode):
             if self.recursive:
                 if self.verbose:
                     print >> sys.stderr, "Recursing into subdirectory %s" % file_path
-                for child in os.listdir( file_path ):
-                    child_path = os.path.join( file_path, child )
-                    child_arcname = os.path.join( file_arcname, child )
-                    self.bundle_file( child_path, child_arcname )
+                for child in os.listdir(file_path):
+                    child_path = os.path.join(file_path, child)
+                    child_arcname = os.path.join(file_arcname, child)
+                    self.bundle_file(child_path, child_arcname)
             elif self.verbose:
                 print >> sys.stderr, "Skipping subdirectory %s" % file_path
             return
@@ -183,9 +185,9 @@ class File_Bundler:
 
         file_in = None
         try:
-            file_in = open( file_path, 'r' )
+            file_in = open(file_path, 'r')
         except IOError, err:
-            raise Bundler_Error( "Couldn't read from file: %s" % file_path )
+            raise Bundler_Error("Couldn't read from file: %s" % file_path)
 
         h = hashlib.sha1()
         while True:
@@ -193,35 +195,35 @@ class File_Bundler:
             data = file_in.read(1024 * 1024)
             if not data:
                 break
-            h.update( data )
+            h.update(data)
         file_hash = h.hexdigest()
         file_in.close()
 
         if file_arcname in self.hash_dict:
-            if hash != self.hash_dict[ file_arcname ]:
-                raise Bundler_Error( "Different file with the same arcname is already in the bundle" )
+            if hash != self.hash_dict[file_arcname]:
+                raise Bundler_Error("Different file with the same arcname is already in the bundle")
             if self.verbose:
                 print >> sys.stderr, "File already in bundle: %s.  Skipping" % file_path
             return
-        self.hash_dict[ file_arcname ] = file_hash
+        self.hash_dict[file_arcname] = file_hash
 
         if self.verbose:
             print >> sys.stderr, "Bundling %s" % file_path
-        self._bundle_file( file_path, file_arcname )
+        self._bundle_file(file_path, file_arcname)
 
 
 
-    def _bundle_metadata( self, metadata ):
+    def _bundle_metadata(self, metadata):
         """
         A 'Pure Virtual' function that will perform the class specific metadata bundling in a child class
         
         @param metadata: The metadata string to bundle
         """
-        raise Bundler_Error( "Can't bundle metadata with the base class" )
+        raise Bundler_Error("Can't bundle metadata with the base class")
 
 
 
-    def _bundle_file( self, file_name, file_arcname=None ):
+    def _bundle_file(self, file_name, file_arcname=None):
         """
         A 'Pure Virtual' function that will perform the class specificg file bundling in a child class
         
@@ -231,17 +233,17 @@ class File_Bundler:
             file_arcname
                 An alternative name to use for the file inside of the bundle
         """
-        raise Bundler_Error( "Can't bundle a file with the base class" )
+        raise Bundler_Error("Can't bundle a file with the base class")
 
 
 
-class Tar_Bundler( File_Bundler ):
+class Tar_Bundler(File_Bundler):
     """
     A Derived Class that bundles files in a tarfile format
     """
 
-    def __init__( self, bundle_path, proposal_ID='', instrument_name='', instrument_ID='',
-                  recursive=True, verbose=False, groups=None ):
+    def __init__(self, bundle_path, proposal_ID='', instrument_name='', instrument_ID='',
+                  recursive=True, verbose=False, groups=None):
         """
         Initializes a Tar_Bundler
         
@@ -263,22 +265,22 @@ class Tar_Bundler( File_Bundler ):
             bundle_path = 'bundle.tar'
 
         # Initialize the Base Bundler Class
-        File_Bundler.__init__( self, bundle_path,
+        File_Bundler.__init__(self, bundle_path,
                                proposal_ID=proposal_ID, instrument_name=instrument_name, instrument_ID=instrument_ID,
-                               recursive=recursive, verbose=verbose, groups=groups )
+                               recursive=recursive, verbose=verbose, groups=groups)
 
         try:
-            tarball = tarfile.TarFile( name=self.bundle_path, mode='w' )
+            tarball = tarfile.TarFile(name=self.bundle_path, mode='w')
             tarball.close()
         except:
-            raise Bundler_Error( "Couldn't create bundle tarball: %s" % self.bundle_path )
+            raise Bundler_Error("Couldn't create bundle tarball: %s" % self.bundle_path)
 
         self.empty_tar = True
 
         if self.verbose:
             print >> sys.stderr, "Successfully created tarfile bundle %s" % self.bundle_path
 
-    def _bundle_file( self, file_path, file_arcname=None ):
+    def _bundle_file(self, file_path, file_arcname=None):
         """
         Bundles files into a tarfile formatted bundle
         
@@ -290,15 +292,15 @@ class Tar_Bundler( File_Bundler ):
         """
 
         if self.empty_tar:
-            tarball = tarfile.TarFile( name=self.bundle_path, mode='w' )
+            tarball = tarfile.TarFile(name=self.bundle_path, mode='w')
             self.empty_tar = False
         else:
-            tarball = tarfile.TarFile( name=self.bundle_path, mode='a' )
+            tarball = tarfile.TarFile(name=self.bundle_path, mode='a')
 
-        tarball.add( file_path, arcname=file_arcname, recursive=False )
+        tarball.add(file_path, arcname=file_arcname, recursive=False)
         tarball.close()
 
-    def _bundle_metadata( self, metadata ):
+    def _bundle_metadata(self, metadata):
         """
         Bundles the metadata into a tarfile formatted bundle
         
@@ -312,20 +314,20 @@ class Tar_Bundler( File_Bundler ):
         try:
             metadata_file = tempfile.TemporaryFile()
         except IOError:
-            raise Bundler_Error( "Can't create metadata file in working directory" )
+            raise Bundler_Error("Can't create metadata file in working directory")
 
-        metadata_file.write( metadata )
-        metadata_file.seek( 0 )
+        metadata_file.write(metadata)
+        metadata_file.seek(0)
 
         if self.empty_tar:
-            tarball = tarfile.TarFile( name=self.bundle_path, mode='w' )
+            tarball = tarfile.TarFile(name=self.bundle_path, mode='w')
             self.empty_tar = False
         else:
-            tarball = tarfile.TarFile( name=self.bundle_path, mode='a' )
-        ti = tarfile.TarInfo( "metadata.txt" )
-        ti.size = len( metadata )
+            tarball = tarfile.TarFile(name=self.bundle_path, mode='a')
+        ti = tarfile.TarInfo("metadata.txt")
+        ti.size = len(metadata)
         ti.mtime = time.time()
-        tarball.addfile( ti, metadata_file )
+        tarball.addfile(ti, metadata_file)
         metadata_file.close()
         tarball.close()
 
@@ -335,8 +337,8 @@ def error_handler(err):
     current_task.update_state(state='FAILURE', meta={'info': err})
             
 
-def bundle( bundle_name=None, instrument_name=None, proposal=None,
-            file_list=[], recursive=True, verbose=False, groups=None ):
+def bundle(bundle_name=None, instrument_name=None, proposal=None,
+            file_list=[], recursive=True, verbose=False, groups=None):
     """
     Bundles a list of files into a single aggregated bundle file
     
@@ -361,44 +363,46 @@ def bundle( bundle_name=None, instrument_name=None, proposal=None,
 
     # validate parameters
     if bundle_name == None or bundle_name == '':
-        error_handler ("Missing bundle name")
+        error_handler("Missing bundle name")
         return
 
     if instrument_name == None or instrument_name == '':
-        error_handler ("Missing instrument name")
+        error_handler("Missing instrument name")
         return
 
     if proposal == None or proposal == '':
-        error_handler ("Missing proposal")
+        error_handler("Missing proposal")
         return
 
-    if file_list == None or len( file_list ) == 0:
-        error_handler ("Missing file list")
+    if file_list == None or len(file_list) == 0:
+        error_handler("Missing file list")
         return
 
     if groups == None or groups == '':
-        error_handler ("Missing groups")
+        error_handler("Missing groups")
         return
 
     if verbose:
         print >> sys.stderr, "Start bundling %s" % bundle_name
 
     # Set up the bundle file
-    bundle_path = os.path.abspath( bundle_name )
+    bundle_path = os.path.abspath(bundle_name)
     if verbose:
         print >> sys.stderr, "Bundle file set to %s" % bundle_path
 
     # Set up the bundler object
     bundler = None
 
-    # dfh note we are setting the instrument name and ID to the same thing, which is being
-    # sent in as the instrument name but is actually the instrument ID.  Fix this.
-    bundler = Tar_Bundler( bundle_path, proposal_ID=proposal,
+    # dfh note we are setting the instrument name and ID to the same thing,
+    # which is being
+    # sent in as the instrument name but is actually the instrument ID.  Fix
+    # this.
+    bundler = Tar_Bundler(bundle_path, proposal_ID=proposal,
                                instrument_name=instrument_name, instrument_ID=instrument_name,
-                               recursive=recursive, verbose=verbose, groups=groups )
+                               recursive=recursive, verbose=verbose, groups=groups)
     
     bundle_size = 0
-    for ( file_path, file_arcname ) in file_list:
+    for (file_path, file_arcname) in file_list:
         bundle_size += os.path.getsize(file_path)      
 
     
@@ -406,13 +410,13 @@ def bundle( bundle_name=None, instrument_name=None, proposal=None,
         print >> sys.stderr, "bundle size %s" % str(bundle_size)
 
     fCount = len(file_list)
-    running_size=0
-    for ( file_path, file_arcname ) in file_list:
+    running_size = 0
+    for (file_path, file_arcname) in file_list:
         try:
             running_size += os.path.getsize(file_path)
             percent_complete = 100.0 * running_size / bundle_size
 
-            bundler.bundle_file( file_path, file_arcname )
+            bundler.bundle_file(file_path, file_arcname)
 
             if verbose:
                 print >> sys.stderr, "percent complete %s" % str(percent_complete)
@@ -420,7 +424,7 @@ def bundle( bundle_name=None, instrument_name=None, proposal=None,
             current_task.update_state(state=str(percent_complete), meta={'Status': "Bundling percent complete: " + str(percent_complete)})
         
         except Bundler_Error, err:
-            error_handler( "Failed to bundle file: %s: %s" % ( file_path, err.msg ))
+            error_handler("Failed to bundle file: %s: %s" % (file_path, err.msg))
 
     bundler.bundle_metadata()
 

@@ -245,12 +245,14 @@ def upload(bundle_name='bundle.zip', protocol='https', server='dev1.my.emsl.pnl.
     server = ''
     location = ''
 
+    #gets a session to be used for the entire upload
     session = PycurlSession(protocol, server, user, insecure, password, negotiate, verbose)
     
     curl = session.curl
     odata = StringIO()
     curl.setopt(pycurl.WRITEFUNCTION, odata.write)
 
+    #**************************************************
     # Pre-allocate with cURL
     if verbose:
         print >> sys.stderr, 'Performing cURL preallocation'    
@@ -287,8 +289,10 @@ def upload(bundle_name='bundle.zip', protocol='https', server='dev1.my.emsl.pnl.
     if server == '' or location == '':
         raise Uploader_Error("Got invalid server and/or location information from server")
 
-    #if verbose:
-    #    print >> sys.stderr, 'Cookies:\n %s' %(open(cookie_jar).readlines())
+    #*********************************************************************
+
+    #************************************************************************
+    #Uploading
 
     # Set the URL with the server data fetched via cURL
     url = '%s://%s' % (protocol, server)
@@ -331,7 +335,9 @@ def upload(bundle_name='bundle.zip', protocol='https', server='dev1.my.emsl.pnl.
     except IOError:
         raise Uploader_Error("Couldn't read from bundle file")
 
-
+    #************************************************************************
+    
+    #************************************************************************
     # Finalize the upload
     if verbose:
         print >> sys.stderr, 'Peforming cURL finalization of upload'
@@ -371,11 +377,15 @@ def upload(bundle_name='bundle.zip', protocol='https', server='dev1.my.emsl.pnl.
 
         curl.perform()
 
+
+
     except pycurl.error:
         raise Uploader_Error("cURL operations failed for finalization:\n    %s" % curl.errstr())
 
     # dfh fix this when tempfile permissions are fixed
     #cookie_file.close()
+
+    #************************************************************************
 
     return status
 
