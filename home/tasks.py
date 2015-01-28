@@ -39,6 +39,9 @@ def uploadFiles(bundle_name='',
                  negotiate = False,
                  verbose=True)
 
+    if res is None:
+        current_task.update_state("FAILURE", meta={'Status': "Uploader dieded. We don't know whyitded"})
+
     print >> sys.stderr, "upload completed"
 
     current_task.update_state("PROGRESS", meta={'Status': "Completing Upload Process"})
