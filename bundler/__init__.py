@@ -37,14 +37,14 @@ class Bundler_Error(Exception):
 
 
 
-class File_Bundler:
+class FileBundler:
     """
     An 'Abstract' Base Class that provide a template by which bundlers using
     specific formats/libraries shall be defined
     """
 
     def __init__(self, bundle_path, proposal_ID='', instrument_name='', instrument_ID='',
-                  recursive=True, verbose=False, groups=None):
+                 recursive=True, verbose=False, groups=None):
         """
         Initializes a Bundler
 
@@ -58,7 +58,8 @@ class File_Bundler:
             groups
                 The type:name groups
             recursive
-                If true, directories named in the file list will have their contents recursively added
+                If true, directories named in the file list will have their
+                contents recursively added
             verbose
                 Print out lots of status messages about the bundling process
         """
@@ -82,7 +83,7 @@ class File_Bundler:
 #FIXME handling of metadata file and 0 entry bundles"
         """
         Bundle in the metadata for the bundled files
-        
+
         @note: This should be called after all of the files have been added (it will replace)
         """
 
@@ -117,7 +118,8 @@ class File_Bundler:
         # Add metadata for each file
         for (file_arcname, file_hash) in self.hash_dict.items():
             (file_dir, file_name) = os.path.split(file_arcname)
-            metadata += '{"sha1Hash":"%s","fileName":"%s","destinationDirectory":"%s"},\n' % (file_hash, file_name, file_dir)
+            metadata += '{"sha1Hash":"%s","fileName":"%s", "destinationDirectory":"%s"},\n' \
+                % (file_hash, file_name, file_dir)
 
         # Strip the trailing comma off of the end and close the string
         metadata = metadata[:-2] + "]}"
@@ -132,7 +134,7 @@ class File_Bundler:
     def bundle_file(self, file_path, file_arcname):
         """
         Bundle in a file or directory
-        
+
         :Parameters:
             file_path
                 The path to the file to bundle
@@ -149,7 +151,7 @@ class File_Bundler:
             if self.verbose:
                 print >> sys.stderr, "Skipping bundle file %s" % file_path
             return
-            
+
         # If the file_arcname argument is None use the base file name as the
         # arc name
         if file_arcname == None:
@@ -215,8 +217,7 @@ class File_Bundler:
 
     def _bundle_metadata(self, metadata):
         """
-        A 'Pure Virtual' function that will perform the class specific metadata bundling in a child class
-        
+        A 'Pure Virtual' function that will perform metadata bundling in a child class
         @param metadata: The metadata string to bundle
         """
         raise Bundler_Error("Can't bundle metadata with the base class")
@@ -225,8 +226,8 @@ class File_Bundler:
 
     def _bundle_file(self, file_name, file_arcname=None):
         """
-        A 'Pure Virtual' function that will perform the class specificg file bundling in a child class
-        
+        A 'Pure Virtual' function that will perform file bundling in a child class
+
         :Parameters:
             file_name
                 The name of the file to bundle
@@ -237,16 +238,16 @@ class File_Bundler:
 
 
 
-class Tar_Bundler(File_Bundler):
+class Tar_Bundler(FileBundler):
     """
     A Derived Class that bundles files in a tarfile format
     """
 
     def __init__(self, bundle_path, proposal_ID='', instrument_name='', instrument_ID='',
-                  recursive=True, verbose=False, groups=None):
+                 recursive=True, verbose=False, groups=None):
         """
         Initializes a Tar_Bundler
-        
+
         :Parameters:
             bundle_path
                 The path to the target bundle file
@@ -255,7 +256,7 @@ class Tar_Bundler(File_Bundler):
             instrument_name
                 The name of the instrument that produced the data packaged in the bundle
             recursive
-                If true, directories named in the file list will have their contents recursively added
+                If true, dirs named in the file list will have their contents recursively added
             verbose
                 Print out lots of status messages about the bundling process
         """
@@ -265,9 +266,13 @@ class Tar_Bundler(File_Bundler):
             bundle_path = 'bundle.tar'
 
         # Initialize the Base Bundler Class
-        File_Bundler.__init__(self, bundle_path,
-                               proposal_ID=proposal_ID, instrument_name=instrument_name, instrument_ID=instrument_ID,
-                               recursive=recursive, verbose=verbose, groups=groups)
+        FileBundler.__init__(self, bundle_path,
+                             proposal_ID=proposal_ID,
+                             instrument_name=instrument_name,
+                             instrument_ID=instrument_ID,
+                             recursive=recursive,
+                             verbose=verbose,
+                             groups=groups)
 
         try:
             tarball = tarfile.TarFile(name=self.bundle_path, mode='w')
@@ -283,7 +288,7 @@ class Tar_Bundler(File_Bundler):
     def _bundle_file(self, file_path, file_arcname=None):
         """
         Bundles files into a tarfile formatted bundle
-        
+
         :Parameters:
             file_name
                 The name of the file to bundle
@@ -303,7 +308,7 @@ class Tar_Bundler(File_Bundler):
     def _bundle_metadata(self, metadata):
         """
         Bundles the metadata into a tarfile formatted bundle
-        
+
         @param metadata: The metadata string to bundle
         """
         if self.verbose:
@@ -335,13 +340,12 @@ def error_handler(err):
     print >> sys.stderr, err
     # celery call
     current_task.update_state(state='FAILURE', meta={'info': err})
-            
 
 def bundle(bundle_name=None, instrument_name=None, proposal=None,
-            file_list=[], recursive=True, verbose=False, groups=None):
+           file_list=[], recursive=True, verbose=False, groups=None):
     """
     Bundles a list of files into a single aggregated bundle file
-    
+
     :Parameters:
         bundle_name
             The target bundle file in which to aggregate the file list
@@ -398,18 +402,19 @@ def bundle(bundle_name=None, instrument_name=None, proposal=None,
     # sent in as the instrument name but is actually the instrument ID.  Fix
     # this.
     bundler = Tar_Bundler(bundle_path, proposal_ID=proposal,
-                               instrument_name=instrument_name, instrument_ID=instrument_name,
-                               recursive=recursive, verbose=verbose, groups=groups)
-    
+                          instrument_name=instrument_name,
+                          instrument_ID=instrument_name,
+                          recursive=recursive,
+                          verbose=verbose,
+                          groups=groups)
+
     bundle_size = 0
     for (file_path, file_arcname) in file_list:
-        bundle_size += os.path.getsize(file_path)      
+        bundle_size += os.path.getsize(file_path)
 
-    
     if verbose:
         print >> sys.stderr, "bundle size %s" % str(bundle_size)
 
-    fCount = len(file_list)
     running_size = 0
     for (file_path, file_arcname) in file_list:
         try:
@@ -422,7 +427,7 @@ def bundle(bundle_name=None, instrument_name=None, proposal=None,
                 print >> sys.stderr, "percent complete %s" % str(percent_complete)
 
             current_task.update_state(state=str(percent_complete), meta={'Status': "Bundling percent complete: " + str(percent_complete)})
-        
+
         except Bundler_Error, err:
             error_handler("Failed to bundle file: %s: %s" % (file_path, err.msg))
 
