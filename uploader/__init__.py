@@ -2,6 +2,7 @@
 """
 An Uploader module that uses PycURL to transfer data
 """
+#pylint: disable=no-member
 
 import os
 import sys
@@ -251,7 +252,6 @@ def upload(bundle_name='',
     bundle_path = os.path.abspath(bundle_name)
     if not os.path.exists(bundle_path):
         raise UploaderError("The target bundle does not exist:\n    %s" % bundle_path)
-        return None
 
     # @todo: get cURL to use protocol as a guide for authentication type
     url = '%s://%s' % (protocol, server)
@@ -285,12 +285,9 @@ def upload(bundle_name='',
         curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
 
         curl.perform()
-
-        successful
         curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
         if curl_http_code / 100 == 4:
             raise UploaderError("Authentication failed with code %i" % curl_http_code)
-            return None
         else:
             odata.seek(0)
             print odata.read()
@@ -298,7 +295,6 @@ def upload(bundle_name='',
         if curl_http_code == 503:
             odata.seek(0)
             raise UploaderError(odata.read(), outage=True)
-            return None
 
         # Make sure that cURL was able to get server and location data
         server = re.search(r'Server: ([\w\.-]*)', odata.getvalue()).group(1)
@@ -306,15 +302,12 @@ def upload(bundle_name='',
 
     except pycurl.error:
         raise UploaderError("cURL operations failed for preallocation:\n    %s" % curl.errstr())
-        return None
 
     except:
         raise UploaderError("Backend appears to be tits up")
-        return None
 
     if server == '' or location == '':
         raise UploaderError("Got invalid server and/or location information from server")
-        return None
 
     #*********************************************************************
 
@@ -355,15 +348,12 @@ def upload(bundle_name='',
         if curl_http_code == 503:
             odata.seek(0)
             raise UploaderError(odata.read(), outage=True)
-            return None
 
     except pycurl.error:
         raise UploaderError("cURL operations failed during upload:\n    %s" % curl.errstr())
-        return None
 
     except IOError:
         raise UploaderError("Couldn't read from bundle file")
-        return None
 
     #************************************************************************
 
@@ -387,7 +377,6 @@ def upload(bundle_name='',
         if curl_http_code == 503:
             odata.seek(0)
             raise UploaderError(odata.read(), outage=True)
-            return None
 
         print "curl_http_code " + str(curl_http_code)
         print pyurl
@@ -396,14 +385,11 @@ def upload(bundle_name='',
         # Make sure that the upload was accepted
         if re.search(r'Accepted', odata.getvalue()) == None:
             raise UploaderError("Upload was not accepted")
-            return None
 
     except pycurl.error:
         raise UploaderError("cURL operations failed for finalization:\n    %s" % curl.errstr())
-        return None
     except:
         raise UploaderError("The Uploader 'as buggered off before finalization:\n")
-        return None
 
     try:
         # Set the URL for the curl query.
@@ -416,7 +402,6 @@ def upload(bundle_name='',
 
     except pycurl.error:
         raise UploaderError("cURL operations failed for finalization:\n    %s" % curl.errstr())
-        return None
 
     # dfh fix this when tempfile permissions are fixed
     #cookie_file.close()

@@ -3,7 +3,6 @@ from __future__ import absolute_import
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import authenticate, login
 
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -15,17 +14,14 @@ import json
 import pprint
 
 import datetime
-from time import sleep
 
 from urlparse import urlparse
 
 import os
 import platform
 import sys
-from django.contrib.auth.models import User
 from mhlib import PATH
 
-from uploader import upload
 from uploader import test_authorization
 from uploader import user_info
 
@@ -34,7 +30,7 @@ from home.models import Metadata
 
 from home import tasks
 
-from celery import shared_task, current_task
+from celery import current_task
 
 from multiprocessing import Process
 
@@ -154,7 +150,8 @@ def upload_meta_string(folder):
     print '{0}|{1}'.format(str(meta.fileCount), str(meta.totalBytes))
 
     meta.dir_count -= 1
-    meta_str = 'folders {0}|files {1}|{2}'.format(str(meta.dir_count),str(meta.fileCount),upload_size_string(meta.totalBytes))
+    meta_str = 'folders {0}|files {1}|{2}'.\
+        format(str(meta.dir_count), str(meta.fileCount), upload_size_string(meta.totalBytes))
 
     return meta_str
 
@@ -307,7 +304,7 @@ def modify(request):
             #create a list of tuples to meet the call format
             tuples = []
             file_tuples(selected_files, tuples, root)
-            file_tuples(selected_dirs,tuples, root)
+            file_tuples(selected_dirs, tuples, root)
             print tuples
 
             # create the groups dictionary
@@ -422,7 +419,9 @@ def Login(request):
 
         if not authorized:
             password = ""
-            return render_to_response('home/login.html', {'message': "User or Password is incorrect"}, context_instance=RequestContext(request))
+            return render_to_response('home/login.html', \
+                {'message': "User or Password is incorrect"}, \
+                context_instance=RequestContext(request))
 
         print "password accepted"
 
@@ -468,7 +467,9 @@ def Login(request):
 
             if not valid_instrument:
                 password = ""
-                return render_to_response('home/login.html', {'message': "User is not valid for this instrument"}, context_instance=RequestContext(request))
+                return render_to_response('home/login.html', \
+                    {'message': "User is not valid for this instrument"}, \
+                    context_instance=RequestContext(request))
 
             print "props"
             props = info["proposals"]
@@ -551,5 +552,3 @@ def incremental_status(request):
     retval = json.dumps({'state':state, 'result':result})
 
     return HttpResponse(retval)
-
-    return HttpResponse(result)

@@ -14,5 +14,5 @@ urlpatterns = patterns('',
                        (r'^login/$', 'home.views.Login'),
                        (r'^logout/$', 'home.views.Logout'),)
 
-urlpatterns += patterns('',
-                        (r'^media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT}))
+urlpatterns += patterns('', (r'^media/(?P<path>.*)$', \
+    'django.views.static.serve', {'document_root': settings.MEDIA_ROOT}))
