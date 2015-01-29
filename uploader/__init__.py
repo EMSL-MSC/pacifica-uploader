@@ -28,7 +28,7 @@ class Uploader_Error(Exception):
     def __init__(self, msg, outage=False):
         """
         Initializes an Uploader_Error
-        
+
         @param msg: A custom message packaged with the exception
         """
         self.msg = msg
@@ -48,12 +48,12 @@ def PycurlSession(protocol='https', server='dev1.my.emsl.pnl.gov', user='',
             insecure=False, password=':', negotiate=False, verbose=False):
     """
     Uploads a bundle of files via cURL to a specified server
-    
+
     :Parameters:
         protocol
             The communication protocol
         server
-            The server 
+            The server
         user
             The user name on the destination server to use
         insecure
@@ -65,7 +65,7 @@ def PycurlSession(protocol='https', server='dev1.my.emsl.pnl.gov', user='',
         verbose
             Print lots and lots of status information
     """
-    
+
     # @todo: get cURL to use protocol as a guide for authentication type
     url = '%s://%s' % (protocol, server)
 
@@ -99,54 +99,53 @@ def PycurlSession(protocol='https', server='dev1.my.emsl.pnl.gov', user='',
 
     #cookie_file = tempfile.NamedTemporaryFile()
     #cookie_jar = cookie_file.name
-    
+
     cookie_file = "cookies.txt"
     cookie_jar = "cookies.txt"
-    
+
     if (os.path.exists(cookie_file)):
         print "deleting " + cookie_file
         os.remove(cookie_file)
-        
-    
+
     if verbose:
         print >> sys.stderr, 'cookie file: %s' % cookie_file
         print >> sys.stderr, 'cookie jar: %s' % cookie_jar
         print >> sys.stderr, 'Performing cURL preallocation'
-    
+
     #odata = StringIO()
     odata = sys.stderr
-        
+
     # Create the PycURL object
     curl = pycurl.Curl()
-    curl.setopt(pycurl.WRITEFUNCTION, odata.write)  
+    curl.setopt(pycurl.WRITEFUNCTION, odata.write)
     curl.setopt(pycurl.USERPWD, pycurl_userpwd.encode('utf-8'))
     curl.setopt(pycurl.HTTPAUTH, pycurl_httpauth)
     """
     curl.setopt( pycurl.SSL_VERIFYPEER, pycurl_ssl_verifypeer )
-    curl.setopt( pycurl.SSL_VERIFYHOST, pycurl_ssl_verifypeer )     
+    curl.setopt( pycurl.SSL_VERIFYHOST, pycurl_ssl_verifypeer )
     """
     curl.setopt(pycurl.SSL_VERIFYPEER, 0)
-    curl.setopt(pycurl.SSL_VERIFYHOST, 0)     
-       
-    curl.setopt(pycurl.VERBOSE, pycurl_verbose)            
+    curl.setopt(pycurl.SSL_VERIFYHOST, 0)
+
+    curl.setopt(pycurl.VERBOSE, pycurl_verbose)
     curl.setopt(pycurl.COOKIEJAR, cookie_jar.encode('utf-8'))
     curl.setopt(pycurl.COOKIEFILE, cookie_jar.encode('utf-8'))
     curl.setopt(pycurl.FOLLOWLOCATION, 1)
     curl.setopt(pycurl.UNRESTRICTED_AUTH, 1)
-        
+
     retVal = Session()
     retVal.curl = curl
     retVal.url = url
     retVal.server = server
     retVal.location = location
-    
+
     return retVal
 
 def UserInfo(protocol='https', server='dev1.my.emsl.pnl.gov', user='',
             insecure=False, password=':', negotiate=False, verbose=False):
-    
+
     session = PycurlSession(protocol, server, user, insecure, password, negotiate, verbose)
-    
+
     curl = session.curl
 
     pyURL = session.url + "/myemsl/userinfo"
@@ -155,7 +154,7 @@ def UserInfo(protocol='https', server='dev1.my.emsl.pnl.gov', user='',
     curl.setopt(pycurl.WRITEFUNCTION, odata.write)
 
     curl.perform()
-        
+
     # Verify that authentication was successful
     curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
     if curl_http_code / 100 == 4:
@@ -165,13 +164,12 @@ def UserInfo(protocol='https', server='dev1.my.emsl.pnl.gov', user='',
         reply = odata.read()
         print reply
         return reply
-    
-        
+
 def TestAuth(protocol='https', server='dev1.my.emsl.pnl.gov', user='',
             insecure=False, password=':', negotiate=False, verbose=False):
-    
+
     session = PycurlSession(protocol, server, user, insecure, password, negotiate, verbose)
-    
+
     curl = session.curl
 
     pyURL = session.url + "/myemsl/testauth"
@@ -180,7 +178,7 @@ def TestAuth(protocol='https', server='dev1.my.emsl.pnl.gov', user='',
     curl.setopt(pycurl.WRITEFUNCTION, odata.write)
 
     curl.perform()
-        
+
     # Verify that authentication was successful
     curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
     if curl_http_code / 100 == 4:
@@ -192,7 +190,7 @@ def TestAuth(protocol='https', server='dev1.my.emsl.pnl.gov', user='',
         if "ok" in reply:
             print "True"
             return True
-    
+
     return False
 
 def progress(download_t, download_d, upload_t, upload_d):
@@ -206,7 +204,7 @@ def upload(bundle_name='bundle.zip', protocol='https', server='dev1.my.emsl.pnl.
             insecure=False, password=':', negotiate=False, verbose=False):
     """
     Uploads a bundle of files via cURL to a specified server
-    
+
     :Parameters:
         bundle_name
             The name of the bundle file to upload.
@@ -224,7 +222,7 @@ def upload(bundle_name='bundle.zip', protocol='https', server='dev1.my.emsl.pnl.
             Use Kerberos5 negotiation to authenticate the upload
         verbose
             Print lots and lots of status information for the upload
-        
+
     @note This function assumes a bundle has been created already and is ready to upload
     """
     status = None
@@ -251,7 +249,7 @@ def upload(bundle_name='bundle.zip', protocol='https', server='dev1.my.emsl.pnl.
 
     #gets a session to be used for the entire upload
     session = PycurlSession(protocol, server, user, insecure, password, negotiate, verbose)
-    
+
     curl = session.curl
     odata = StringIO()
     curl.setopt(pycurl.WRITEFUNCTION, odata.write)
@@ -261,7 +259,6 @@ def upload(bundle_name='bundle.zip', protocol='https', server='dev1.my.emsl.pnl.
     if verbose:
         print >> sys.stderr, 'Performing cURL preallocation'    
     try:
-        
         # Set the URL for the curl query.
         pyURL = url + "/myemsl/cgi-bin/preallocate"
         curl.setopt(pycurl.URL, pyURL.encode('utf-8'))
@@ -353,7 +350,7 @@ def upload(bundle_name='bundle.zip', protocol='https', server='dev1.my.emsl.pnl.
     # Finalize the upload
     if verbose:
         print >> sys.stderr, 'Peforming cURL finalization of upload'
-        
+
     try:
         #turn off upload
         curl.setopt(pycurl.PUT, 0)
@@ -373,7 +370,7 @@ def upload(bundle_name='bundle.zip', protocol='https', server='dev1.my.emsl.pnl.
 
         print "curl_http_code " + str(curl_http_code) 
         print pyURL
-        
+
         status = re.search(r'Status: (.*)', odata.getvalue()).group(1)
         # Make sure that the upload was accepted
         if re.search(r'Accepted', odata.getvalue()) == None:
@@ -384,11 +381,10 @@ def upload(bundle_name='bundle.zip', protocol='https', server='dev1.my.emsl.pnl.
         raise Uploader_Error("cURL operations failed for finalization:\n    %s" % curl.errstr())
         return None
     except:
-         raise Uploader_Error("The Uploader 'as buggered off before finalization:\n")
-         return None
+        raise Uploader_Error("The Uploader 'as buggered off before finalization:\n")
+        return None
 
     try:
-        
         # Set the URL for the curl query.
         pyURL = url + "/myemsl/logout"
         curl.setopt(pycurl.URL, pyURL.encode('utf-8'))

@@ -10,8 +10,8 @@ from uploader import upload
 def uploadFiles(bundle_name='',
                 instrument_name='',
                 proposal='',
-                file_list=[],
-                groups=[],
+                file_list=None,
+                groups=None,
                 server='',
                 user='',
                 password=''):

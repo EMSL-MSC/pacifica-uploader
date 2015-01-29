@@ -6,7 +6,7 @@ class Filepath(models.Model):
 
 class Metadata(models.Model):
     # display name
-    label = models.CharField(primary_key=True,max_length=80)
+    label = models.CharField(primary_key=True, max_length=80)
 
     #searchable
     name = models.CharField(max_length=80)

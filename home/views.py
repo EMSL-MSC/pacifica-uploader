@@ -39,7 +39,7 @@ from celery import shared_task, current_task
 
 from multiprocessing import Process
 
-class mData(object):
+class MetaData(object):
     label = ""
     value = ""
     name = ""
@@ -47,25 +47,25 @@ class mData(object):
     def __init__(self):
         pass
 
-class folderMeta(object):
+class FolderMeta(object):
     fileCount = 0
-    dirCount = 0
+    dir_count = 0
     totalBytes = 0
     
     def __init__(self):
         pass
 
-rootDir = ""
-user = ""
-current_time = ""
-password = ""
-proposal = ""
-propID = ""
-selectedDirs = []
-selectedFiles = []
-dirSizes = []
-fileSizes = []
-directoryHistory = []
+user = ''
+current_time = ''
+instrument = ''
+password = ''
+proposal = ''
+propID = ''
+selected_dirs = []
+selected_files = []
+dir_sizes = []
+file_sizes = []
+directory_history = []
 
 # meta data values
 metaList = []
@@ -77,11 +77,11 @@ instrumentList = []
 proposalList = []
 
 # process that handles bundling and uploading
-bundleProcess = None
+bundle_process = None
 
 
 def currentDirectory(history):
-    dir = ""
+    dir = ''
     for path in history:
         dir = os.path.join(dir, path)
         dir = dir + "/"
@@ -101,7 +101,7 @@ def getFolderSize(folder):
 
 def getFolderMeta(folder, meta):
 
-    meta.dirCount += 1
+    meta.dir_count += 1
 
     for item in os.listdir(folder):
         itempath = os.path.join(folder, item)
@@ -111,26 +111,26 @@ def getFolderMeta(folder, meta):
         elif os.path.isdir(itempath):
             getFolderMeta(itempath, meta)
 
-def getTuplesRecursive(folder, tupleList, rootDir):
+def getTuplesRecursive(folder, tuple_list, root_dir):
 
     for item in os.listdir(folder):
         path = os.path.join(folder, item)
         if os.path.isfile(path):
-            relPath = path.replace(rootDir, '')
-            tupleList.append((path, relPath))
+            relPath = path.replace(root_dir, '')
+            tuple_list.append((path, relPath))
         elif os.path.isdir(path):
-            getTuplesRecursive(path, tupleList, rootDir)
+            getTuplesRecursive(path, tuple_list, root_dir)
 
 # bundler takes a list of tuples
-def getTuples(selectedList, tupleList, rootDir):
+def getTuples(selected_list, tuple_list, root_dir):
 
-    for path in selectedList:
+    for path in selected_list:
         if os.path.isfile(path):
             # the relative path is the path without the root directory
-            relPath = path.replace(rootDir, '')
-            tupleList.append((path, relPath))
+            relPath = path.replace(root_dir, '')
+            tuple_list.append((path, relPath))
         elif os.path.isdir(path):
-            getTuplesRecursive(path, tupleList, rootDir)
+            getTuplesRecursive(path, tuple_list, root_dir)
 
 def getSizeString(total_size):
     # less than a Kb show b
@@ -151,16 +151,16 @@ def getSizeString(total_size):
 
 def getFolderString(folder):
 
-    meta = folderMeta()
+    meta = FolderMeta()
     getFolderMeta(folder, meta)
 
     print str(meta.fileCount) + "|" + str(meta.totalBytes)
 
     #total_size = getFolderSize(folder)
-    meta.dirCount -= 1
-    metaStr = "folders " + str(meta.dirCount) + "|files " + str(meta.fileCount) + "|" + getSizeString(meta.totalBytes)
+    meta.dir_count -= 1
+    meta_str = 'folders ' + str(meta.dir_count) + '|files ' + str(meta.fileCount) + '|' + getSizeString(meta.totalBytes)
 
-    return metaStr
+    return meta_str
 
 def getFileString(filename):
 
@@ -177,20 +177,20 @@ def list(request):
     global password
     # first time through go to login page
     if (password == ""):
-        return render_to_response('home/login.html',{'message': ""}, context_instance=RequestContext(request))
+        return render_to_response('home/login.html', {'message': ""}, context_instance=RequestContext(request))
 
-    global selectedDirs
-    global dirSizes
-    global selectedFiles
-    global fileSizes
-    global directoryHistory
+    global selected_dirs
+    global dir_sizes
+    global selected_files
+    global file_sizes
+    global directory_history
     global metaList
     global instrumentList
     global proposalList
     global proposal
     global current_time
 
-    rootDir = currentDirectory(directoryHistory)
+    rootDir = currentDirectory(directory_history)
 
     if rootDir == "": # first time through, initialize
         dataPath = Filepath.objects.get(name="dataRoot")
@@ -203,11 +203,11 @@ def list(request):
 
         if (rootDir.endswith("\\")):
             rootDir = rootDir[:-1]
-        directoryHistory.append(rootDir)
-        rootDir = currentDirectory(directoryHistory)
+        directory_history.append(rootDir)
+        rootDir = currentDirectory(directory_history)
 
         for meta in Metadata.objects.all():
-            thingy = mData()
+            thingy = MetaData()
             thingy.label = meta.label
             thingy.name = meta.name
             thingy.value = ""
@@ -225,12 +225,12 @@ def list(request):
         fullPath = os.path.join(rootDir , path)
 
         if (os.path.isdir(fullPath)):
-            if (fullPath in selectedDirs):
+            if (fullPath in selected_dirs):
                 checkedDirs.append(path)
             else:
                 uncheckedDirs.append(path)
         else:
-            if (fullPath in selectedFiles):
+            if (fullPath in selected_files):
                 checkedFiles.append(path)
             else:
                 uncheckedFiles.append(path)
@@ -240,16 +240,16 @@ def list(request):
         {'instrument': instrument, 
          'proposalList': proposalList,
          'proposal':proposal,  
-         'directoryHistory': directoryHistory, 
+         'directoryHistory': directory_history, 
          'metaList': metaList,
          'checkedDirs': checkedDirs, 
          'uncheckedDirs': uncheckedDirs, 
          'checkedFiles': checkedFiles, 
          'uncheckedFiles': uncheckedFiles, 
-         'selectedDirs': selectedDirs, 
-         'dirSizes': dirSizes,
-         'selectedFiles': selectedFiles, 
-         'fileSizes': fileSizes,
+         'selectedDirs': selected_dirs, 
+         'dirSizes': dir_sizes,
+         'selectedFiles': selected_files, 
+         'fileSizes': file_sizes,
          'current_time': current_time,
          'user': user},
         context_instance=RequestContext(request))
@@ -259,28 +259,27 @@ def modify(request):
     print 'modify ' + request.get_full_path()
 
     global user
-    global password
-    global directoryHistory
-    global selectedDirs
-    global dirSizes
-    global selectedFiles
-    global fileSizes
+    global password 
+    global directory_history
+    global selected_dirs
+    global dir_sizes
+    global selected_files
+    global file_sizes
     global metaList
     global proposal
-    global instrument
     global current_time
-    global bundleProcess
+    global bundle_process
     global propID
 
-    rootDir = currentDirectory(directoryHistory)
+    rootDir = currentDirectory(directory_history)
 
     if request.POST:
 
         print request.POST
 
         if (request.POST.get("Clear")):
-            selectedFiles = []
-            selectedDirs = []
+            selected_files = []
+            selected_dirs = []
 
         for m in metaList:
             value = request.POST.get(m.name)
@@ -311,8 +310,8 @@ def modify(request):
 
             #create a list of tuples to meet the call format
             tupleList = []
-            getTuples(selectedFiles, tupleList, root)            
-            getTuples(selectedDirs, tupleList, root)
+            getTuples(selected_files, tupleList, root)            
+            getTuples(selected_dirs, tupleList, root)
             print tupleList
 
             # create the groups dictionary
@@ -340,7 +339,7 @@ def modify(request):
             #return HttpResponseRedirect(reverse('home.views.list'))
             # spin this off as a background process and load the status page
             #task = tasks.sleeptask.delay(1, list)
-            bundleProcess = tasks.uploadFiles.delay(bundle_name = bundleName, 
+            bundle_process = tasks.uploadFiles.delay(bundle_name = bundleName, 
                    instrument_name = instrument, 
                    proposal = propID, 
                    file_list=tupleList, 
@@ -372,28 +371,28 @@ def modify(request):
 
         if (modType == 'enterDir'):
             rootDir = os.path.join(rootDir, path)
-            directoryHistory.append(path)
+            directory_history.append(path)
 
         elif (modType == 'toggleFile'):
-            if (full not in selectedFiles):
-                selectedFiles.append(full) 
-                fileSizes.append(getFileString(full))
+            if (full not in selected_files):
+                selected_files.append(full) 
+                file_sizes.append(getFileString(full))
             else:
-                index = selectedFiles.index(full)
-                selectedFiles.remove(full) 
-                del fileSizes[index]
+                index = selected_files.index(full)
+                selected_files.remove(full) 
+                del file_sizes[index]
         elif (modType == 'toggleDir'):
-            if (full not in selectedDirs):
-                selectedDirs.append(full) 
-                dirSizes.append(getFolderString(full))
+            if (full not in selected_dirs):
+                selected_dirs.append(full) 
+                dir_sizes.append(getFolderString(full))
             else:
-                index = selectedDirs.index(full)
-                selectedDirs.remove(full) 
-                del dirSizes[index]
+                index = selected_dirs.index(full)
+                selected_dirs.remove(full) 
+                del dir_sizes[index]
         elif (modType == "upDir"):
             index = int(path)
-            del directoryHistory[index:]
-            print currentDirectory(directoryHistory)
+            del directory_history[index:]
+            print currentDirectory(directory_history)
 
     return HttpResponseRedirect(reverse('home.views.list'))
 
@@ -408,18 +407,18 @@ def LoadUserInfo():
     print userInfo
     json_parsed = 0
     try:
-       foo = json.loads(text)
-       json_parsed = 1
+        txt = json.loads(text)
+        json_parsed = 1
     except Exception, ex:
-       print "json failure"
+        print "json failure"
     if json_parsed:
         print json.dumps(json.loads(text), sort_keys=True, indent=4, separators=(',', ': '))
 
 def Login(request):
     global password   
     global user 
-    global instrument
     global proposalList
+    global instrument
 
     user = password = ''
 
@@ -446,7 +445,7 @@ def Login(request):
 
         if (not auth):
             password = ""     
-            return render_to_response('home/login.html',{'message': "User or Password is incorrect"}, context_instance=RequestContext(request)) 
+            return render_to_response('home/login.html', {'message': "User or Password is incorrect"}, context_instance=RequestContext(request))
 
         print "password accepted"
 
@@ -460,10 +459,10 @@ def Login(request):
 
         json_parsed = 0
         try:
-           info = json.loads(userInfo)
-           json_parsed = 1
+            info = json.loads(userInfo)
+            json_parsed = 1
         except Exception, ex:
-           print "json failure"
+            print "json failure"
         if json_parsed:
             print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
 
@@ -476,38 +475,38 @@ def Login(request):
             print "instrument:  " + instrument
 
             print "instruments"
-            instruments = info["instruments"]            
+            instruments = info["instruments"]
             #pprint.pprint(instruments)
 
             instrumentList = []
             validInstrument = False
             for instID, instBlock in instruments.iteritems():
-                instName = instBlock.get("instrument_name") 
-                instStr = instID + "  " + instName 
-                instrumentList.append(instStr)    
+                instName = instBlock.get("instrument_name")
+                instStr = instID + "  " + instName
+                instrumentList.append(instStr)
                 if (instrument == instID):
-                    validInstrument = True       
+                    validInstrument = True
                 print instStr
                 print ""
 
             if (not validInstrument):
-                password = ""     
-                return render_to_response('home/login.html',{'message': "User is not valid for this instrument"}, context_instance=RequestContext(request)) 
+                password = ""
+                return render_to_response('home/login.html', {'message': "User is not valid for this instrument"}, context_instance=RequestContext(request))
 
             print "props"
             props = info["proposals"]
             proposalList = []
             for propID, propBlock in props.iteritems():
-                title = propBlock.get("title")      
-                propStr = propID + "  " + title     
+                title = propBlock.get("title")
+                propStr = propID + "  " + title
                 proposalList.append(propStr)
                 print propStr
 
                 #for later
-                instruments = propBlock.get("instruments") 
+                instruments = propBlock.get("instruments")
                 for i in instruments:
                     for j in i:
-                        print j     
+                        print j
                 print ""
 
         return HttpResponseRedirect(reverse('home.views.list'))
@@ -516,8 +515,8 @@ def Login(request):
         return render_to_response('home/login.html', context_instance=RequestContext(request))
 
 def Logout(request):
-    global password   
-    global user 
+    global password
+    global user
 
     user = password = ''
 
@@ -528,20 +527,20 @@ def status(request):
     global user
     global metaList
     global proposal
-    global instrument
     global current_time
+    global instrument
 
-    global bundleProcess
+    global bundle_process
 
-    output = bundleProcess.state
+    output = bundle_process.state
     state = json.dumps(output)
     print state
 
-    output = bundleProcess.result
+    output = bundle_process.result
     result = json.dumps(output)
     print result
 
-    if (bundleProcess.status == 'SUCCESS'):
+    if (bundle_process.status == 'SUCCESS'):
         return HttpResponseRedirect(reverse('home.views.list'))
 
     else:
@@ -557,13 +556,13 @@ def status(request):
 
 def incStatus(request):
 
-    global bundleProcess
+    global bundle_process
 
-    output = bundleProcess.status
+    output = bundle_process.status
     state = output
     print state
 
-    output = bundleProcess.result
+    output = bundle_process.result
     result = output
     print result
 

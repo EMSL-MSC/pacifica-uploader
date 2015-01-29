@@ -16,7 +16,7 @@ from optparse import OptionParser
 
 from celery import current_task
 
-class Bundler_Error(Exception):
+class BundlerError(Exception):
     """
     A special exception class especially for the uploader module
     """
@@ -27,6 +27,7 @@ class Bundler_Error(Exception):
 
         @param msg: A custom message packaged with the exception
         """
+        super(BundlerError, self, Exception).__init__()
         self.msg = msg
 
     def __str__(self):
@@ -43,8 +44,13 @@ class FileBundler:
     specific formats/libraries shall be defined
     """
 
-    def __init__(self, bundle_path, proposal_ID='', instrument_name='', instrument_ID='',
-                 recursive=True, verbose=False, groups=None):
+    def __init__(self, bundle_path,
+                 proposal_id='',
+                 instrument_name='',
+                 instrument_id='',
+                 recursive=True,
+                 verbose=False,
+                 groups=None):
         """
         Initializes a Bundler
 
@@ -69,15 +75,13 @@ class FileBundler:
         self.bundle_path = os.path.abspath(bundle_path)
         (self.bundle_dir, self.bundle_name) = os.path.split(self.bundle_path)
 
-        self.proposal_ID = proposal_ID
+        self.proposal_id = proposal_id
         self.instrument_name = instrument_name
-        self.instrument_ID = instrument_ID
+        self.instrument_id = instrument_id
         self.hash_dict = {}
 
         self.recursive = recursive
         self.verbose = verbose
-
-
 
     def bundle_metadata(self):
 #FIXME handling of metadata file and 0 entry bundles"
@@ -90,26 +94,26 @@ class FileBundler:
         metadata = '{"version":"1.0.0","eusInfo":{'
 
         need_comma = False
-        if self.proposal_ID != '':
-            metadata += '"proposalID":"%s"' % self.proposal_ID
+        if self.proposal_id != '':
+            metadata += '"proposalID":"%s"' % self.proposal_id
             need_comma = True
 
         if self.instrument_name != '':
-            if self.proposal_ID != '':
+            if self.proposal_id != '':
                 metadata += ', '
             metadata += '"instrumentName":"%s"' % self.instrument_name
             need_comma = True
-            if self.instrument_ID != '':
-                metadata += ', "instrumentId":"%s"' % self.instrument_ID
+            if self.instrument_id != '':
+                metadata += ', "instrumentId":"%s"' % self.instrument_id
         if len(self.groups) > 0:
             if need_comma:
                 metadata += ', '
             metadata += '"groups":['
             another_need_comma = False
-            for (type, name) in self.groups.iteritems():
+            for (g_type, name) in self.groups.iteritems():
                 if another_need_comma:
                     metadata += ', '
-                metadata += "{\"name\":\"%s\", \"type\":\"%s\"}" % (name, type)
+                metadata += "{\"name\":\"%s\", \"type\":\"%s\"}" % (name, g_type)
                 another_need_comma = True
             metadata += ']'
             need_comma = True
@@ -158,15 +162,15 @@ class FileBundler:
             file_arcname = os.path.basename(file_path)
 
         if not os.path.exists(file_path):
-            raise Bundler_Error("%s doesn't exist" % file_path)
+            raise BundlerError("%s doesn't exist" % file_path)
         if not os.access(file_path, os.R_OK):
-            raise Bundler_Error("Can't read from %s" % file_path)
+            raise BundlerError("Can't read from %s" % file_path)
         if 'metadata' in os.path.basename(file_path):
-            raise Bundler_Error("A metadata file may not be explicitly added to the bundle")
+            raise BundlerError("A metadata file may not be explicitly added to the bundle")
 
         file_mode = os.stat(file_path)[stat.ST_MODE]
         if not stat.S_ISDIR(file_mode) and not stat.S_ISREG(file_mode):
-            raise Bundler_Error("Unknown file type for %s" % file_path)
+            raise BundlerError("Unknown file type for %s" % file_path)
 
         # If the file is a directory and recursing is enabled, recursively add
         # its children
@@ -189,7 +193,7 @@ class FileBundler:
         try:
             file_in = open(file_path, 'r')
         except IOError, err:
-            raise Bundler_Error("Couldn't read from file: %s" % file_path)
+            raise BundlerError("Couldn't read from file: %s" % file_path)
 
         h = hashlib.sha1()
         while True:
@@ -203,7 +207,7 @@ class FileBundler:
 
         if file_arcname in self.hash_dict:
             if hash != self.hash_dict[file_arcname]:
-                raise Bundler_Error("Different file with the same arcname is already in the bundle")
+                raise BundlerError("Different file with the same arcname is already in the bundle")
             if self.verbose:
                 print >> sys.stderr, "File already in bundle: %s.  Skipping" % file_path
             return
@@ -220,7 +224,7 @@ class FileBundler:
         A 'Pure Virtual' function that will perform metadata bundling in a child class
         @param metadata: The metadata string to bundle
         """
-        raise Bundler_Error("Can't bundle metadata with the base class")
+        raise BundlerError("Can't bundle metadata with the base class")
 
 
 
@@ -234,11 +238,11 @@ class FileBundler:
             file_arcname
                 An alternative name to use for the file inside of the bundle
         """
-        raise Bundler_Error("Can't bundle a file with the base class")
+        raise BundlerError("Can't bundle a file with the base class")
 
 
 
-class Tar_Bundler(FileBundler):
+class TarBundler(FileBundler):
     """
     A Derived Class that bundles files in a tarfile format
     """
@@ -267,9 +271,9 @@ class Tar_Bundler(FileBundler):
 
         # Initialize the Base Bundler Class
         FileBundler.__init__(self, bundle_path,
-                             proposal_ID=proposal_ID,
+                             proposal_id=proposal_ID,
                              instrument_name=instrument_name,
-                             instrument_ID=instrument_ID,
+                             instrument_id=instrument_ID,
                              recursive=recursive,
                              verbose=verbose,
                              groups=groups)
@@ -278,7 +282,7 @@ class Tar_Bundler(FileBundler):
             tarball = tarfile.TarFile(name=self.bundle_path, mode='w')
             tarball.close()
         except:
-            raise Bundler_Error("Couldn't create bundle tarball: %s" % self.bundle_path)
+            raise BundlerError("Couldn't create bundle tarball: %s" % self.bundle_path)
 
         self.empty_tar = True
 
@@ -319,7 +323,7 @@ class Tar_Bundler(FileBundler):
         try:
             metadata_file = tempfile.TemporaryFile()
         except IOError:
-            raise Bundler_Error("Can't create metadata file in working directory")
+            raise BundlerError("Can't create metadata file in working directory")
 
         metadata_file.write(metadata)
         metadata_file.seek(0)
@@ -341,8 +345,13 @@ def error_handler(err):
     # celery call
     current_task.update_state(state='FAILURE', meta={'info': err})
 
-def bundle(bundle_name=None, instrument_name=None, proposal=None,
-           file_list=[], recursive=True, verbose=False, groups=None):
+def bundle(bundle_name='',
+           instrument_name='',
+           proposal='',
+           file_list=None,
+           recursive=True,
+           verbose=False,
+           groups=None):
     """
     Bundles a list of files into a single aggregated bundle file
 
@@ -401,7 +410,7 @@ def bundle(bundle_name=None, instrument_name=None, proposal=None,
     # which is being
     # sent in as the instrument name but is actually the instrument ID.  Fix
     # this.
-    bundler = Tar_Bundler(bundle_path, proposal_ID=proposal,
+    bundler = TarBundler(bundle_path, proposal_ID=proposal,
                           instrument_name=instrument_name,
                           instrument_ID=instrument_name,
                           recursive=recursive,
@@ -426,9 +435,10 @@ def bundle(bundle_name=None, instrument_name=None, proposal=None,
             if verbose:
                 print >> sys.stderr, "percent complete %s" % str(percent_complete)
 
-            current_task.update_state(state=str(percent_complete), meta={'Status': "Bundling percent complete: " + str(percent_complete)})
+            current_task.update_state(state=str(percent_complete), \
+                meta={'Status': "Bundling percent complete: " + str(percent_complete)})
 
-        except Bundler_Error, err:
+        except BundlerError, err:
             error_handler("Failed to bundle file: %s: %s" % (file_path, err.msg))
 
     bundler.bundle_metadata()
