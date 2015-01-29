@@ -8,7 +8,6 @@ from __future__ import absolute_import
 
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponseRedirect
@@ -38,9 +37,9 @@ class MetaData(object):
     structure used to pass upload metadata back and forth to the upload page
     """
 
-    label = ""
-    value = ""
-    name = ""
+    label = ''
+    value = ''
+    name = ''
 
     def __init__(self):
         pass
@@ -57,28 +56,35 @@ class FolderMeta(object):
     def __init__(self):
         pass
 
+class SessionData(object):
+    """
+    meta data about a folder, including filecount, directory count, and the total bytes.
+    """
+
+    user = ''
+    current_time = ''
+    instrument = ''
+    password = ''
+    proposal_verbose = ''
+    proposal_id = ''
+    selected_dirs = []
+    selected_files = []
+    dir_sizes = []
+    file_sizes = []
+    directory_history = []
+
+    # meta data values
+    meta_list = []
+
+    # proposals
+    proposal_list = []
+
+    # process that handles bundling and uploading
+    bundle_process = None
+
+
 # Module level variables
-user = ''
-current_time = ''
-instrument = ''
-password = ''
-proposal_verbose = ''
-proposal_id = ''
-selected_dirs = []
-selected_files = []
-dir_sizes = []
-file_sizes = []
-directory_history = []
-
-# meta data values
-meta_list = []
-
-# proposals
-proposal_list = []
-
-# process that handles bundling and uploading
-bundle_process = None
-
+session_data = SessionData()
 
 def current_directory(history):
     """
@@ -203,26 +209,14 @@ def list(request):
     formats the main uploader page
     """
 
-    global user
-    print user
+    global session_data
 
-    global password
     # first time through go to login page
-    if password == "":
+    if session_data.password == '':
         return render_to_response('home/login.html', \
             {'message': ""}, context_instance=RequestContext(request))
 
-    global selected_dirs
-    global dir_sizes
-    global selected_files
-    global file_sizes
-    global directory_history
-    global meta_list
-    global proposal_list
-    global proposal_verbose
-    global current_time
-
-    root_dir = current_directory(directory_history)
+    root_dir = current_directory(session_data.directory_history)
 
     if root_dir == "": # first time through, initialize
         data_path = Filepath.objects.get(name="dataRoot")
@@ -235,8 +229,8 @@ def list(request):
 
         if root_dir.endswith("\\"):
             root_dir = root_dir[:-1]
-        directory_history.append(root_dir)
-        root_dir = current_directory(directory_history)
+        session_data.directory_history.append(root_dir)
+        root_dir = current_directory(session_data.directory_history)
 
         # create a list of metadata entries to pass to the list upload page
         for meta in Metadata.objects.all():
@@ -244,7 +238,7 @@ def list(request):
             meta_entry.label = meta.label
             meta_entry.name = meta.name
             meta_entry.value = ""
-            meta_list.append(meta_entry)
+            session_data.meta_list.append(meta_entry)
 
     checked_dirs = []
     unchecked_dirs = []
@@ -254,36 +248,35 @@ def list(request):
     contents = os.listdir(root_dir)
 
     for path in contents:
-
         full_path = os.path.join(root_dir, path)
 
         if os.path.isdir(full_path):
-            if full_path in selected_dirs:
+            if full_path in session_data.selected_dirs:
                 checked_dirs.append(path)
             else:
                 unchecked_dirs.append(path)
         else:
-            if full_path in selected_files:
+            if full_path in session_data.selected_files:
                 checked_files.append(path)
             else:
                 unchecked_files.append(path)
 
     # Render list page with the documents and the form
-    return render_to_response('home/uploader.html', {'instrument': instrument,
-                                                     'proposalList': proposal_list,
-                                                     'proposal':proposal_verbose,
-                                                     'directoryHistory': directory_history,
-                                                     'metaList': meta_list,
+    return render_to_response('home/uploader.html', {'instrument': session_data.instrument,
+                                                     'proposalList': session_data.proposal_list,
+                                                     'proposal':session_data.proposal_verbose,
+                                                     'directoryHistory': session_data.directory_history,
+                                                     'metaList': session_data.meta_list,
                                                      'checkedDirs': checked_dirs,
                                                      'uncheckedDirs': unchecked_dirs,
                                                      'checkedFiles': checked_files,
                                                      'uncheckedFiles': unchecked_files,
-                                                     'selectedDirs': selected_dirs,
-                                                     'dirSizes': dir_sizes,
-                                                     'selectedFiles': selected_files,
-                                                     'fileSizes': file_sizes,
-                                                     'current_time': current_time,
-                                                     'user': user},
+                                                     'selectedDirs': session_data.selected_dirs,
+                                                     'dirSizes': session_data.dir_sizes,
+                                                     'selectedFiles': session_data.selected_files,
+                                                     'fileSizes': session_data.file_sizes,
+                                                     'current_time': session_data.current_time,
+                                                     'user': session_data.user},
                               context_instance=RequestContext(request))
 
 
@@ -296,45 +289,33 @@ def modify(request):
         upload request
     """
 
-
     print 'modify ' + request.get_full_path()
 
-    global user
-    global password
-    global directory_history
-    global selected_dirs
-    global dir_sizes
-    global selected_files
-    global file_sizes
-    global meta_list
-    global proposal_verbose
-    global current_time
-    global bundle_process
-    global proposal_id
-
-    root_dir = current_directory(directory_history)
+    global session_data
+   
+    root_dir = current_directory(session_data.directory_history)
 
     if request.POST:
 
         print request.POST
 
         if request.POST.get("Clear"):
-            selected_files = []
-            selected_dirs = []
+            session_data.selected_files = []
+            session_data.selected_dirs = []
 
-        for meta in meta_list:
+        for meta in session_data. meta_list:
             value = request.POST.get(meta.name)
             if value:
                 meta.value = value
                 print meta.name + ": " + meta.value
 
-        proposal_verbose = request.POST.get("proposal")
-        print "proposal:  " + proposal_verbose
+        session_data.proposal_verbose = request.POST.get("proposal")
+        print "proposal:  " + session_data.proposal_verbose
 
-        split = proposal_verbose.split()
-        proposal_id = split[0]
+        split = session_data.proposal_verbose.split()
+        session_data.proposal_id = split[0]
 
-        print proposal_id
+        print session_data.proposal_id
 
         if request.POST.get("Upload Files & Metadata"):
 
@@ -351,17 +332,17 @@ def modify(request):
 
             #create a list of tuples to meet the call format
             tuples = []
-            file_tuples(selected_files, tuples, root)
-            file_tuples(selected_dirs, tuples, root)
+            file_tuples(session_data.selected_files, tuples, root)
+            file_tuples(session_data.selected_dirs, tuples, root)
             print tuples
 
             # create the groups dictionary
             #{"groups":[{"name":"FOO1", "type":"Tag"}]}
             groups = {}
-            for meta in meta_list:
+            for meta in session_data.meta_list:
                 groups[meta.name] = meta.value
 
-            current_time = datetime.datetime.now().time().strftime("%m.%d.%Y.%H.%M.%S")
+            session_data.current_time = datetime.datetime.now().time().strftime("%m.%d.%Y.%H.%M.%S")
 
             target_path = Filepath.objects.get(name="target")
             if target_path is not None:
@@ -369,7 +350,7 @@ def modify(request):
             else:
                 target_dir = root_dir
 
-            bundle_name = os.path.join(target_dir, current_time + ".tar")
+            bundle_name = os.path.join(target_dir, session_data.current_time + ".tar")
 
             server_path = Filepath.objects.get(name="server")
             if server_path is not None:
@@ -377,24 +358,23 @@ def modify(request):
             else:
                 full_server_path = "dev1.my.emsl.pnl.gov"
 
-            #return HttpResponseRedirect(reverse('home.views.list'))
             # spin this off as a background process and load the status page
+            session_data.bundle_process = \
+                tasks.upload_files.delay(bundle_name=bundle_name,
+                                         instrument_name=session_data.instrument,
+                                         proposal=session_data.proposal_id,
+                                         file_list=tuples,
+                                         groups=groups,
+                                         server=full_server_path,
+                                         user=session_data.user,
+                                         password=session_data.password)
 
-            bundle_process = tasks.upload_files.delay(bundle_name=bundle_name,
-                                                      instrument_name=instrument,
-                                                      proposal=proposal_id,
-                                                      file_list=tuples,
-                                                      groups=groups,
-                                                      server=full_server_path,
-                                                      user=user,
-                                                      password=password)
-
-            return render_to_response('home/status.html', {'instrument': instrument,
+            return render_to_response('home/status.html', {'instrument': session_data.instrument,
                                                            'status': 'Starting Upload',
-                                                           'proposal':proposal_verbose,
-                                                           'metaList': meta_list,
-                                                           'current_time': current_time,
-                                                           'user': user},
+                                                           'proposal':session_data.proposal_verbose,
+                                                           'metaList':session_data. meta_list,
+                                                           'current_time': session_data.current_time,
+                                                           'user': session_data.user},
                                       context_instance=RequestContext(request))
     else:
         value_pair = urlparse(request.get_full_path())
@@ -414,24 +394,26 @@ def modify(request):
             directory_history.append(path)
 
         elif mod_type == 'toggleFile':
-            if full not in selected_files:
-                selected_files.append(full)
-                file_sizes.append(file_size_string(full))
+            if full not in session_data.selected_files:
+                session_data.selected_files.append(full)
+                session_data.file_sizes.append(file_size_string(full))
             else:
-                index = selected_files.index(full)
-                selected_files.remove(full)
-                del file_sizes[index]
+                index = session_data.selected_files.index(full)
+                session_data.selected_files.remove(full)
+                del session_data.file_sizes[index]
+
         elif mod_type == 'toggleDir':
-            if full not in selected_dirs:
-                selected_dirs.append(full)
-                dir_sizes.append(upload_meta_string(full))
+            if full not in session_data.selected_dirs:
+                session_data.selected_dirs.append(full)
+                session_data.dir_sizes.append(upload_meta_string(full))
             else:
-                index = selected_dirs.index(full)
-                selected_dirs.remove(full)
+                index = session_data.selected_dirs.index(full)
+                session_data.selected_dirs.remove(full)
                 del dir_sizes[index]
+
         elif mod_type == "upDir":
             index = int(path)
-            del directory_history[index:]
+            del session_data.directory_history[index:]
             print current_directory(directory_history)
 
     return HttpResponseRedirect(reverse('home.views.list'))
@@ -444,19 +426,14 @@ def Login(request):
     Otherwise, gets the user data to populate the main page
     """
 
-    global password
-    global user
-    global proposal_list
-    global instrument
+    global session_data
 
-    user = password = ''
-
-    print "logging in"
+    session_data.user = session_data.password = ''
 
     if request.POST:
         print "Post"
-        user = request.POST['username']
-        password = request.POST['password']
+        session_data.user = request.POST['username']
+        session_data.password = request.POST['password']
 
         server_path = Filepath.objects.get(name="server")
         if server_path is not None:
@@ -466,14 +443,14 @@ def Login(request):
 
         authorized = test_authorization(protocol="https",
                                         server=full_server_path,
-                                        user=user,
+                                        user=session_data.user,
                                         insecure=True,
-                                        password=password,
+                                        password=session_data.password,
                                         negotiate=False,
                                         verbose=True)
 
         if not authorized:
-            password = ""
+            session_data.password = ""
             return render_to_response('home/login.html', \
                 {'message': "User or Password is incorrect"}, \
                 context_instance=RequestContext(request))
@@ -482,9 +459,9 @@ def Login(request):
 
         info = user_info(protocol="https",
                          server=full_server_path,
-                         user=user,
+                         user=session_data.user,
                          insecure=True,
-                         password=password,
+                         password=session_data.password,
                          negotiate=False,
                          verbose=True)
 
@@ -499,15 +476,14 @@ def Login(request):
 
             obj = Filepath.objects.get(name="instrument")
             if obj:
-                instrument = obj.fullpath
+                session_data.instrument = obj.fullpath
             else:
-                instrument = "unknown"
+                session_data.instrument = "unknown"
 
-            print "instrument:  " + instrument
+            print "instrument:  " + session_data.instrument
 
             print "instruments"
             instruments = info["instruments"]
-            #pprint.pprint(instruments)
 
             instrument_list = []
             valid_instrument = False
@@ -515,24 +491,24 @@ def Login(request):
                 inst_name = inst_block.get("instrument_name")
                 inst_str = inst_id + "  " + inst_name
                 instrument_list.append(inst_str)
-                if instrument == inst_id:
+                if session_data.instrument == inst_id:
                     valid_instrument = True
                 print inst_str
                 print ""
 
             if not valid_instrument:
-                password = ""
+                session_data.password = ""
                 return render_to_response('home/login.html', \
                     {'message': "User is not valid for this instrument"}, \
                     context_instance=RequestContext(request))
 
             print "props"
             props = info["proposals"]
-            proposal_list = []
+            session_data.proposal_list = []
             for prop_id, prop_block in props.iteritems():
                 title = prop_block.get("title")
                 prop_str = prop_id + "  " + title
-                proposal_list.append(prop_str)
+                session_data.proposal_list.append(prop_str)
                 print prop_str
 
                 #for later
@@ -559,55 +535,18 @@ def Logout(request):
 
     return HttpResponseRedirect(reverse('home.views.list'))
 
-
-def status(request):
-    """
-    status request from status page
-    used while in the uploading phase
-    returns celery updates from the background celery process
-    """
-
-    global user
-    global meta_list
-    global proposal_verbose
-    global current_time
-    global instrument
-
-    global bundle_process
-
-    output = bundle_process.state
-    state = json.dumps(output)
-    print state
-
-    output = bundle_process.result
-    result = json.dumps(output)
-    print result
-
-    if bundle_process.status == 'SUCCESS':
-        return HttpResponseRedirect(reverse('home.views.list'))
-
-    else:
-        return render_to_response('home/status.html', {'instrument': instrument,
-                                                       'status': state + " " + result,
-                                                       'proposal':proposal_verbose,
-                                                       'metaList': meta_list,
-                                                       'current_time': current_time,
-                                                       'user': user},
-                                  context_instance=RequestContext(request))
-
-
 def incremental_status(request):
     """
     updates the status page with the current status of the background upload process
     """
 
-    global bundle_process
+    global session_data
 
-    output = bundle_process.status
+    output = session_data.bundle_process.status
     state = output
     print state
 
-    output = bundle_process.result
+    output = session_data.bundle_process.result
     result = output
     print result
 

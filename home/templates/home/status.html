@@ -180,7 +180,7 @@ li ul li
                 </p>    
             {% endfor %}
 
-            <form  action="{% url "status" %}" method="post" enctype="multipart/form-data">
+            <form  action="{% url "incStatus" %}" method="post" enctype="multipart/form-data">
 			{% csrf_token %}			
 			    <div style="text-align: center; position: relative; margin-top: 2em;">	
                     <input type="submit" name = "Cancel Upload" value="Cancel Upload" />            
