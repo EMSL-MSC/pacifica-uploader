@@ -19,7 +19,7 @@ from __future__ import absolute_import
 BROKER_URL = 'amqp://guest:guest@localhost//'
 CELERY_RESULT_BACKEND = 'amqp'
 
-CELERYD_STATE_DB = "celery_worker_state" 
+CELERYD_STATE_DB = "celery_worker_state"
 
 #: Only add pickle to this list if your broker is secured
 #: from unwanted access (see userguide/security.html)
@@ -56,11 +56,11 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
-    #'django.contrib.sites',     
-    
+
+    #'django.contrib.sites',
+
     'kombu.transport.django.KombuAppConfig',
-    
+
     'home',
     'home.templatetags.app_filters',
 )

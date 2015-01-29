@@ -8,13 +8,13 @@ from uploader import upload
 #tag to show this def as a celery task
 @shared_task
 def upload_files(bundle_name='',
-                instrument_name='',
-                proposal='',
-                file_list=None,
-                groups=None,
-                server='',
-                user='',
-                password=''):
+                 instrument_name='',
+                 proposal='',
+                 file_list=None,
+                 groups=None,
+                 server='',
+                 user='',
+                 password=''):
 
     # initial state pushed through celery
     current_task.update_state("PROGRESS", meta={'Status': "Starting Bundle/Upload Process"})

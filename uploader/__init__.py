@@ -44,8 +44,13 @@ class UploaderError(Exception):
         current_task.update_state(state='FAILURE', meta={'info': self.msg})
         return "Uploader failed: %s" % self.msg
 
-def pycurl_session(protocol='https', server='dev1.my.emsl.pnl.gov', user='',
-            insecure=False, password=':', negotiate=False, verbose=False):
+def pycurl_session(protocol='https',
+                   server='dev1.my.emsl.pnl.gov',
+                   user='',
+                   insecure=False,
+                   password=':',
+                   negotiate=False,
+                   verbose=False):
     """
     Uploads a bundle of files via cURL to a specified server
 
@@ -103,7 +108,7 @@ def pycurl_session(protocol='https', server='dev1.my.emsl.pnl.gov', user='',
     cookie_file = "cookies.txt"
     cookie_jar = "cookies.txt"
 
-    if (os.path.exists(cookie_file)):
+    if os.path.exists(cookie_file):
         print "deleting " + cookie_file
         os.remove(cookie_file)
 
@@ -210,8 +215,14 @@ def progress(download_t, download_d, upload_t, upload_d):
     print "Total to upload", upload_t
     print "Total uploaded", upload_d
 
-def upload(bundle_name='bundle.zip', protocol='https', server='dev1.my.emsl.pnl.gov', user='',
-            insecure=False, password=':', negotiate=False, verbose=False):
+def upload(bundle_name='',
+           protocol='https',
+           server='',
+           user='',
+           insecure=False,
+           password='',
+           negotiate=False,
+           verbose=False):
     """
     Uploads a bundle of files via cURL to a specified server
 
@@ -267,15 +278,15 @@ def upload(bundle_name='bundle.zip', protocol='https', server='dev1.my.emsl.pnl.
     #**************************************************
     # Pre-allocate with cURL
     if verbose:
-        print >> sys.stderr, 'Performing cURL preallocation'    
+        print >> sys.stderr, 'Performing cURL preallocation'
     try:
         # Set the URL for the curl query.
         pyurl = url + "/myemsl/cgi-bin/preallocate"
         curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
 
         curl.perform()
-        
-        # Verify that authentication was successful
+
+        successful
         curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
         if curl_http_code / 100 == 4:
             raise UploaderError("Authentication failed with code %i" % curl_http_code)
@@ -317,7 +328,7 @@ def upload(bundle_name='bundle.zip', protocol='https', server='dev1.my.emsl.pnl.
         print >> sys.stderr, 'Fetched Server: %s' % server
         print >> sys.stderr, 'Fetched Location: %s' % location
         print >> sys.stderr, 'New Server URL: %s' % url
-        
+
         # Upload bundle with cURL
         print >> sys.stderr, 'Peforming cURL upload of bundle of %s' % bundle_path
 
@@ -327,14 +338,14 @@ def upload(bundle_name='bundle.zip', protocol='https', server='dev1.my.emsl.pnl.
         curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
 
         curl.setopt(pycurl.PUT, 1)
-        curl.setopt(pycurl.UPLOAD, 1)        
+        curl.setopt(pycurl.UPLOAD, 1)
 
         # Set the input callback function to read from the bundle file
         bundlefd = open(bundle_path, 'rb')
         curl.setopt(pycurl.READFUNCTION, bundlefd.read)
 
         size = os.lstat(bundle_path)[stat.ST_SIZE]
-        curl.setopt(pycurl.INFILESIZE_LARGE, size)       
+        curl.setopt(pycurl.INFILESIZE_LARGE, size)
 
         #curl.setopt(pycurl.NOPROGRESS, 0)
         #curl.setopt(pycurl.PROGRESSFUNCTION, progress)
@@ -355,7 +366,7 @@ def upload(bundle_name='bundle.zip', protocol='https', server='dev1.my.emsl.pnl.
         return None
 
     #************************************************************************
-    
+
     #************************************************************************
     # Finalize the upload
     if verbose:
@@ -364,7 +375,7 @@ def upload(bundle_name='bundle.zip', protocol='https', server='dev1.my.emsl.pnl.
     try:
         #turn off upload
         curl.setopt(pycurl.PUT, 0)
-        curl.setopt(pycurl.UPLOAD, 0)       
+        curl.setopt(pycurl.UPLOAD, 0)
 
         # Set the URL for the curl query.
         pyurl = url + "/myemsl/cgi-bin/finish" + location
@@ -378,7 +389,7 @@ def upload(bundle_name='bundle.zip', protocol='https', server='dev1.my.emsl.pnl.
             raise UploaderError(odata.read(), outage=True)
             return None
 
-        print "curl_http_code " + str(curl_http_code) 
+        print "curl_http_code " + str(curl_http_code)
         print pyurl
 
         status = re.search(r'Status: (.*)', odata.getvalue()).group(1)

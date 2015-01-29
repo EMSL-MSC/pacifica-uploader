@@ -4,7 +4,6 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
-from django.contrib import auth
 
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -51,7 +50,7 @@ class FolderMeta(object):
     fileCount = 0
     dir_count = 0
     totalBytes = 0
-    
+
     def __init__(self):
         pass
 
@@ -94,7 +93,7 @@ def folder_size(folder):
             total_size += os.path.getsize(itempath)
         elif os.path.isdir(itempath):
             total_size += folder_size(itempath)
-            
+
     return total_size
 
 def folder_meta(folder, meta):
@@ -132,14 +131,14 @@ def file_tuples(selected_list, tuple_list, root_dir):
 
 def upload_size_string(total_size):
     # less than a Kb show b
-    if (total_size < 1024):
+    if total_size < 1024:
         return str(total_size) + " b"
     # less than an Mb show Kb
-    if (total_size < 1048576):
+    if total_size < 1048576:
         kilobytes = float(total_size) / 1024.0
         return str(round(kilobytes, 2)) + " Kb"
     # less than a Gb show Mb
-    elif (total_size < 1073741824):
+    elif total_size < 1073741824:
         megabytes = float(total_size) / 1048576.0
         return str(round(megabytes, 2)) + " Mb"
     # else show in Gb
@@ -173,7 +172,7 @@ def list(request):
 
     global password
     # first time through go to login page
-    if (password == ""):
+    if password == "":
         return render_to_response('home/login.html', \
             {'message': ""}, context_instance=RequestContext(request))
 
@@ -191,14 +190,14 @@ def list(request):
 
     if root_dir == "": # first time through, initialize
         data_path = Filepath.objects.get(name="dataRoot")
-        if (data_path is not None):
+        if data_path is not None:
             root_dir = data_path.fullpath
-        elif ("Linux" in platform.platform(aliased=0, terse=0)):
+        elif "Linux" in platform.platform(aliased=0, terse=0):
             root_dir = "/home"
         else:
             root_dir = "c:\\"
 
-        if (root_dir.endswith("\\")):
+        if root_dir.endswith("\\"):
             root_dir = root_dir[:-1]
         directory_history.append(root_dir)
         root_dir = current_directory(directory_history)
@@ -222,42 +221,41 @@ def list(request):
 
         full_path = os.path.join(root_dir, path)
 
-        if (os.path.isdir(full_path)):
-            if (full_path in selected_dirs):
+        if os.path.isdir(full_path):
+            if full_path in selected_dirs:
                 checked_dirs.append(path)
             else:
                 unchecked_dirs.append(path)
         else:
-            if (full_path in selected_files):
+            if full_path in selected_files:
                 checked_files.append(path)
             else:
                 unchecked_files.append(path)
 
     # Render list page with the documents and the form
-    return render_to_response('home/uploader.html',
-        {'instrument': instrument, 
-         'proposalList': proposal_list,
-         'proposal':proposal_verbose,  
-         'directoryHistory': directory_history, 
-         'metaList': meta_list,
-         'checkedDirs': checked_dirs, 
-         'uncheckedDirs': unchecked_dirs, 
-         'checkedFiles': checked_files, 
-         'uncheckedFiles': unchecked_files, 
-         'selectedDirs': selected_dirs, 
-         'dirSizes': dir_sizes,
-         'selectedFiles': selected_files, 
-         'fileSizes': file_sizes,
-         'current_time': current_time,
-         'user': user},
-        context_instance=RequestContext(request))
+    return render_to_response('home/uploader.html', {'instrument': instrument,
+                                                     'proposalList': proposal_list,
+                                                     'proposal':proposal_verbose,
+                                                     'directoryHistory': directory_history,
+                                                     'metaList': meta_list,
+                                                     'checkedDirs': checked_dirs,
+                                                     'uncheckedDirs': unchecked_dirs,
+                                                     'checkedFiles': checked_files,
+                                                     'uncheckedFiles': unchecked_files,
+                                                     'selectedDirs': selected_dirs,
+                                                     'dirSizes': dir_sizes,
+                                                     'selectedFiles': selected_files,
+                                                     'fileSizes': file_sizes,
+                                                     'current_time': current_time,
+                                                     'user': user},
+                              context_instance=RequestContext(request))
 
 
 def modify(request):
     print 'modify ' + request.get_full_path()
 
     global user
-    global password 
+    global password
     global directory_history
     global selected_dirs
     global dir_sizes
@@ -275,17 +273,17 @@ def modify(request):
 
         print request.POST
 
-        if (request.POST.get("Clear")):
+        if request.POST.get("Clear"):
             selected_files = []
             selected_dirs = []
 
         for meta in meta_list:
             value = request.POST.get(meta.name)
-            if (value):
+            if value:
                 meta.value = value
                 print meta.name + ": " + meta.value
 
-        proposal_verbose = request.POST.get("proposal")  
+        proposal_verbose = request.POST.get("proposal")
         print "proposal:  " + proposal_verbose
 
         split = proposal_verbose.split()
@@ -293,12 +291,12 @@ def modify(request):
 
         print proposal_id
 
-        if (request.POST.get("Upload Files & Metadata")):
+        if request.POST.get("Upload Files & Metadata"):
 
             print "uploading now"
 
             data_path = Filepath.objects.get(name="dataRoot")
-            if (data_path is not None):
+            if data_path is not None:
                 root_dir = data_path.fullpath
             else:
                 root_dir = ""
@@ -321,7 +319,7 @@ def modify(request):
             current_time = datetime.datetime.now().time().strftime("%m.%d.%Y.%H.%M.%S")
 
             target_path = Filepath.objects.get(name="target")
-            if (target_path is not None):
+            if target_path is not None:
                 target_dir = target_path.fullpath
             else:
                 target_dir = root_dir
@@ -329,15 +327,15 @@ def modify(request):
             bundle_name = os.path.join(target_dir, current_time + ".tar")
 
             server_path = Filepath.objects.get(name="server")
-            if (server_path is not None):
+            if server_path is not None:
                 full_server_path = server_path.fullpath
             else:
                 full_server_path = "dev1.my.emsl.pnl.gov"
 
             #return HttpResponseRedirect(reverse('home.views.list'))
             # spin this off as a background process and load the status page
-            #task = tasks.sleeptask.delay(1, list)
-            bundle_process = tasks.upload_files.delay(bundle_name = bundle_name,
+
+            bundle_process = tasks.upload_files.delay(bundle_name=bundle_name,
                                                       instrument_name=instrument,
                                                       proposal=proposal_id,
                                                       file_list=tuples,
@@ -346,13 +344,12 @@ def modify(request):
                                                       user=user,
                                                       password=password)
 
-            return render_to_response('home/status.html',
-                                      {'instrument': instrument,
-                                      'status': 'Starting Upload',
-                                      'proposal':proposal_verbose,
-                                      'metaList': meta_list,
-                                      'current_time': current_time,
-                                      'user': user},
+            return render_to_response('home/status.html', {'instrument': instrument,
+                                                           'status': 'Starting Upload',
+                                                           'proposal':proposal_verbose,
+                                                           'metaList': meta_list,
+                                                           'current_time': current_time,
+                                                           'user': user},
                                       context_instance=RequestContext(request))
     else:
         value_pair = urlparse(request.get_full_path())
@@ -367,54 +364,36 @@ def modify(request):
 
         full = os.path.join(root_dir, path)
 
-        if (mod_type == 'enterDir'):
+        if mod_type == 'enterDir':
             root_dir = os.path.join(root_dir, path)
             directory_history.append(path)
 
-        elif (mod_type == 'toggleFile'):
-            if (full not in selected_files):
-                selected_files.append(full) 
+        elif mod_type == 'toggleFile':
+            if full not in selected_files:
+                selected_files.append(full)
                 file_sizes.append(file_size_string(full))
             else:
                 index = selected_files.index(full)
                 selected_files.remove(full) 
                 del file_sizes[index]
-        elif (mod_type == 'toggleDir'):
-            if (full not in selected_dirs):
-                selected_dirs.append(full) 
+        elif mod_type == 'toggleDir':
+            if full not in selected_dirs:
+                selected_dirs.append(full)
                 dir_sizes.append(upload_meta_string(full))
             else:
                 index = selected_dirs.index(full)
-                selected_dirs.remove(full) 
+                selected_dirs.remove(full)
                 del dir_sizes[index]
-        elif (mod_type == "upDir"):
+        elif mod_type == "upDir":
             index = int(path)
             del directory_history[index:]
             print current_directory(directory_history)
 
     return HttpResponseRedirect(reverse('home.views.list'))
 
-def load_user_info():
-    info = user_info(protocol="https",
-                   server=sPath,
-                   user=user,
-                   insecure=True,
-                   password=password,
-                   negotiate = False,
-                   verbose=True)
-    print info
-    json_parsed = 0
-    try:
-        txt = json.loads(text)
-        json_parsed = 1
-    except Exception, ex:
-        print "json failure"
-    if json_parsed:
-        print json.dumps(json.loads(text), sort_keys=True, indent=4, separators=(',', ': '))
-
 def Login(request):
-    global password   
-    global user 
+    global password
+    global user
     global proposal_list
     global instrument
 
@@ -428,44 +407,44 @@ def Login(request):
         password = request.POST['password']
 
         server_path = Filepath.objects.get(name="server")
-        if (server_path is not None):
+        if server_path is not None:
             full_server_path = server_path.fullpath
         else:
             full_server_path = "dev1.my.emsl.pnl.gov"
 
         authorized = test_authorization(protocol="https",
-                                  server=full_server_path,
-                                  user=user,
-                                  insecure=True,
-                                  password=password,
-                                  negotiate = False,
-                                  verbose=True)
+                                        server=full_server_path,
+                                        user=user,
+                                        insecure=True,
+                                        password=password,
+                                        negotiate = False,
+                                        verbose=True)
 
-        if (not authorized):
-            password = ""     
+        if not authorized:
+            password = ""
             return render_to_response('home/login.html', {'message': "User or Password is incorrect"}, context_instance=RequestContext(request))
 
         print "password accepted"
 
         info = user_info(protocol="https",
-                   server=full_server_path,
-                   user=user,
-                   insecure=True,
-                   password=password,
-                   negotiate = False,
-                   verbose=True)
+                         server=full_server_path,
+                         user=user,
+                         insecure=True,
+                         password=password,
+                         negotiate = False,
+                         verbose=True)
 
         json_parsed = 0
         try:
             info = json.loads(info)
             json_parsed = 1
-        except Exception, ex:
+        except Exception:
             print "json failure"
         if json_parsed:
             print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
 
             obj = Filepath.objects.get(name="instrument")
-            if (obj):
+            if obj:
                 instrument = obj.fullpath
             else:
                 instrument = "unknown"
@@ -482,12 +461,12 @@ def Login(request):
                 inst_name = inst_block.get("instrument_name")
                 inst_str = inst_id + "  " + inst_name
                 instrument_list.append(inst_str)
-                if (instrument == inst_id):
+                if instrument == inst_id:
                     valid_instrument = True
                 print inst_str
                 print ""
 
-            if (not valid_instrument):
+            if not valid_instrument:
                 password = ""
                 return render_to_response('home/login.html', {'message': "User is not valid for this instrument"}, context_instance=RequestContext(request))
 
@@ -538,18 +517,17 @@ def status(request):
     result = json.dumps(output)
     print result
 
-    if (bundle_process.status == 'SUCCESS'):
+    if bundle_process.status == 'SUCCESS':
         return HttpResponseRedirect(reverse('home.views.list'))
 
     else:
-        return render_to_response('home/status.html',
-                {'instrument': instrument,
-                 'status': state + " " + result,
-                 'proposal':proposal_verbose,
-                 'metaList': meta_list,
-                 'current_time': current_time,
-                 'user': user},
-                context_instance=RequestContext(request))
+        return render_to_response('home/status.html', {'instrument': instrument,
+                                                       'status': state + " " + result,
+                                                       'proposal':proposal_verbose,
+                                                       'metaList': meta_list,
+                                                       'current_time': current_time,
+                                                       'user': user},
+                                  context_instance=RequestContext(request))
 
 
 def incremental_status(request):
@@ -564,10 +542,7 @@ def incremental_status(request):
     result = output
     print result
 
-    #if (bundleProcess.status == 'SUCCESS'):
-    #    state = 'PROGRESS'
-
-    if (result is not None):
+    if result is not None:
         if "http" in result:
             state = 'DONE'
             result = result.strip('"')

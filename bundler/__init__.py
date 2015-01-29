@@ -192,7 +192,7 @@ class FileBundler:
         file_in = None
         try:
             file_in = open(file_path, 'r')
-        except IOError, err:
+        except IOError:
             raise BundlerError("Couldn't read from file: %s" % file_path)
 
         hashval = hashlib.sha1()
@@ -411,11 +411,11 @@ def bundle(bundle_name='',
     # sent in as the instrument name but is actually the instrument ID.  Fix
     # this.
     bundler = TarBundler(bundle_path, proposal_ID=proposal,
-                          instrument_name=instrument_name,
-                          instrument_ID=instrument_name,
-                          recursive=recursive,
-                          verbose=verbose,
-                          groups=groups)
+                         instrument_name=instrument_name,
+                         instrument_ID=instrument_name,
+                         recursive=recursive,
+                         verbose=verbose,
+                         groups=groups)
 
     bundle_size = 0
     for (file_path, file_arcname) in file_list:
