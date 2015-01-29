@@ -1,3 +1,7 @@
+"""
+register the Django models
+"""
+
 from django.contrib import admin
 from home.models import Filepath
 from home.models import Metadata

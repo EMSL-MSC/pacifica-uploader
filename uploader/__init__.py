@@ -154,6 +154,10 @@ def user_info(protocol='https',
               negotiate=False,
               verbose=False):
 
+    """
+    gets the user info from the EUS database mirror on the backend server
+    """
+
     session = pycurl_session(protocol, server, user, password, negotiate, verbose)
 
     curl = session.curl
@@ -183,6 +187,10 @@ def test_authorization(protocol='https',
                        negotiate=False,
                        verbose=False):
 
+    """
+    Validates the user as a MyEMSL user
+    """
+
     session = pycurl_session(protocol, server, user, password, negotiate, verbose)
 
     curl = session.curl
@@ -209,6 +217,10 @@ def test_authorization(protocol='https',
     return False
 
 def progress(download_t, download_d, upload_t, upload_d):
+    """
+    gets the progress of the current pycurl upload
+    """
+
     sleep(1)
     print "Total to download", download_t
     print "Total downloaded", download_d
@@ -411,6 +423,10 @@ def upload(bundle_name='',
 
 
 def main():
+    """
+    placeholder
+    """
+
     print >> sys.stderr, "empty main"
 
 if __name__ == '__main__':

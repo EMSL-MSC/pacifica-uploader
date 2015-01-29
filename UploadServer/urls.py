@@ -1,3 +1,8 @@
+"""
+URLs used by the Django server
+used to route to the appropriate view to handle the request
+"""
+
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from django.conf import settings

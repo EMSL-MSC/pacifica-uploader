@@ -340,6 +340,10 @@ class TarBundler(FileBundler):
         tarball.close()
 
 def error_handler(err):
+    """
+    routes errors to the celery status updater to pass to the uploader via the Rabbit mq
+    """
+
     print >> sys.stderr, err
     # celery call
     current_task.update_state(state='FAILURE', meta={'info': err})
@@ -446,6 +450,10 @@ def bundle(bundle_name='',
         print >> sys.stderr, "Finished bundling"
 
 def main():
+    """
+    placeholder
+    """
+
     print 'empty'
 
 if __name__ == '__main__':

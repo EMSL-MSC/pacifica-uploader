@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+
+"""
+Django start
+"""
+
 import os
 import sys
 

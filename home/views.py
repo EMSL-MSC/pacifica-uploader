@@ -1,5 +1,9 @@
 #pylint: disable=no-member
 
+"""
+Django views, handle requests from the client side pages
+"""
+
 from __future__ import absolute_import
 
 from django.shortcuts import render_to_response
@@ -30,6 +34,10 @@ from home.models import Metadata
 from home import tasks
 
 class MetaData(object):
+    """
+    structure used to pass upload metadata back and forth to the upload page
+    """
+
     label = ""
     value = ""
     name = ""
@@ -38,6 +46,10 @@ class MetaData(object):
         pass
 
 class FolderMeta(object):
+    """
+    meta data about a folder, including filecount, directory count, and the total bytes.
+    """
+
     fileCount = 0
     dir_count = 0
     totalBytes = 0
@@ -69,6 +81,10 @@ bundle_process = None
 
 
 def current_directory(history):
+    """
+    builds the current directory based on the navigation history
+    """
+
     directory = ''
     for path in history:
         directory = os.path.join(directory, path)
@@ -77,6 +93,10 @@ def current_directory(history):
     return directory
 
 def folder_size(folder):
+    """
+    recursively totals up total size of the files in the folder and sub folders
+    """
+
     total_size = os.path.getsize(folder)
     for item in os.listdir(folder):
         itempath = os.path.join(folder, item)
@@ -88,6 +108,12 @@ def folder_size(folder):
     return total_size
 
 def folder_meta(folder, meta):
+    """
+    gets the meta data for a folder
+    number of folders
+    number of files
+    total size
+    """
 
     meta.dir_count += 1
 
@@ -100,6 +126,9 @@ def folder_meta(folder, meta):
             folder_meta(itempath, meta)
 
 def file_tuples_recursively(folder, tuple_list, root_dir):
+    """
+    recursively gets file tuples for a folder
+    """
 
     for item in os.listdir(folder):
         path = os.path.join(folder, item)
@@ -109,9 +138,12 @@ def file_tuples_recursively(folder, tuple_list, root_dir):
         elif os.path.isdir(path):
             file_tuples_recursively(path, tuple_list, root_dir)
 
-# bundler takes a list of tuples
 def file_tuples(selected_list, tuple_list, root_dir):
-
+    """
+    gets all the file tuples for a list of either folders or files
+    tuples consist of the absolute path where the local file can be found
+    and the relative path used to store the file in the archive
+    """
     for path in selected_list:
         if os.path.isfile(path):
             # the relative path is the path without the root directory
@@ -121,6 +153,10 @@ def file_tuples(selected_list, tuple_list, root_dir):
             file_tuples_recursively(path, tuple_list, root_dir)
 
 def upload_size_string(total_size):
+    """
+    returns the upload size as a string with the appropriate units
+    """
+
     # less than a Kb show b
     if total_size < 1024:
         return str(total_size) + " b"
@@ -138,19 +174,24 @@ def upload_size_string(total_size):
         return str(round(gigabytes, 2)) + " Gb"
 
 def upload_meta_string(folder):
-
+    """
+    returns the meta data for a folder as a string to be displayed to the user
+    """
     meta = FolderMeta()
     folder_meta(folder, meta)
 
     print '{0}|{1}'.format(str(meta.fileCount), str(meta.totalBytes))
 
     meta.dir_count -= 1
-    meta_str = 'folders {0}|files {1}|{2}'.\
+    meta_str = 'folders {0} | files {1} | {2}'.\
         format(str(meta.dir_count), str(meta.fileCount), upload_size_string(meta.totalBytes))
 
     return meta_str
 
 def file_size_string(filename):
+    """
+    returns a string with the file size in appropriate units
+    """
 
     total_size = os.path.getsize(filename)
 
@@ -158,6 +199,9 @@ def file_size_string(filename):
 
 #@login_required(login_url='/login/')
 def list(request):
+    """
+    formats the main uploader page
+    """
 
     global user
     print user
@@ -244,6 +288,15 @@ def list(request):
 
 
 def modify(request):
+    """
+    modifies the data underlying the main upload page depending on the request
+    the main request catagories are:
+        file sytem navigation
+        selected list management
+        upload request
+    """
+
+
     print 'modify ' + request.get_full_path()
 
     global user
@@ -384,6 +437,13 @@ def modify(request):
     return HttpResponseRedirect(reverse('home.views.list'))
 
 def Login(request):
+    """
+    Logs the user in
+    If the login fails for whatever reason, authentication, invalid for instrument, etc.,
+    returns to login page with error.
+    Otherwise, gets the user data to populate the main page
+    """
+
     global password
     global user
     global proposal_list
@@ -488,6 +548,10 @@ def Login(request):
         return render_to_response('home/login.html', context_instance=RequestContext(request))
 
 def Logout(request):
+    """
+    logs the user out and returns to the main page
+    which will bounce to the login page
+    """
     global password
     global user
 
@@ -497,6 +561,12 @@ def Logout(request):
 
 
 def status(request):
+    """
+    status request from status page
+    used while in the uploading phase
+    returns celery updates from the background celery process
+    """
+
     global user
     global meta_list
     global proposal_verbose
@@ -527,6 +597,9 @@ def status(request):
 
 
 def incremental_status(request):
+    """
+    updates the status page with the current status of the background upload process
+    """
 
     global bundle_process
 
