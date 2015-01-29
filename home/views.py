@@ -1,8 +1,9 @@
+#pylint: disable=no-member
+
 from __future__ import absolute_import
 
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.contrib.auth.decorators import login_required
 
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -11,7 +12,6 @@ from django.http import HttpResponse
 from django.core.urlresolvers import reverse
 
 import json
-import pprint
 
 import datetime
 
@@ -20,7 +20,6 @@ from urlparse import urlparse
 import os
 import platform
 import sys
-from mhlib import PATH
 
 from uploader import test_authorization
 from uploader import user_info
@@ -29,10 +28,6 @@ from home.models import Filepath
 from home.models import Metadata
 
 from home import tasks
-
-from celery import current_task
-
-from multiprocessing import Process
 
 class MetaData(object):
     label = ""
@@ -371,7 +366,7 @@ def modify(request):
                 file_sizes.append(file_size_string(full))
             else:
                 index = selected_files.index(full)
-                selected_files.remove(full) 
+                selected_files.remove(full)
                 del file_sizes[index]
         elif mod_type == 'toggleDir':
             if full not in selected_dirs:
@@ -414,7 +409,7 @@ def Login(request):
                                         user=user,
                                         insecure=True,
                                         password=password,
-                                        negotiate = False,
+                                        negotiate=False,
                                         verbose=True)
 
         if not authorized:
@@ -430,7 +425,7 @@ def Login(request):
                          user=user,
                          insecure=True,
                          password=password,
-                         negotiate = False,
+                         negotiate=False,
                          verbose=True)
 
         json_parsed = 0

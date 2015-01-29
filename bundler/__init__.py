@@ -2,7 +2,6 @@
 """
 A Bundler module that aggregates files into a single bundle
 """
-
 from __future__ import division
 
 import sys

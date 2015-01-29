@@ -48,7 +48,6 @@ class UploaderError(Exception):
 def pycurl_session(protocol='https',
                    server='dev1.my.emsl.pnl.gov',
                    user='',
-                   insecure=False,
                    password=':',
                    negotiate=False,
                    verbose=False):
@@ -155,7 +154,7 @@ def user_info(protocol='https',
               negotiate=False,
               verbose=False):
 
-    session = pycurl_session(protocol, server, user, insecure, password, negotiate, verbose)
+    session = pycurl_session(protocol, server, user, password, negotiate, verbose)
 
     curl = session.curl
 
@@ -184,7 +183,7 @@ def test_authorization(protocol='https',
                        negotiate=False,
                        verbose=False):
 
-    session = pycurl_session(protocol, server, user, insecure, password, negotiate, verbose)
+    session = pycurl_session(protocol, server, user, password, negotiate, verbose)
 
     curl = session.curl
 
@@ -269,7 +268,7 @@ def upload(bundle_name='',
     location = ''
 
     #gets a session to be used for the entire upload
-    session = pycurl_session(protocol, server, user, insecure, password, negotiate, verbose)
+    session = pycurl_session(protocol, server, user, password, negotiate, verbose)
 
     curl = session.curl
     odata = StringIO()
