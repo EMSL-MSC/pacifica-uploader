@@ -9,7 +9,7 @@ urlpatterns = patterns('',
     url(r'^$', 'home.views.list', name='home'),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^status/', 'home.views.status', name='status'), 
-    url(r'^incStatus/', 'home.views.incStatus', name='incStatus'), 
+    url(r'^incStatus/', 'home.views.incremental_status', name='incStatus'), 
     url(r'^modify/', 'home.views.modify', name='modify'), 
         (r'^login/$', 'home.views.Login'),
         (r'^logout/$', 'home.views.Logout'),)

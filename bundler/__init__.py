@@ -195,14 +195,14 @@ class FileBundler:
         except IOError, err:
             raise BundlerError("Couldn't read from file: %s" % file_path)
 
-        h = hashlib.sha1()
+        hashval = hashlib.sha1()
         while True:
             # dfh need define
             data = file_in.read(1024 * 1024)
             if not data:
                 break
-            h.update(data)
-        file_hash = h.hexdigest()
+            hashval.update(data)
+        file_hash = hashval.hexdigest()
         file_in.close()
 
         if file_arcname in self.hash_dict:
@@ -333,10 +333,10 @@ class TarBundler(FileBundler):
             self.empty_tar = False
         else:
             tarball = tarfile.TarFile(name=self.bundle_path, mode='a')
-        ti = tarfile.TarInfo("metadata.txt")
-        ti.size = len(metadata)
-        ti.mtime = time.time()
-        tarball.addfile(ti, metadata_file)
+        tar_info = tarfile.TarInfo("metadata.txt")
+        tar_info.size = len(metadata)
+        tar_info.mtime = time.time()
+        tarball.addfile(tar_info, metadata_file)
         metadata_file.close()
         tarball.close()
 

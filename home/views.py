@@ -27,8 +27,8 @@ from django.contrib.auth.models import User
 from mhlib import PATH
 
 from uploader import upload
-from uploader import TestAuth
-from uploader import UserInfo
+from uploader import test_authorization
+from uploader import user_info
 
 from home.models import Filepath
 from home.models import Metadata
@@ -55,12 +55,13 @@ class FolderMeta(object):
     def __init__(self):
         pass
 
+# Module level variables
 user = ''
 current_time = ''
 instrument = ''
 password = ''
-proposal = ''
-propID = ''
+proposal_verbose = ''
+proposal_id = ''
 selected_dirs = []
 selected_files = []
 dir_sizes = []
@@ -68,38 +69,35 @@ file_sizes = []
 directory_history = []
 
 # meta data values
-metaList = []
+meta_list = []
 
-# instruments
-instrumentList = []
-    
-# instruments
-proposalList = []
+# proposals
+proposal_list = []
 
 # process that handles bundling and uploading
 bundle_process = None
 
 
-def currentDirectory(history):
-    dir = ''
+def current_directory(history):
+    directory = ''
     for path in history:
-        dir = os.path.join(dir, path)
-        dir = dir + "/"
+        directory = os.path.join(directory, path)
+        directory = directory + "/"
 
-    return dir
+    return directory
 
-def getFolderSize(folder):
+def folder_size(folder):
     total_size = os.path.getsize(folder)
     for item in os.listdir(folder):
         itempath = os.path.join(folder, item)
         if os.path.isfile(itempath):
             total_size += os.path.getsize(itempath)
         elif os.path.isdir(itempath):
-            total_size += getFolderSize(itempath)
+            total_size += folder_size(itempath)
             
     return total_size
 
-def getFolderMeta(folder, meta):
+def folder_meta(folder, meta):
 
     meta.dir_count += 1
 
@@ -109,64 +107,63 @@ def getFolderMeta(folder, meta):
             meta.totalBytes += os.path.getsize(itempath)
             meta.fileCount += 1
         elif os.path.isdir(itempath):
-            getFolderMeta(itempath, meta)
+            folder_meta(itempath, meta)
 
-def getTuplesRecursive(folder, tuple_list, root_dir):
+def file_tuples_recursively(folder, tuple_list, root_dir):
 
     for item in os.listdir(folder):
         path = os.path.join(folder, item)
         if os.path.isfile(path):
-            relPath = path.replace(root_dir, '')
-            tuple_list.append((path, relPath))
+            relative_path = path.replace(root_dir, '')
+            tuple_list.append((path, relative_path))
         elif os.path.isdir(path):
-            getTuplesRecursive(path, tuple_list, root_dir)
+            file_tuples_recursively(path, tuple_list, root_dir)
 
 # bundler takes a list of tuples
-def getTuples(selected_list, tuple_list, root_dir):
+def file_tuples(selected_list, tuple_list, root_dir):
 
     for path in selected_list:
         if os.path.isfile(path):
             # the relative path is the path without the root directory
-            relPath = path.replace(root_dir, '')
-            tuple_list.append((path, relPath))
+            relative_path = path.replace(root_dir, '')
+            tuple_list.append((path, relative_path))
         elif os.path.isdir(path):
-            getTuplesRecursive(path, tuple_list, root_dir)
+            file_tuples_recursively(path, tuple_list, root_dir)
 
-def getSizeString(total_size):
+def upload_size_string(total_size):
     # less than a Kb show b
     if (total_size < 1024):
         return str(total_size) + " b"
     # less than an Mb show Kb
     if (total_size < 1048576):
-        kb = float(total_size) / 1024.0
-        return str(round(kb, 2)) + " Kb"
+        kilobytes = float(total_size) / 1024.0
+        return str(round(kilobytes, 2)) + " Kb"
     # less than a Gb show Mb
     elif (total_size < 1073741824):
-        mb = float(total_size) / 1048576.0
-        return str(round(mb, 2)) + " Mb"
+        megabytes = float(total_size) / 1048576.0
+        return str(round(megabytes, 2)) + " Mb"
     # else show in Gb
     else:
-        gb = float(total_size) / 1073741824.0
-        return str(round(gb, 2)) + " Gb"
+        gigabytes = float(total_size) / 1073741824.0
+        return str(round(gigabytes, 2)) + " Gb"
 
-def getFolderString(folder):
+def upload_meta_string(folder):
 
     meta = FolderMeta()
-    getFolderMeta(folder, meta)
+    folder_meta(folder, meta)
 
-    print str(meta.fileCount) + "|" + str(meta.totalBytes)
+    print '{0}|{1}'.format(str(meta.fileCount), str(meta.totalBytes))
 
-    #total_size = getFolderSize(folder)
     meta.dir_count -= 1
-    meta_str = 'folders ' + str(meta.dir_count) + '|files ' + str(meta.fileCount) + '|' + getSizeString(meta.totalBytes)
+    meta_str = 'folders {0}|files {1}|{2}'.format(str(meta.dir_count),str(meta.fileCount),upload_size_string(meta.totalBytes))
 
     return meta_str
 
-def getFileString(filename):
+def file_size_string(filename):
 
     total_size = os.path.getsize(filename)
 
-    return getSizeString(total_size)
+    return upload_size_string(total_size)
 
 #@login_required(login_url='/login/')
 def list(request):
@@ -177,75 +174,76 @@ def list(request):
     global password
     # first time through go to login page
     if (password == ""):
-        return render_to_response('home/login.html', {'message': ""}, context_instance=RequestContext(request))
+        return render_to_response('home/login.html', \
+            {'message': ""}, context_instance=RequestContext(request))
 
     global selected_dirs
     global dir_sizes
     global selected_files
     global file_sizes
     global directory_history
-    global metaList
-    global instrumentList
-    global proposalList
-    global proposal
+    global meta_list
+    global proposal_list
+    global proposal_verbose
     global current_time
 
-    rootDir = currentDirectory(directory_history)
+    root_dir = current_directory(directory_history)
 
-    if rootDir == "": # first time through, initialize
-        dataPath = Filepath.objects.get(name="dataRoot")
-        if (dataPath is not None):
-            rootDir = dataPath.fullpath
+    if root_dir == "": # first time through, initialize
+        data_path = Filepath.objects.get(name="dataRoot")
+        if (data_path is not None):
+            root_dir = data_path.fullpath
         elif ("Linux" in platform.platform(aliased=0, terse=0)):
-            rootDir = "/home"
+            root_dir = "/home"
         else:
-            rootDir = "c:\\"
+            root_dir = "c:\\"
 
-        if (rootDir.endswith("\\")):
-            rootDir = rootDir[:-1]
-        directory_history.append(rootDir)
-        rootDir = currentDirectory(directory_history)
+        if (root_dir.endswith("\\")):
+            root_dir = root_dir[:-1]
+        directory_history.append(root_dir)
+        root_dir = current_directory(directory_history)
 
+        # create a list of metadata entries to pass to the list upload page
         for meta in Metadata.objects.all():
-            thingy = MetaData()
-            thingy.label = meta.label
-            thingy.name = meta.name
-            thingy.value = ""
-            metaList.append(thingy)
+            meta_entry = MetaData()
+            meta_entry.label = meta.label
+            meta_entry.name = meta.name
+            meta_entry.value = ""
+            meta_list.append(meta_entry)
 
-    checkedDirs = []
-    uncheckedDirs = []
-    checkedFiles = []
-    uncheckedFiles = []
+    checked_dirs = []
+    unchecked_dirs = []
+    checked_files = []
+    unchecked_files = []
 
-    contents = os.listdir(rootDir)
+    contents = os.listdir(root_dir)
 
     for path in contents:
 
-        fullPath = os.path.join(rootDir , path)
+        full_path = os.path.join(root_dir, path)
 
-        if (os.path.isdir(fullPath)):
-            if (fullPath in selected_dirs):
-                checkedDirs.append(path)
+        if (os.path.isdir(full_path)):
+            if (full_path in selected_dirs):
+                checked_dirs.append(path)
             else:
-                uncheckedDirs.append(path)
+                unchecked_dirs.append(path)
         else:
-            if (fullPath in selected_files):
-                checkedFiles.append(path)
+            if (full_path in selected_files):
+                checked_files.append(path)
             else:
-                uncheckedFiles.append(path)
+                unchecked_files.append(path)
 
     # Render list page with the documents and the form
     return render_to_response('home/uploader.html',
         {'instrument': instrument, 
-         'proposalList': proposalList,
-         'proposal':proposal,  
+         'proposalList': proposal_list,
+         'proposal':proposal_verbose,  
          'directoryHistory': directory_history, 
-         'metaList': metaList,
-         'checkedDirs': checkedDirs, 
-         'uncheckedDirs': uncheckedDirs, 
-         'checkedFiles': checkedFiles, 
-         'uncheckedFiles': uncheckedFiles, 
+         'metaList': meta_list,
+         'checkedDirs': checked_dirs, 
+         'uncheckedDirs': unchecked_dirs, 
+         'checkedFiles': checked_files, 
+         'uncheckedFiles': unchecked_files, 
          'selectedDirs': selected_dirs, 
          'dirSizes': dir_sizes,
          'selectedFiles': selected_files, 
@@ -265,13 +263,13 @@ def modify(request):
     global dir_sizes
     global selected_files
     global file_sizes
-    global metaList
-    global proposal
+    global meta_list
+    global proposal_verbose
     global current_time
     global bundle_process
-    global propID
+    global proposal_id
 
-    rootDir = currentDirectory(directory_history)
+    root_dir = current_directory(directory_history)
 
     if request.POST:
 
@@ -281,85 +279,85 @@ def modify(request):
             selected_files = []
             selected_dirs = []
 
-        for m in metaList:
-            value = request.POST.get(m.name)
+        for meta in meta_list:
+            value = request.POST.get(meta.name)
             if (value):
-                m.value = value
-                print m.name + ": " + m.value
+                meta.value = value
+                print meta.name + ": " + meta.value
 
-        proposal = request.POST.get("proposal")  
-        print "proposal:  " + proposal
+        proposal_verbose = request.POST.get("proposal")  
+        print "proposal:  " + proposal_verbose
 
-        split = proposal.split()
-        propID = split[0]
+        split = proposal_verbose.split()
+        proposal_id = split[0]
 
-        print propID
+        print proposal_id
 
         if (request.POST.get("Upload Files & Metadata")):
 
             print "uploading now"
 
-            dataPath = Filepath.objects.get(name="dataRoot")
-            if (dataPath is not None):
-                rootDir = dataPath.fullpath
+            data_path = Filepath.objects.get(name="dataRoot")
+            if (data_path is not None):
+                root_dir = data_path.fullpath
             else:
-                rootDir = ""
+                root_dir = ""
 
             # get the correct \/ orientation for the OS
-            root = rootDir.replace("\\", "/")
+            root = root_dir.replace("\\", "/")
 
             #create a list of tuples to meet the call format
-            tupleList = []
-            getTuples(selected_files, tupleList, root)            
-            getTuples(selected_dirs, tupleList, root)
-            print tupleList
+            tuples = []
+            file_tuples(selected_files, tuples, root)
+            file_tuples(selected_dirs,tuples, root)
+            print tuples
 
             # create the groups dictionary
             #{"groups":[{"name":"FOO1", "type":"Tag"}]}
             groups = {}
-            for m in metaList:
-                groups[m.name] = m.value
+            for meta in meta_list:
+                groups[meta.name] = meta.value
 
             current_time = datetime.datetime.now().time().strftime("%m.%d.%Y.%H.%M.%S")
 
-            targetPath = Filepath.objects.get(name="target")
-            if (targetPath is not None):
-                targetDir = targetPath.fullpath
+            target_path = Filepath.objects.get(name="target")
+            if (target_path is not None):
+                target_dir = target_path.fullpath
             else:
-                targetDir = rootDir
+                target_dir = root_dir
 
-            bundleName = os.path.join(targetDir, current_time + ".tar")
+            bundle_name = os.path.join(target_dir, current_time + ".tar")
 
-            serverPath = Filepath.objects.get(name="server")
-            if (serverPath is not None):
-                sPath = serverPath.fullpath
+            server_path = Filepath.objects.get(name="server")
+            if (server_path is not None):
+                full_server_path = server_path.fullpath
             else:
-                sPath = "dev1.my.emsl.pnl.gov"
+                full_server_path = "dev1.my.emsl.pnl.gov"
 
             #return HttpResponseRedirect(reverse('home.views.list'))
             # spin this off as a background process and load the status page
             #task = tasks.sleeptask.delay(1, list)
-            bundle_process = tasks.uploadFiles.delay(bundle_name = bundleName, 
-                   instrument_name = instrument, 
-                   proposal = propID, 
-                   file_list=tupleList, 
-                   groups = groups,
-                   server=sPath,
-                   user=user,
-                   password=password)
+            bundle_process = tasks.upload_files.delay(bundle_name = bundle_name,
+                                                      instrument_name=instrument,
+                                                      proposal=proposal_id,
+                                                      file_list=tuples,
+                                                      groups=groups,
+                                                      server=full_server_path,
+                                                      user=user,
+                                                      password=password)
 
             return render_to_response('home/status.html',
-                {'instrument': instrument,
-                 'status': 'Starting Upload',
-                 'proposal':proposal,
-                 'metaList': metaList,
-                 'current_time': current_time,
-                 'user': user},
-                context_instance=RequestContext(request))
+                                      {'instrument': instrument,
+                                      'status': 'Starting Upload',
+                                      'proposal':proposal_verbose,
+                                      'metaList': meta_list,
+                                      'current_time': current_time,
+                                      'user': user},
+                                      context_instance=RequestContext(request))
     else:
-        o = urlparse(request.get_full_path())
-        params = o.query.split("=")
-        modType = params[0]
+        value_pair = urlparse(request.get_full_path())
+        params = value_pair.query.split("=")
+        mod_type = params[0]
         path = params[1]
 
         # spaces
@@ -367,44 +365,44 @@ def modify(request):
         # backslash
         path = path.replace("%5C", "\\")
 
-        full = os.path.join(rootDir, path)
+        full = os.path.join(root_dir, path)
 
-        if (modType == 'enterDir'):
-            rootDir = os.path.join(rootDir, path)
+        if (mod_type == 'enterDir'):
+            root_dir = os.path.join(root_dir, path)
             directory_history.append(path)
 
-        elif (modType == 'toggleFile'):
+        elif (mod_type == 'toggleFile'):
             if (full not in selected_files):
                 selected_files.append(full) 
-                file_sizes.append(getFileString(full))
+                file_sizes.append(file_size_string(full))
             else:
                 index = selected_files.index(full)
                 selected_files.remove(full) 
                 del file_sizes[index]
-        elif (modType == 'toggleDir'):
+        elif (mod_type == 'toggleDir'):
             if (full not in selected_dirs):
                 selected_dirs.append(full) 
-                dir_sizes.append(getFolderString(full))
+                dir_sizes.append(upload_meta_string(full))
             else:
                 index = selected_dirs.index(full)
                 selected_dirs.remove(full) 
                 del dir_sizes[index]
-        elif (modType == "upDir"):
+        elif (mod_type == "upDir"):
             index = int(path)
             del directory_history[index:]
-            print currentDirectory(directory_history)
+            print current_directory(directory_history)
 
     return HttpResponseRedirect(reverse('home.views.list'))
 
-def LoadUserInfo():
-    userInfo = UserInfo(protocol="https",
+def load_user_info():
+    info = user_info(protocol="https",
                    server=sPath,
                    user=user,
                    insecure=True,
                    password=password,
                    negotiate = False,
                    verbose=True)
-    print userInfo
+    print info
     json_parsed = 0
     try:
         txt = json.loads(text)
@@ -417,7 +415,7 @@ def LoadUserInfo():
 def Login(request):
     global password   
     global user 
-    global proposalList
+    global proposal_list
     global instrument
 
     user = password = ''
@@ -429,28 +427,28 @@ def Login(request):
         user = request.POST['username']
         password = request.POST['password']
 
-        serverPath = Filepath.objects.get(name="server")
-        if (serverPath is not None):
-            sPath = serverPath.fullpath
+        server_path = Filepath.objects.get(name="server")
+        if (server_path is not None):
+            full_server_path = server_path.fullpath
         else:
-            sPath = "dev1.my.emsl.pnl.gov"
+            full_server_path = "dev1.my.emsl.pnl.gov"
 
-        auth = TestAuth(protocol="https",
-                   server=sPath,
-                   user=user,
-                   insecure=True,
-                   password=password,
-                   negotiate = False,
-                   verbose=True)
+        authorized = test_authorization(protocol="https",
+                                  server=full_server_path,
+                                  user=user,
+                                  insecure=True,
+                                  password=password,
+                                  negotiate = False,
+                                  verbose=True)
 
-        if (not auth):
+        if (not authorized):
             password = ""     
             return render_to_response('home/login.html', {'message': "User or Password is incorrect"}, context_instance=RequestContext(request))
 
         print "password accepted"
 
-        userInfo = UserInfo(protocol="https",
-                   server=sPath,
+        info = user_info(protocol="https",
+                   server=full_server_path,
                    user=user,
                    insecure=True,
                    password=password,
@@ -459,7 +457,7 @@ def Login(request):
 
         json_parsed = 0
         try:
-            info = json.loads(userInfo)
+            info = json.loads(info)
             json_parsed = 1
         except Exception, ex:
             print "json failure"
@@ -478,32 +476,32 @@ def Login(request):
             instruments = info["instruments"]
             #pprint.pprint(instruments)
 
-            instrumentList = []
-            validInstrument = False
-            for instID, instBlock in instruments.iteritems():
-                instName = instBlock.get("instrument_name")
-                instStr = instID + "  " + instName
-                instrumentList.append(instStr)
-                if (instrument == instID):
-                    validInstrument = True
-                print instStr
+            instrument_list = []
+            valid_instrument = False
+            for inst_id, inst_block in instruments.iteritems():
+                inst_name = inst_block.get("instrument_name")
+                inst_str = inst_id + "  " + inst_name
+                instrument_list.append(inst_str)
+                if (instrument == inst_id):
+                    valid_instrument = True
+                print inst_str
                 print ""
 
-            if (not validInstrument):
+            if (not valid_instrument):
                 password = ""
                 return render_to_response('home/login.html', {'message': "User is not valid for this instrument"}, context_instance=RequestContext(request))
 
             print "props"
             props = info["proposals"]
-            proposalList = []
-            for propID, propBlock in props.iteritems():
-                title = propBlock.get("title")
-                propStr = propID + "  " + title
-                proposalList.append(propStr)
-                print propStr
+            proposal_list = []
+            for prop_id, prop_block in props.iteritems():
+                title = prop_block.get("title")
+                prop_str = prop_id + "  " + title
+                proposal_list.append(prop_str)
+                print prop_str
 
                 #for later
-                instruments = propBlock.get("instruments")
+                instruments = prop_block.get("instruments")
                 for i in instruments:
                     for j in i:
                         print j
@@ -525,8 +523,8 @@ def Logout(request):
 
 def status(request):
     global user
-    global metaList
-    global proposal
+    global meta_list
+    global proposal_verbose
     global current_time
     global instrument
 
@@ -547,14 +545,14 @@ def status(request):
         return render_to_response('home/status.html',
                 {'instrument': instrument,
                  'status': state + " " + result,
-                 'proposal':proposal,
-                 'metaList': metaList,
+                 'proposal':proposal_verbose,
+                 'metaList': meta_list,
                  'current_time': current_time,
                  'user': user},
                 context_instance=RequestContext(request))
 
 
-def incStatus(request):
+def incremental_status(request):
 
     global bundle_process
 

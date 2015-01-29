@@ -7,7 +7,7 @@ from uploader import upload
 
 #tag to show this def as a celery task
 @shared_task
-def uploadFiles(bundle_name='',
+def upload_files(bundle_name='',
                 instrument_name='',
                 proposal='',
                 file_list=None,
@@ -36,11 +36,12 @@ def uploadFiles(bundle_name='',
                  user=user,
                  insecure=True,
                  password=password,
-                 negotiate = False,
+                 negotiate=False,
                  verbose=True)
 
     if res is None:
-        current_task.update_state("FAILURE", meta={'Status': "Uploader dieded. We don't know whyitded"})
+        current_task.update_state("FAILURE", \
+            meta={'Status': "Uploader dieded. We don't know whyitded"})
 
     print >> sys.stderr, "upload completed"
 
