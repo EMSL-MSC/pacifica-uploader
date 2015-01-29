@@ -22,7 +22,6 @@ from urlparse import urlparse
 
 import os
 import platform
-import sys
 
 from uploader import test_authorization
 from uploader import user_info
@@ -204,7 +203,7 @@ def file_size_string(filename):
     return upload_size_string(total_size)
 
 #@login_required(login_url='/login/')
-def list(request):
+def populate_upload_page(request):
     """
     formats the main uploader page
     """
@@ -262,21 +261,23 @@ def list(request):
                 unchecked_files.append(path)
 
     # Render list page with the documents and the form
-    return render_to_response('home/uploader.html', {'instrument': session_data.instrument,
-                                                     'proposalList': session_data.proposal_list,
-                                                     'proposal':session_data.proposal_verbose,
-                                                     'directoryHistory': session_data.directory_history,
-                                                     'metaList': session_data.meta_list,
-                                                     'checkedDirs': checked_dirs,
-                                                     'uncheckedDirs': unchecked_dirs,
-                                                     'checkedFiles': checked_files,
-                                                     'uncheckedFiles': unchecked_files,
-                                                     'selectedDirs': session_data.selected_dirs,
-                                                     'dirSizes': session_data.dir_sizes,
-                                                     'selectedFiles': session_data.selected_files,
-                                                     'fileSizes': session_data.file_sizes,
-                                                     'current_time': session_data.current_time,
-                                                     'user': session_data.user},
+    return render_to_response('home/uploader.html', \
+        {'instrument': session_data.instrument,
+         'proposalList': session_data.proposal_list,
+         'proposal':session_data.proposal_verbose,
+         'directoryHistory': session_data.directory_history,
+         'metaList': session_data.meta_list,
+         'checkedDirs': checked_dirs,
+         'uncheckedDirs': unchecked_dirs,
+         'checkedFiles': checked_files,
+         'uncheckedFiles': unchecked_files,
+         'selectedDirs': session_data.selected_dirs,
+         'dirSizes': session_data.dir_sizes,
+         'selectedFiles': session_data.selected_files,
+         'fileSizes': session_data.file_sizes,
+         'current_time': session_data.current_time,
+         'user': session_data.user
+        },
                               context_instance=RequestContext(request))
 
 
@@ -292,7 +293,7 @@ def modify(request):
     print 'modify ' + request.get_full_path()
 
     global session_data
-   
+
     root_dir = current_directory(session_data.directory_history)
 
     if request.POST:
@@ -369,12 +370,13 @@ def modify(request):
                                          user=session_data.user,
                                          password=session_data.password)
 
-            return render_to_response('home/status.html', {'instrument': session_data.instrument,
-                                                           'status': 'Starting Upload',
-                                                           'proposal':session_data.proposal_verbose,
-                                                           'metaList':session_data. meta_list,
-                                                           'current_time': session_data.current_time,
-                                                           'user': session_data.user},
+            return render_to_response('home/status.html', \
+                {'instrument': session_data.instrument,
+                 'status': 'Starting Upload',
+                 'proposal':session_data.proposal_verbose,
+                 'metaList':session_data. meta_list,
+                 'current_time': session_data.current_time,
+                 'user': session_data.user},
                                       context_instance=RequestContext(request))
     else:
         value_pair = urlparse(request.get_full_path())
@@ -391,7 +393,7 @@ def modify(request):
 
         if mod_type == 'enterDir':
             root_dir = os.path.join(root_dir, path)
-            directory_history.append(path)
+            session_data.directory_history.append(path)
 
         elif mod_type == 'toggleFile':
             if full not in session_data.selected_files:
@@ -409,16 +411,16 @@ def modify(request):
             else:
                 index = session_data.selected_dirs.index(full)
                 session_data.selected_dirs.remove(full)
-                del dir_sizes[index]
+                del session_data.dir_sizes[index]
 
         elif mod_type == "upDir":
             index = int(path)
             del session_data.directory_history[index:]
-            print current_directory(directory_history)
+            print current_directory(session_data.directory_history)
 
-    return HttpResponseRedirect(reverse('home.views.list'))
+    return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
-def Login(request):
+def login(request):
     """
     Logs the user in
     If the login fails for whatever reason, authentication, invalid for instrument, etc.,
@@ -518,22 +520,21 @@ def Login(request):
                         print j
                 print ""
 
-        return HttpResponseRedirect(reverse('home.views.list'))
+        return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
     else:
         print "no Post"
         return render_to_response('home/login.html', context_instance=RequestContext(request))
 
-def Logout(request):
+def logout(request):
     """
     logs the user out and returns to the main page
     which will bounce to the login page
     """
-    global password
-    global user
+    global session_data
 
-    user = password = ''
+    session_data.user = session_data.password = ''
 
-    return HttpResponseRedirect(reverse('home.views.list'))
+    return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
 def incremental_status(request):
     """
