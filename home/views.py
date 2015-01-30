@@ -1,4 +1,8 @@
 #pylint: disable=no-member
+# justification:  dynamic methods
+
+#pylint: disable=invalid-name
+# justification: module level variables
 
 """
 Django views, handle requests from the client side pages
@@ -55,6 +59,8 @@ class FolderMeta(object):
     def __init__(self):
         pass
 
+
+
 class SessionData(object):
     """
     meta data about a folder, including filecount, directory count, and the total bytes.
@@ -80,7 +86,6 @@ class SessionData(object):
 
     # process that handles bundling and uploading
     bundle_process = None
-
 
 # Module level variables
 session_data = SessionData()
@@ -280,6 +285,91 @@ def populate_upload_page(request):
         },
                               context_instance=RequestContext(request))
 
+def spin_off_upload(request, session_data):
+    """
+    spins the upload process off to a background celery process
+    """
+
+    root_dir = current_directory(session_data.directory_history)
+
+    # get the meta data values from the post
+    for meta in session_data. meta_list:
+        value = request.POST.get(meta.name)
+        if value:
+            meta.value = value
+
+    # get the selected proposal string from the post
+    session_data.proposal_verbose = request.POST.get("proposal")
+
+    # split the proposal string into ID and description
+    split = session_data.proposal_verbose.split()
+    session_data.proposal_id = split[0]
+
+    # get the root directory from the database
+    data_path = Filepath.objects.get(name="dataRoot")
+    if data_path is not None:
+        root_dir = data_path.fullpath
+    else:
+        # handle error here
+        root_dir = ""
+
+    # get the correct \/ orientation for the OS
+    root = root_dir.replace("\\", "/")
+
+    #create a list of tuples (filepath, arcpath)
+    tuples = []
+    file_tuples(session_data.selected_files, tuples, root)
+    file_tuples(session_data.selected_dirs, tuples, root)
+
+    # create the groups dictionary
+    #{"groups":[{"name":"FOO1", "type":"Tag"}]}
+    groups = {}
+    for meta in session_data.meta_list:
+        groups[meta.name] = meta.value
+
+    session_data.current_time = datetime.datetime.now().time().strftime("%m.%d.%Y.%H.%M.%S")
+
+    target_path = Filepath.objects.get(name="target")
+    if target_path is not None:
+        target_dir = target_path.fullpath
+    else:
+        target_dir = root_dir
+
+    bundle_name = os.path.join(target_dir, session_data.current_time + ".tar")
+
+    server_path = Filepath.objects.get(name="server")
+    if server_path is not None:
+        full_server_path = server_path.fullpath
+    else:
+        #handle error here
+        full_server_path = "dev1.my.emsl.pnl.gov"
+
+    # spin this off as a background process and load the status page
+    session_data.bundle_process = \
+                tasks.upload_files.delay(bundle_name=bundle_name,
+                                         instrument_name=session_data.instrument,
+                                         proposal=session_data.proposal_id,
+                                         file_list=tuples,
+                                         groups=groups,
+                                         server=full_server_path,
+                                         user=session_data.user,
+                                         password=session_data.password)
+
+    return render_to_response('home/status.html', \
+                {'instrument': session_data.instrument,
+                 'status': 'Starting Upload',
+                 'proposal':session_data.proposal_verbose,
+                 'metaList':session_data. meta_list,
+                 'current_time': session_data.current_time,
+                 'user': session_data.user},
+                              context_instance=RequestContext(request))
+
+def clear_upload_lists(session_data):
+    """
+    clears the directory and file lists
+    """
+    session_data.selected_files = []
+    session_data.selected_dirs = []
 
 def modify(request):
     """
@@ -301,83 +391,11 @@ def modify(request):
         print request.POST
 
         if request.POST.get("Clear"):
-            session_data.selected_files = []
-            session_data.selected_dirs = []
-
-        for meta in session_data. meta_list:
-            value = request.POST.get(meta.name)
-            if value:
-                meta.value = value
-                print meta.name + ": " + meta.value
-
-        session_data.proposal_verbose = request.POST.get("proposal")
-        print "proposal:  " + session_data.proposal_verbose
-
-        split = session_data.proposal_verbose.split()
-        session_data.proposal_id = split[0]
-
-        print session_data.proposal_id
+            clear_upload_lists(session_data)
 
         if request.POST.get("Upload Files & Metadata"):
+            return spin_off_upload(request, session_data)
 
-            print "uploading now"
-
-            data_path = Filepath.objects.get(name="dataRoot")
-            if data_path is not None:
-                root_dir = data_path.fullpath
-            else:
-                root_dir = ""
-
-            # get the correct \/ orientation for the OS
-            root = root_dir.replace("\\", "/")
-
-            #create a list of tuples to meet the call format
-            tuples = []
-            file_tuples(session_data.selected_files, tuples, root)
-            file_tuples(session_data.selected_dirs, tuples, root)
-            print tuples
-
-            # create the groups dictionary
-            #{"groups":[{"name":"FOO1", "type":"Tag"}]}
-            groups = {}
-            for meta in session_data.meta_list:
-                groups[meta.name] = meta.value
-
-            session_data.current_time = datetime.datetime.now().time().strftime("%m.%d.%Y.%H.%M.%S")
-
-            target_path = Filepath.objects.get(name="target")
-            if target_path is not None:
-                target_dir = target_path.fullpath
-            else:
-                target_dir = root_dir
-
-            bundle_name = os.path.join(target_dir, session_data.current_time + ".tar")
-
-            server_path = Filepath.objects.get(name="server")
-            if server_path is not None:
-                full_server_path = server_path.fullpath
-            else:
-                full_server_path = "dev1.my.emsl.pnl.gov"
-
-            # spin this off as a background process and load the status page
-            session_data.bundle_process = \
-                tasks.upload_files.delay(bundle_name=bundle_name,
-                                         instrument_name=session_data.instrument,
-                                         proposal=session_data.proposal_id,
-                                         file_list=tuples,
-                                         groups=groups,
-                                         server=full_server_path,
-                                         user=session_data.user,
-                                         password=session_data.password)
-
-            return render_to_response('home/status.html', \
-                {'instrument': session_data.instrument,
-                 'status': 'Starting Upload',
-                 'proposal':session_data.proposal_verbose,
-                 'metaList':session_data. meta_list,
-                 'current_time': session_data.current_time,
-                 'user': session_data.user},
-                                      context_instance=RequestContext(request))
     else:
         value_pair = urlparse(request.get_full_path())
         params = value_pair.query.split("=")
@@ -530,6 +548,10 @@ def logout(request):
     logs the user out and returns to the main page
     which will bounce to the login page
     """
+
+    # pass pylint
+    request = request
+
     global session_data
 
     session_data.user = session_data.password = ''
@@ -540,6 +562,8 @@ def incremental_status(request):
     """
     updates the status page with the current status of the background upload process
     """
+    # pass pylint
+    request = request
 
     global session_data
 

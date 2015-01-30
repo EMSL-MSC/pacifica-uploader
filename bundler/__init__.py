@@ -1,4 +1,7 @@
 #! /usr/bin/env python
+
+#pylint: disable=unused-argument
+
 """
 A Bundler module that aggregates files into a single bundle
 """
@@ -26,8 +29,10 @@ class BundlerError(Exception):
 
         @param msg: A custom message packaged with the exception
         """
-        super(BundlerError, self, Exception).__init__()
+        # super(BundlerError, self, Exception).__init__()
         self.msg = msg
+
+        current_task.update_state(state='FAILURE', meta={'info': msg})
 
     def __str__(self):
         """
@@ -339,14 +344,6 @@ class TarBundler(FileBundler):
         metadata_file.close()
         tarball.close()
 
-def error_handler(err):
-    """
-    routes errors to the celery status updater to pass to the uploader via the Rabbit mq
-    """
-
-    print >> sys.stderr, err
-    # celery call
-    current_task.update_state(state='FAILURE', meta={'info': err})
 
 def bundle(bundle_name='',
            instrument_name='',
@@ -379,24 +376,19 @@ def bundle(bundle_name='',
 
     # validate parameters
     if bundle_name == None or bundle_name == '':
-        error_handler("Missing bundle name")
-        return
+        raise BundlerError("Missing bundle name")
 
     if instrument_name == None or instrument_name == '':
-        error_handler("Missing instrument name")
-        return
+        raise BundlerError("Missing instrument name")
 
     if proposal == None or proposal == '':
-        error_handler("Missing proposal")
-        return
+        raise BundlerError("Missing proposal")
 
     if file_list == None or len(file_list) == 0:
-        error_handler("Missing file list")
-        return
+        raise BundlerError("Missing file list")
 
     if groups == None or groups == '':
-        error_handler("Missing groups")
-        return
+        raise BundlerError("Missing groups")
 
     if verbose:
         print >> sys.stderr, "Start bundling %s" % bundle_name
@@ -442,7 +434,7 @@ def bundle(bundle_name='',
                 meta={'Status': "Bundling percent complete: " + str(percent_complete)})
 
         except BundlerError, err:
-            error_handler("Failed to bundle file: %s: %s" % (file_path, err.msg))
+            raise BundlerError("Failed to bundle file: %s: %s" % (file_path, err.msg))
 
     bundler.bundle_metadata()
 

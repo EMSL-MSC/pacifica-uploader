@@ -3,6 +3,7 @@
 An Uploader module that uses PycURL to transfer data
 """
 #pylint: disable=no-member
+#pylint: disable=unused-argument
 
 import os
 import sys
