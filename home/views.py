@@ -12,8 +12,6 @@ from __future__ import absolute_import
 
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.shortcuts import render_to_response
-from django.template import RequestContext
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 from django.core.urlresolvers import reverse
@@ -285,25 +283,25 @@ def populate_upload_page(request):
         },
                               context_instance=RequestContext(request))
 
-def spin_off_upload(request, session_data):
+def spin_off_upload(request, s_data):
     """
     spins the upload process off to a background celery process
     """
 
-    root_dir = current_directory(session_data.directory_history)
+    root_dir = current_directory(s_data.directory_history)
 
     # get the meta data values from the post
-    for meta in session_data. meta_list:
+    for meta in s_data. meta_list:
         value = request.POST.get(meta.name)
         if value:
             meta.value = value
 
     # get the selected proposal string from the post
-    session_data.proposal_verbose = request.POST.get("proposal")
+    s_data.proposal_verbose = request.POST.get("proposal")
 
     # split the proposal string into ID and description
-    split = session_data.proposal_verbose.split()
-    session_data.proposal_id = split[0]
+    split = s_data.proposal_verbose.split()
+    s_data.proposal_id = split[0]
 
     # get the root directory from the database
     data_path = Filepath.objects.get(name="dataRoot")
@@ -318,16 +316,16 @@ def spin_off_upload(request, session_data):
 
     #create a list of tuples (filepath, arcpath)
     tuples = []
-    file_tuples(session_data.selected_files, tuples, root)
-    file_tuples(session_data.selected_dirs, tuples, root)
+    file_tuples(s_data.selected_files, tuples, root)
+    file_tuples(s_data.selected_dirs, tuples, root)
 
     # create the groups dictionary
     #{"groups":[{"name":"FOO1", "type":"Tag"}]}
     groups = {}
-    for meta in session_data.meta_list:
+    for meta in s_data.meta_list:
         groups[meta.name] = meta.value
 
-    session_data.current_time = datetime.datetime.now().time().strftime("%m.%d.%Y.%H.%M.%S")
+    s_data.current_time = datetime.datetime.now().time().strftime("%m.%d.%Y.%H.%M.%S")
 
     target_path = Filepath.objects.get(name="target")
     if target_path is not None:
@@ -335,7 +333,7 @@ def spin_off_upload(request, session_data):
     else:
         target_dir = root_dir
 
-    bundle_name = os.path.join(target_dir, session_data.current_time + ".tar")
+    bundle_name = os.path.join(target_dir, s_data.current_time + ".tar")
 
     server_path = Filepath.objects.get(name="server")
     if server_path is not None:
@@ -345,31 +343,31 @@ def spin_off_upload(request, session_data):
         full_server_path = "dev1.my.emsl.pnl.gov"
 
     # spin this off as a background process and load the status page
-    session_data.bundle_process = \
+    s_data.bundle_process = \
                 tasks.upload_files.delay(bundle_name=bundle_name,
-                                         instrument_name=session_data.instrument,
-                                         proposal=session_data.proposal_id,
+                                         instrument_name=s_data.instrument,
+                                         proposal=s_data.proposal_id,
                                          file_list=tuples,
                                          groups=groups,
                                          server=full_server_path,
-                                         user=session_data.user,
-                                         password=session_data.password)
+                                         user=s_data.user,
+                                         password=s_data.password)
 
     return render_to_response('home/status.html', \
-                {'instrument': session_data.instrument,
+                {'instrument': s_data.instrument,
                  'status': 'Starting Upload',
-                 'proposal':session_data.proposal_verbose,
-                 'metaList':session_data. meta_list,
-                 'current_time': session_data.current_time,
-                 'user': session_data.user},
+                 'proposal':s_data.proposal_verbose,
+                 'metaList':s_data. meta_list,
+                 'current_time': s_data.current_time,
+                 'user': s_data.user},
                               context_instance=RequestContext(request))
 
-def clear_upload_lists(session_data):
+def clear_upload_lists(s_data):
     """
     clears the directory and file lists
     """
-    session_data.selected_files = []
-    session_data.selected_dirs = []
+    s_data.selected_files = []
+    s_data.selected_dirs = []
 
 def modify(request):
     """
@@ -464,10 +462,7 @@ def login(request):
         authorized = test_authorization(protocol="https",
                                         server=full_server_path,
                                         user=session_data.user,
-                                        insecure=True,
-                                        password=session_data.password,
-                                        negotiate=False,
-                                        verbose=True)
+                                        password=session_data.password)
 
         if not authorized:
             session_data.password = ""
@@ -480,10 +475,7 @@ def login(request):
         info = user_info(protocol="https",
                          server=full_server_path,
                          user=session_data.user,
-                         insecure=True,
-                         password=session_data.password,
-                         negotiate=False,
-                         verbose=True)
+                         password=session_data.password)
 
         json_parsed = 0
         try:

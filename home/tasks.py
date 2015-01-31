@@ -31,8 +31,6 @@ def upload_files(bundle_name='',
            instrument_name=instrument_name,
            proposal=proposal,
            file_list=file_list,
-           recursive=False,
-           verbose=True,
            groups=groups)
 
 
@@ -42,10 +40,7 @@ def upload_files(bundle_name='',
                  protocol="https",
                  server=server,
                  user=user,
-                 insecure=True,
-                 password=password,
-                 negotiate=False,
-                 verbose=True)
+                 password=password)
 
     if res is None:
         current_task.update_state("FAILURE", \

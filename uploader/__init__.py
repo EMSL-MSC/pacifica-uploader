@@ -3,7 +3,7 @@
 An Uploader module that uses PycURL to transfer data
 """
 #pylint: disable=no-member
-#pylint: disable=unused-argument
+#pylint: disable=no-member
 
 import os
 import sys
@@ -33,6 +33,8 @@ class UploaderError(Exception):
 
         @param msg: A custom message packaged with the exception
         """
+        super(UploaderError, self).__init__(msg)
+
         self.msg = msg
         self.outage = outage
 
@@ -49,9 +51,7 @@ class UploaderError(Exception):
 def pycurl_session(protocol='https',
                    server='dev1.my.emsl.pnl.gov',
                    user='',
-                   password=':',
-                   negotiate=False,
-                   verbose=False):
+                   password=':'):
     """
     Uploads a bundle of files via cURL to a specified server
 
@@ -62,22 +62,15 @@ def pycurl_session(protocol='https',
             The server
         user
             The user name on the destination server to use
-        insecure
-            Use insecure authentication ( don't verify the destination server )
         password
             The password to use for the selected user on the destination server
-        negotiate
-            Use Kerberos5 negotiation to authenticate
-        verbose
-            Print lots and lots of status information
     """
 
     # @todo: get cURL to use protocol as a guide for authentication type
     url = '%s://%s' % (protocol, server)
 
-    if verbose:
-        print >> sys.stderr, 'Server URL: %s' % url
-        print >> sys.stderr, 'User: %s' % user
+    print >> sys.stderr, 'Server URL: %s' % url
+    print >> sys.stderr, 'User: %s' % user
 
     server = ''
     location = ''
@@ -90,18 +83,8 @@ def pycurl_session(protocol='https',
     #pycurl_httpauth = pycurl.HTTPAUTH_ANY
     pycurl_httpauth = pycurl.HTTPAUTH_BASIC
 
-    # Enable Kerberos5 GssNegotiation for authentication.  Equivalent to
-    # --negotiate cli option
-    # we don't negotiate with terrorists
-    #if negotiate:
-    #    pycurl_httpauth = pycurl.HTTPAUTH_GSSNEGOTIATE
-
-    # Set SSL verification mode.  If insecure == true, this is equivalent to
-    # the --insecure cli option
-    #pycurl_ssl_verifypeer = not insecure
-
     # Set verbose mode in cURL
-    pycurl_verbose = verbose
+    pycurl_verbose = True
 
     #cookie_file = tempfile.NamedTemporaryFile()
     #cookie_jar = cookie_file.name
@@ -113,10 +96,9 @@ def pycurl_session(protocol='https',
         print "deleting " + cookie_file
         os.remove(cookie_file)
 
-    if verbose:
-        print >> sys.stderr, 'cookie file: %s' % cookie_file
-        print >> sys.stderr, 'cookie jar: %s' % cookie_jar
-        print >> sys.stderr, 'Performing cURL preallocation'
+    print >> sys.stderr, 'cookie file: %s' % cookie_file
+    print >> sys.stderr, 'cookie jar: %s' % cookie_jar
+    print >> sys.stderr, 'Performing cURL preallocation'
 
     #odata = StringIO()
     odata = sys.stderr
@@ -150,16 +132,13 @@ def pycurl_session(protocol='https',
 def user_info(protocol='https',
               server='dev1.my.emsl.pnl.gov',
               user='',
-              insecure=False,
-              password=':',
-              negotiate=False,
-              verbose=False):
+              password=':'):
 
     """
     gets the user info from the EUS database mirror on the backend server
     """
 
-    session = pycurl_session(protocol, server, user, password, negotiate, verbose)
+    session = pycurl_session(protocol, server, user, password)
 
     curl = session.curl
 
@@ -183,16 +162,13 @@ def user_info(protocol='https',
 def test_authorization(protocol='https',
                        server='',
                        user='',
-                       insecure=False,
-                       password=':',
-                       negotiate=False,
-                       verbose=False):
+                       password=':'):
 
     """
     Validates the user as a MyEMSL user
     """
 
-    session = pycurl_session(protocol, server, user, password, negotiate, verbose)
+    session = pycurl_session(protocol, server, user, password)
 
     curl = session.curl
 
@@ -232,10 +208,7 @@ def upload(bundle_name='',
            protocol='https',
            server='',
            user='',
-           insecure=False,
-           password='',
-           negotiate=False,
-           verbose=False):
+           password=''):
     """
     Uploads a bundle of files via cURL to a specified server
 
@@ -248,15 +221,8 @@ def upload(bundle_name='',
             The server to which the bundle should be uploaded
         user
             The user name on the destination server to use for the upload
-        insecure
-            Use insecure authentication ( don't verify the destination server )
         password
             The password to use for the selected user on the destination server
-        negotiate
-            Use Kerberos5 negotiation to authenticate the upload
-        verbose
-            Print lots and lots of status information for the upload
-
     @note This function assumes a bundle has been created already and is ready to upload
     """
     status = None
@@ -272,16 +238,15 @@ def upload(bundle_name='',
     #if user == '':
     #    user = os.getlogin()
 
-    if verbose:
-        print >> sys.stderr, 'Server URL: %s' % url
-        print >> sys.stderr, 'File: %s' % bundle_path
-        print >> sys.stderr, 'User: %s' % user
+    print >> sys.stderr, 'Server URL: %s' % url
+    print >> sys.stderr, 'File: %s' % bundle_path
+    print >> sys.stderr, 'User: %s' % user
 
     server = ''
     location = ''
 
     #gets a session to be used for the entire upload
-    session = pycurl_session(protocol, server, user, password, negotiate, verbose)
+    session = pycurl_session(protocol, server, user, password)
 
     curl = session.curl
     odata = StringIO()
@@ -289,8 +254,8 @@ def upload(bundle_name='',
 
     #**************************************************
     # Pre-allocate with cURL
-    if verbose:
-        print >> sys.stderr, 'Performing cURL preallocation'
+    print >> sys.stderr, 'Performing cURL preallocation'
+
     try:
         # Set the URL for the curl query.
         pyurl = url + "/myemsl/cgi-bin/preallocate"
@@ -329,13 +294,12 @@ def upload(bundle_name='',
     # Set the URL with the server data fetched via cURL
     url = '%s://%s' % (protocol, server)
 
-    if verbose:
-        print >> sys.stderr, 'Fetched Server: %s' % server
-        print >> sys.stderr, 'Fetched Location: %s' % location
-        print >> sys.stderr, 'New Server URL: %s' % url
+    print >> sys.stderr, 'Fetched Server: %s' % server
+    print >> sys.stderr, 'Fetched Location: %s' % location
+    print >> sys.stderr, 'New Server URL: %s' % url
 
-        # Upload bundle with cURL
-        print >> sys.stderr, 'Peforming cURL upload of bundle of %s' % bundle_path
+    # Upload bundle with cURL
+    print >> sys.stderr, 'Peforming cURL upload of bundle of %s' % bundle_path
 
     try:
         # Set the URL for the curl query.
@@ -371,8 +335,7 @@ def upload(bundle_name='',
 
     #************************************************************************
     # Finalize the upload
-    if verbose:
-        print >> sys.stderr, 'Peforming cURL finalization of upload'
+    print >> sys.stderr, 'Peforming cURL finalization of upload'
 
     try:
         #turn off upload

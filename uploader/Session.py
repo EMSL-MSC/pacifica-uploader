@@ -10,11 +10,10 @@ class Session(object):
     classdocs
     '''
     curl = None
-    url = ""
-    verbose = True
-    server = ""
-    location = ""
-    
+    url = ''
+    server = ''
+    location = ''
+
     def __init__(self):
         '''
         Constructor
