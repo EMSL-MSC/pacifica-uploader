@@ -2,6 +2,7 @@
 Celery tasks to be run in the background
 """
 
+
 from __future__ import absolute_import
 from celery import shared_task, current_task
 import sys
