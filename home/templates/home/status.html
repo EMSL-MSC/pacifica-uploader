@@ -7,10 +7,10 @@
     <script type="text/javascript">
         var url = '/incStatus';
         worker();
+	$.ajaxSetup({cache:false});
         function worker() {
-            $.ajax({
-                url: url,
-                success: function (data) {
+            var jqobject = $.ajax(url)
+                .done(function(data){
                     var dataObj = $.parseJSON(data);
                     $('#status_text').html(JSON.stringify(dataObj.result));
                     $('#currState').html(dataObj.state);
@@ -20,11 +20,14 @@
                         window.location.href = '/';
                         win.focus();
                     }
-                },
-                complete: function () {
+                })
+                .fail(function(obj, textStatus, error){
+                    alert("error");
+                })
+                .always(function(){
                     setTimeout(worker, 1000);
-                }
-            });
+                });
+
         };
     </script>
 	<style type="text/css">

@@ -64,6 +64,7 @@
     <Folder Include="home\templates\home\images\" />
     <Folder Include="home\templatetags\" />
     <Folder Include="Doc\" />
+    <Folder Include="media\" />
     <Folder Include="uploader\" />
     <Folder Include="UploadServer\" />
     <Folder Include="UploadServer\static\" />
@@ -86,6 +87,19 @@
     <Content Include="home\templates\home\status.html" />
     <Content Include="home\templates\home\uploader.html" />
     <Content Include="db.sqlite3" />
+    <Content Include="media\.DS_Store" />
+    <Content Include="media\bunny.jpg" />
+    <Content Include="media\checkbox-checked.png" />
+    <Content Include="media\checkbox-unchecked.png" />
+    <Content Include="media\emsl.png" />
+    <Content Include="media\emsl_logo-white.png" />
+    <Content Include="media\file3.png" />
+    <Content Include="media\folder.ico" />
+    <Content Include="media\folder.png" />
+    <Content Include="media\jquery-1.11.2.js" />
+    <Content Include="media\jquery-2.1.3.js" />
+    <Content Include="media\jquery-2.1.3.min.js" />
+    <Content Include="media\x_14x14.png" />
     <Content Include="ToDo.txt" />
     <Content Include="UploadServer\paths.txt" />
   </ItemGroup>

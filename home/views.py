@@ -446,10 +446,9 @@ def login(request):
 
     global session_data
 
-    session_data.user = session_data.password = ''
+    cleanup_session(session_data)
 
     if request.POST:
-        print "Post"
         session_data.user = request.POST['username']
         session_data.password = request.POST['password']
 
@@ -535,6 +534,28 @@ def login(request):
         print "no Post"
         return render_to_response('home/login.html', context_instance=RequestContext(request))
 
+def cleanup_session(s_data):
+    """
+    resets a session to a clean state
+    """
+
+    s_data.meta_list = []
+    s_data.bundle_process = None
+    s_data.current_time = None
+    s_data.dir_sizes = []
+    s_data.directory_history = []
+    s_data.file_sizes = []
+    s_data.instrument = None
+    s_data.proposal_id = None
+    s_data.proposal_list = []
+    s_data.selected_dirs = []
+    s_data.selected_files = []
+
+    """ don't clear user and password, done where appropriate
+    s_data.user = ''
+    s_data.password = ''
+    """
+
 def logout(request):
     """
     logs the user out and returns to the main page
@@ -547,6 +568,7 @@ def logout(request):
     global session_data
 
     session_data.user = session_data.password = ''
+    cleanup_session(session_data)
 
     return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
@@ -560,10 +582,14 @@ def incremental_status(request):
     global session_data
 
     output = session_data.bundle_process.status
+    if output is None:
+        output = "FAILURE"
     state = output
     print state
 
     output = session_data.bundle_process.result
+    if output is None:
+        output = "FAILURE"
     result = output
     print result
 
