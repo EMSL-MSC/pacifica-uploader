@@ -26,6 +26,7 @@ import os
 import platform
 
 import psutil
+from subprocess import call
 
 from uploader import test_authorization
 from uploader import user_info
@@ -91,13 +92,24 @@ class SessionData(object):
 session_data = SessionData()
 
 def celery_lives():
+    """
+    check to see if the celery process to bundle and upload is alive, alive!
+    """
     for proc in psutil.process_iter():
         try:
-            if proc.name() == 'Celery.exe':
+            name = proc.name().lower()
+            print name
+            if name == 'celery.exe':
                 return True
         except:
             pass
     return False
+
+def start_celery():
+    """
+    starts the celery process
+    """
+    call(['StartCelery.bat', ''])
 
 def current_directory(history):
     """
@@ -298,6 +310,29 @@ def spin_off_upload(request, s_data):
     """
     spins the upload process off to a background celery process
     """
+
+    # check to see if background celery process is alive
+    # if not, start it.  Wait 5 seconds, if it doesn't start,
+    # we're boned.
+    alive = celery_lives()
+    print 'Celery lives = %s' % (alive)
+    if not alive:
+        start_celery()
+        count = 0
+        while not alive and count < 5:
+            sleep (1)
+            alive = celery_lives()
+            count = count + 1
+        if not alive:
+            return render_to_response('home/status.html', \
+                                     {'instrument': s_data.instrument,
+                                      'status': 'Upload processor has failed',
+                                      'proposal':s_data.proposal_verbose,
+                                      'metaList':s_data. meta_list,
+                                      'current_time': s_data.current_time,
+                                      'user': s_data.user},
+                                     context_instance=RequestContext(request))
+
 
     root_dir = current_directory(s_data.directory_history)
 
@@ -591,9 +626,6 @@ def incremental_status(request):
     request = request
 
     global session_data
-
-    alive = celery_lives()
-    print 'Celery lives = %s' % (alive)
 
     output = session_data.bundle_process.status
     if output is None:
