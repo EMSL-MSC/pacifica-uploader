@@ -16,7 +16,7 @@ import bundler
 from getpass import getpass
 from StringIO import StringIO
 
-from Session import Session
+from PycurlSession import PycurlSession
 
 from time import sleep
 
@@ -121,7 +121,7 @@ def pycurl_session(protocol='https',
     curl.setopt(pycurl.FOLLOWLOCATION, 1)
     curl.setopt(pycurl.UNRESTRICTED_AUTH, 1)
 
-    retval = Session()
+    retval = PycurlSession()
     retval.curl = curl
     retval.url = url
     retval.server = server
