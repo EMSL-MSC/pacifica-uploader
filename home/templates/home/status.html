@@ -22,7 +22,7 @@
                     }
                 })
                 .fail(function(obj, textStatus, error){
-                    alert("error");
+                    $('#currState').html('javascript error');
                 })
                 .always(function(){
                     setTimeout(worker, 1000);
