@@ -25,6 +25,8 @@ from urlparse import urlparse
 import os
 import platform
 
+import psutil
+
 from uploader import test_authorization
 from uploader import user_info
 
@@ -87,6 +89,15 @@ class SessionData(object):
 
 # Module level variables
 session_data = SessionData()
+
+def celery_lives():
+    for proc in psutil.process_iter():
+        try:
+            if proc.name() == 'Celery.exe':
+                return True
+        except:
+            pass
+    return False
 
 def current_directory(history):
     """
@@ -580,6 +591,9 @@ def incremental_status(request):
     request = request
 
     global session_data
+
+    alive = celery_lives()
+    print 'Celery lives = %s' % (alive)
 
     output = session_data.bundle_process.status
     if output is None:
