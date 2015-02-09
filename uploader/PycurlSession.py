@@ -5,7 +5,7 @@ Created on Oct 30, 2014
 '''
 import pycurl
 
-class Session(object):
+class PycurlSession(object):
     '''
     classdocs
     '''
