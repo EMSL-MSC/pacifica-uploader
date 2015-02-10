@@ -110,6 +110,11 @@ def start_celery():
     starts the celery process
     """
     call(['StartCelery.bat', ''])
+    count = 0
+    while not alive and count < 5:
+        sleep (1)
+        alive = celery_lives()
+        count = count + 1
 
 def current_directory(history):
     """
@@ -318,11 +323,6 @@ def spin_off_upload(request, s_data):
     print 'Celery lives = %s' % (alive)
     if not alive:
         start_celery()
-        count = 0
-        while not alive and count < 5:
-            sleep (1)
-            alive = celery_lives()
-            count = count + 1
         if not alive:
             return render_to_response('home/status.html', \
                                      {'instrument': s_data.instrument,
