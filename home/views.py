@@ -243,6 +243,8 @@ def populate_upload_page(request):
 
     # first time through go to login page
     if session_data.password == '':
+        #test to see if the user's browser is set to support cookies
+        request.session.set_test_cookie()
         return render_to_response('home/login.html', \
             {'message': ""}, context_instance=RequestContext(request))
 
@@ -495,6 +497,14 @@ def login(request):
     cleanup_session(session_data)
 
     if request.POST:
+        if request.session.test_cookie_worked():
+            request.session.delete_test_cookie()
+        else:
+            return render_to_response('home/login.html', \
+                                     {'message': "Cookie test failed.  If cookies are disabled, please enable cookies and try again."}, \
+                                     context_instance=RequestContext(request))
+
+
         session_data.user = request.POST['username']
         session_data.password = request.POST['password']
 
