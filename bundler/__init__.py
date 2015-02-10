@@ -46,8 +46,6 @@ class BundlerError(Exception):
         """
         return "Bundler failed: %s" % self.msg
 
-
-
 class FileBundler():
     """
     An 'Abstract' Base Class that provide a template by which bundlers using
@@ -87,8 +85,10 @@ class FileBundler():
         """
         Bundle in the metadata for the bundled files
         """
-
-        metadata = '{"version":"1.0.0","eusInfo":{'
+        # version 1.2.0 pushes the data to a "data" directory while the 
+        # metadata.txt file lives in the root.  This keeps us from collisions with users
+        # having their own versions of metadata.txt
+        metadata = '{"version":"1.2.0","eusInfo":{'
 
         need_comma = False
         if self.proposal_id != '':
@@ -118,7 +118,10 @@ class FileBundler():
 
         # Add metadata for each file
         for (file_arcname, file_hash) in self.hash_dict.items():
-            (file_dir, file_name) = os.path.split(file_arcname)
+            # prepend the file paths and destination filepaths with the data\ directory to keep from
+            # metadata collisions with user files
+            modified_name = 'data/%s' % (file_arcname)
+            (file_dir, file_name) = os.path.split(modified_name)
             metadata += '{"sha1Hash":"%s","fileName":"%s", "destinationDirectory":"%s"},\n' \
                 % (file_hash, file_name, file_dir)
 
@@ -159,8 +162,10 @@ class FileBundler():
             raise BundlerError("%s doesn't exist" % file_path)
         if not os.access(file_path, os.R_OK):
             raise BundlerError("Can't read from %s" % file_path)
-        if 'metadata' in os.path.basename(file_path):
-            raise BundlerError("A metadata file may not be explicitly added to the bundle")
+
+        # removed for version 1.2 support that doesn't have this limitation.
+        # if 'metadata' in os.path.basename(file_path):
+        #     raise BundlerError("A metadata file may not be explicitly added to the bundle")
 
         file_mode = os.stat(file_path)[stat.ST_MODE]
         if not stat.S_ISDIR(file_mode) and not stat.S_ISREG(file_mode):
@@ -294,8 +299,11 @@ class TarBundler(FileBundler):
             self.empty_tar = False
         else:
             tarball = tarfile.TarFile(name=self.bundle_path, mode='a')
-
-        tarball.add(file_path, arcname=file_arcname, recursive=False)
+        
+        # for version 1.2, push files to a data/ directory to avoid collisions with metadata.txt
+        # in the root
+        modified_arc_name = 'data/%s' % (file_arcname)
+        tarball.add(file_path, arcname=modified_arc_name, recursive=False)
         tarball.close()
 
     def _bundle_metadata(self, metadata):
