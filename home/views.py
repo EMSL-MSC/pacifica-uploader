@@ -33,6 +33,8 @@ from uploader import user_info
 
 from home.models import Filepath
 from home.models import Metadata
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login
 
 from home import tasks
 
@@ -90,6 +92,31 @@ class SessionData(object):
 
 # Module level variables
 session_data = SessionData()
+
+def login_user_locally(request):
+    """
+    if we have a new user, let's create a new Django user and log them
+    in with a bogus password, "shrubbery".  Actual authentication will be done
+    before this function is called.
+    """
+    username = request.POST['username']
+    password = 'shrubbery'
+
+    # does this user exist?
+    user = User.objects.get(username=username)
+    if user is None:
+        #create a new user
+        user = User.objects.get(username=username)
+        user.set_password(password)
+        user.save()
+
+    # we have a local user that matches the already validated EUS user
+    # authenticate and log them in locally
+    user = authenticate(username=username, password=password)
+    if user is not None:
+        if user.is_active:
+            login(request, user)
+
 
 def celery_lives():
     """
@@ -241,12 +268,10 @@ def populate_upload_page(request):
 
     global session_data
 
-    # first time through go to login page
+    # if not logged in
     if session_data.password == '':
-        #test to see if the user's browser is set to support cookies
-        request.session.set_test_cookie()
-        return render_to_response('home/login.html', \
-            {'message': ""}, context_instance=RequestContext(request))
+        # call login error with no error message
+        return login_error(request, '')
 
     root_dir = current_directory(session_data.directory_history)
 
@@ -484,6 +509,15 @@ def modify(request):
 
     return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
+def login_error(request, error_string):
+    """
+    returns to the login page with an error message
+    """
+    #test to see if the user's browser is set to support cookies
+    request.session.set_test_cookie()
+    return render_to_response('home/login.html', {'message': error_string}, context_instance=RequestContext(request))
+
+
 def login(request):
     """
     Logs the user in
@@ -497,13 +531,12 @@ def login(request):
     cleanup_session(session_data)
 
     if request.POST:
+        # test that the browser is supporting cookies so we can maintain our session state
         if request.session.test_cookie_worked():
             request.session.delete_test_cookie()
         else:
-            return render_to_response('home/login.html', \
-                                     {'message': "Cookie test failed.  If cookies are disabled, please enable cookies and try again."}, \
-                                     context_instance=RequestContext(request))
-
+            return login_error(request, \
+                               'Cookie test failed.  If cookies are disabled, please enable cookies and try again.')
 
         session_data.user = request.POST['username']
         session_data.password = request.POST['password']
@@ -512,8 +545,9 @@ def login(request):
         if server_path is not None:
             full_server_path = server_path.fullpath
         else:
-            full_server_path = "dev1.my.emsl.pnl.gov"
+            return login_error(request, 'Server path does not exist')
 
+        # test to see if the user authorizes against EUS
         authorized = test_authorization(protocol="https",
                                         server=full_server_path,
                                         user=session_data.user,
@@ -521,12 +555,9 @@ def login(request):
 
         if not authorized:
             session_data.password = ""
-            return render_to_response('home/login.html', \
-                {'message': "User or Password is incorrect"}, \
-                context_instance=RequestContext(request))
+            return login_error(request, 'User or Password is incorrect')
 
-        print "password accepted"
-
+        # get the user's info from EUS
         info = user_info(protocol="https",
                          server=full_server_path,
                          user=session_data.user,
@@ -538,6 +569,7 @@ def login(request):
             json_parsed = 1
         except Exception:
             print "json failure"
+
         if json_parsed:
             print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
 
@@ -565,10 +597,13 @@ def login(request):
 
             if not valid_instrument:
                 session_data.password = ""
-                return render_to_response('home/login.html', \
-                    {'message': "User is not valid for this instrument"}, \
-                    context_instance=RequestContext(request))
+                return login_error(request, 'User is not valid for this instrument')
 
+            """
+            need to filter proposals based on the existing instrument 
+            if there is no valid proposal for the user for this instrument
+            throw and error
+            """
             print "props"
             props = info["proposals"]
             session_data.proposal_list = []
@@ -576,14 +611,23 @@ def login(request):
                 title = prop_block.get("title")
                 prop_str = prop_id + "  " + title
                 session_data.proposal_list.append(prop_str)
-                print prop_str
 
                 #for later
+                """
                 instruments = prop_block.get("instruments")
                 for i in instruments:
                     for j in i:
                         print j
-                print ""
+                """
+        else:
+            return login_error(request, 'Problem getting EUS user information')
+
+        # if the user passes EUS authentication then log them in locally for our session
+        login_user_locally(request)
+
+        # did that work?
+        if not request.user.is_authenticated():
+            return login_error(request, 'Problem with local authentication')
 
         return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
     else:
