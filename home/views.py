@@ -22,20 +22,29 @@ import datetime
 
 from urlparse import urlparse
 
+#operating system and platform
 import os
 import platform
 
+#celery heartbeat
 import psutil
 from subprocess import call
 
+#uploader
 from uploader import test_authorization
 from uploader import user_info
 
+#database imports
 from home.models import Filepath
 from home.models import Metadata
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login
 
+#session imports
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+from django.contrib import auth
+from django.contrib.auth.decorators import login_required
+
+# celery tasks
 from home import tasks
 
 class MetaData(object):
@@ -103,11 +112,14 @@ def login_user_locally(request):
     password = 'shrubbery'
 
     # does this user exist?
-    user = User.objects.get(username=username)
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        user = None
+
     if user is None:
         #create a new user
-        user = User.objects.get(username=username)
-        user.set_password(password)
+        user = User.objects.create_user(username=username, password=password)
         user.save()
 
     # we have a local user that matches the already validated EUS user
@@ -115,7 +127,7 @@ def login_user_locally(request):
     user = authenticate(username=username, password=password)
     if user is not None:
         if user.is_active:
-            login(request, user)
+            auth.login(request, user)
 
 
 def celery_lives():
@@ -260,7 +272,7 @@ def file_size_string(filename):
 
     return upload_size_string(total_size)
 
-#@login_required(login_url='/login/')
+@login_required(login_url='/login/')
 def populate_upload_page(request):
     """
     formats the main uploader page
@@ -271,6 +283,7 @@ def populate_upload_page(request):
     # if not logged in
     if session_data.password == '':
         # call login error with no error message
+        b = request.user.is_authenticated()
         return login_error(request, '')
 
     root_dir = current_directory(session_data.directory_history)
@@ -531,6 +544,9 @@ def login(request):
     cleanup_session(session_data)
 
     if request.POST:
+
+        b = request.user.is_authenticated()
+
         # test that the browser is supporting cookies so we can maintain our session state
         if request.session.test_cookie_worked():
             request.session.delete_test_cookie()
