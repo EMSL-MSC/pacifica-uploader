@@ -10,6 +10,8 @@ Django views, handle requests from the client side pages
 
 from __future__ import absolute_import
 
+from django.conf import settings
+
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponseRedirect
@@ -272,7 +274,7 @@ def file_size_string(filename):
 
     return upload_size_string(total_size)
 
-@login_required(login_url='/login/')
+@login_required(login_url=settings.LOGIN_URL)
 def populate_upload_page(request):
     """
     formats the main uploader page
@@ -528,8 +530,8 @@ def login_error(request, error_string):
     """
     #test to see if the user's browser is set to support cookies
     request.session.set_test_cookie()
-    return render_to_response('home/login.html', {'message': error_string}, context_instance=RequestContext(request))
 
+    return render_to_response(settings.LOGIN_VIEW, {'message': error_string}, context_instance=RequestContext(request))
 
 def login(request):
     """
@@ -543,100 +545,96 @@ def login(request):
 
     cleanup_session(session_data)
 
-    if request.POST:
+    b = request.user.is_authenticated()
 
-        b = request.user.is_authenticated()
+    # test that the browser is supporting cookies so we can maintain our session state
+    if request.session.test_cookie_worked():
+        request.session.delete_test_cookie()
+    else:
+        return login_error(request, \
+                            'Cookie test failed.  If cookies are disabled, please enable cookies and try again.')
 
-        # test that the browser is supporting cookies so we can maintain our session state
-        if request.session.test_cookie_worked():
-            request.session.delete_test_cookie()
+    session_data.user = request.POST['username']
+    session_data.password = request.POST['password']
+
+    server_path = Filepath.objects.get(name="server")
+    if server_path is not None:
+        full_server_path = server_path.fullpath
+    else:
+        return login_error(request, 'Server path does not exist')
+
+    # test to see if the user authorizes against EUS
+    authorized = test_authorization(protocol="https",
+                                    server=full_server_path,
+                                    user=session_data.user,
+                                    password=session_data.password)
+
+    if not authorized:
+        session_data.password = ""
+        return login_error(request, 'User or Password is incorrect')
+
+    # get the user's info from EUS
+    info = user_info(protocol="https",
+                        server=full_server_path,
+                        user=session_data.user,
+                        password=session_data.password)
+
+    json_parsed = 0
+    try:
+        info = json.loads(info)
+        json_parsed = 1
+    except Exception:
+        print "json failure"
+
+    if json_parsed:
+        print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
+
+        obj = Filepath.objects.get(name="instrument")
+        if obj:
+            session_data.instrument = obj.fullpath
         else:
-            return login_error(request, \
-                               'Cookie test failed.  If cookies are disabled, please enable cookies and try again.')
+            session_data.instrument = "unknown"
 
-        session_data.user = request.POST['username']
-        session_data.password = request.POST['password']
+        print "instrument:  " + session_data.instrument
 
-        server_path = Filepath.objects.get(name="server")
-        if server_path is not None:
-            full_server_path = server_path.fullpath
-        else:
-            return login_error(request, 'Server path does not exist')
+        print "instruments"
+        instruments = info["instruments"]
 
-        # test to see if the user authorizes against EUS
-        authorized = test_authorization(protocol="https",
-                                        server=full_server_path,
-                                        user=session_data.user,
-                                        password=session_data.password)
+        instrument_list = []
+        valid_instrument = False
+        for inst_id, inst_block in instruments.iteritems():
+            inst_name = inst_block.get("instrument_name")
+            inst_str = inst_id + "  " + inst_name
+            instrument_list.append(inst_str)
+            if session_data.instrument == inst_id:
+                valid_instrument = True
+            print inst_str
+            print ""
 
-        if not authorized:
+        if not valid_instrument:
             session_data.password = ""
-            return login_error(request, 'User or Password is incorrect')
+            return login_error(request, 'User is not valid for this instrument')
 
-        # get the user's info from EUS
-        info = user_info(protocol="https",
-                         server=full_server_path,
-                         user=session_data.user,
-                         password=session_data.password)
+        """
+        need to filter proposals based on the existing instrument 
+        if there is no valid proposal for the user for this instrument
+        throw and error
+        """
+        print "props"
+        props = info["proposals"]
+        session_data.proposal_list = []
+        for prop_id, prop_block in props.iteritems():
+            title = prop_block.get("title")
+            prop_str = prop_id + "  " + title
+            session_data.proposal_list.append(prop_str)
 
-        json_parsed = 0
-        try:
-            info = json.loads(info)
-            json_parsed = 1
-        except Exception:
-            print "json failure"
-
-        if json_parsed:
-            print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
-
-            obj = Filepath.objects.get(name="instrument")
-            if obj:
-                session_data.instrument = obj.fullpath
-            else:
-                session_data.instrument = "unknown"
-
-            print "instrument:  " + session_data.instrument
-
-            print "instruments"
-            instruments = info["instruments"]
-
-            instrument_list = []
-            valid_instrument = False
-            for inst_id, inst_block in instruments.iteritems():
-                inst_name = inst_block.get("instrument_name")
-                inst_str = inst_id + "  " + inst_name
-                instrument_list.append(inst_str)
-                if session_data.instrument == inst_id:
-                    valid_instrument = True
-                print inst_str
-                print ""
-
-            if not valid_instrument:
-                session_data.password = ""
-                return login_error(request, 'User is not valid for this instrument')
-
+            #for later
             """
-            need to filter proposals based on the existing instrument 
-            if there is no valid proposal for the user for this instrument
-            throw and error
+            instruments = prop_block.get("instruments")
+            for i in instruments:
+                for j in i:
+                    print j
             """
-            print "props"
-            props = info["proposals"]
-            session_data.proposal_list = []
-            for prop_id, prop_block in props.iteritems():
-                title = prop_block.get("title")
-                prop_str = prop_id + "  " + title
-                session_data.proposal_list.append(prop_str)
-
-                #for later
-                """
-                instruments = prop_block.get("instruments")
-                for i in instruments:
-                    for j in i:
-                        print j
-                """
-        else:
-            return login_error(request, 'Problem getting EUS user information')
 
         # if the user passes EUS authentication then log them in locally for our session
         login_user_locally(request)
