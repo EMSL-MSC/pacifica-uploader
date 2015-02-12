@@ -81,9 +81,10 @@ class SessionData(object):
     """
 
     user = ''
+    user_full_name = ''
+    password = ''
     current_time = ''
     instrument = ''
-    password = ''
     proposal_verbose = ''
     proposal_id = ''
     selected_dirs = []
@@ -524,6 +525,10 @@ def modify(request):
 
     return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
+"""
+login and login related accesories
+"""
+#########################################################################################
 def login_error(request, error_string):
     """
     returns to the login page with an error message
@@ -532,6 +537,63 @@ def login_error(request, error_string):
     request.session.set_test_cookie()
 
     return render_to_response(settings.LOGIN_VIEW, {'message': error_string}, context_instance=RequestContext(request))
+
+def populate_user_info(session_data, info):
+    """
+    parses user information from a json struct
+    """
+    try:
+        info = json.loads(info)
+    except Exception:
+        return 'Unable to parse user information'
+
+    print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
+
+    instruments = info["instruments"]
+
+    valid_instrument = False
+    for inst_id, inst_block in instruments.iteritems():
+        inst_name = inst_block.get("instrument_name")
+        inst_str = inst_id + "  " + inst_name
+        if session_data.instrument == inst_id:
+            valid_instrument = True
+        print inst_str
+        print ""
+
+    if not valid_instrument:
+        return 'User is not valid for this instrument'
+
+    """
+    need to filter proposals based on the existing instrument 
+    if there is no valid proposal for the user for this instrument
+    throw and error
+    """
+    print "props"
+    props = info["proposals"]
+    session_data.proposal_list = []
+    for prop_id, prop_block in props.iteritems():
+        title = prop_block.get("title")
+        prop_str = prop_id + "  " + title
+        # session_data.proposal_list.append(prop_str)
+
+        # list only proposals valid for this instrument
+        instruments = prop_block.get("instruments")
+
+        try:
+            if instruments is not None and instruments.count > 0:
+                for inst_id in instruments: # eh.  inst_id is a list of 1 element.
+                    id = str(inst_id[0])
+                    if session_data.instrument == id:
+                        session_data.proposal_list.append(prop_str)
+
+        except Exception, err:
+            print err.msg
+
+    if len(session_data.proposal_list) == 0:
+        return 'No valid proposals for this user on this instrument'
+
+    # no errors found
+    return ''
 
 def login(request):
     """
@@ -568,9 +630,7 @@ def login(request):
                                     server=full_server_path,
                                     user=session_data.user,
                                     password=session_data.password)
-
     if not authorized:
-        session_data.password = ""
         return login_error(request, 'User or Password is incorrect')
 
     # get the user's info from EUS
@@ -579,74 +639,24 @@ def login(request):
                         user=session_data.user,
                         password=session_data.password)
 
-    json_parsed = 0
-    try:
-        info = json.loads(info)
-        json_parsed = 1
-    except Exception:
-        print "json failure"
-
-    if json_parsed:
-        print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
-
-        obj = Filepath.objects.get(name="instrument")
-        if obj:
-            session_data.instrument = obj.fullpath
-        else:
-            session_data.instrument = "unknown"
-
-        print "instrument:  " + session_data.instrument
-
-        print "instruments"
-        instruments = info["instruments"]
-
-        instrument_list = []
-        valid_instrument = False
-        for inst_id, inst_block in instruments.iteritems():
-            inst_name = inst_block.get("instrument_name")
-            inst_str = inst_id + "  " + inst_name
-            instrument_list.append(inst_str)
-            if session_data.instrument == inst_id:
-                valid_instrument = True
-            print inst_str
-            print ""
-
-        if not valid_instrument:
-            session_data.password = ""
-            return login_error(request, 'User is not valid for this instrument')
-
-        """
-        need to filter proposals based on the existing instrument 
-        if there is no valid proposal for the user for this instrument
-        throw and error
-        """
-        print "props"
-        props = info["proposals"]
-        session_data.proposal_list = []
-        for prop_id, prop_block in props.iteritems():
-            title = prop_block.get("title")
-            prop_str = prop_id + "  " + title
-            session_data.proposal_list.append(prop_str)
-
-            #for later
-            """
-            instruments = prop_block.get("instruments")
-            for i in instruments:
-                for j in i:
-                    print j
-            """
-
-        # if the user passes EUS authentication then log them in locally for our session
-        login_user_locally(request)
-
-        # did that work?
-        if not request.user.is_authenticated():
-            return login_error(request, 'Problem with local authentication')
-
-        return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
+    inst = Filepath.objects.get(name="instrument")
+    if inst and inst is not '':
+        session_data.instrument = inst.fullpath
     else:
-        print "no Post"
-        return render_to_response('home/login.html', context_instance=RequestContext(request))
+        return login_error(request, 'This instrument is undefined')
+
+    err_str = populate_user_info(session_data, info)
+    if err_str is not '':
+        return login_error(request, err_str)
+
+    # if the user passes EUS authentication then log them in locally for our session
+    login_user_locally(request)
+
+    # did that work?
+    if not request.user.is_authenticated():
+        return login_error(request, 'Problem with local authentication')
+
+    return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
 def cleanup_session(s_data):
     """
@@ -664,11 +674,9 @@ def cleanup_session(s_data):
     s_data.proposal_list = []
     s_data.selected_dirs = []
     s_data.selected_files = []
-
-    """ don't clear user and password, done where appropriate
     s_data.user = ''
     s_data.password = ''
-    """
+    s_data.user_full_name = ''
 
 def logout(request):
     """
