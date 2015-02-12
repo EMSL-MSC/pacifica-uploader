@@ -47,6 +47,9 @@ ALLOWED_HOSTS = []
 # URL of the login page.
 LOGIN_URL = '/login/'
 
+# login view
+LOGIN_VIEW = 'home/login.html'
+
 # Application definition
 
 INSTALLED_APPS = (
