@@ -533,9 +533,6 @@ def login_error(request, error_string):
     """
     returns to the login page with an error message
     """
-    #test to see if the user's browser is set to support cookies
-    request.session.set_test_cookie()
-
     return render_to_response(settings.LOGIN_VIEW, {'message': error_string}, context_instance=RequestContext(request))
 
 def populate_user_info(session_data, info):
@@ -595,6 +592,20 @@ def populate_user_info(session_data, info):
     # no errors found
     return ''
 
+def cookie_test(request):
+    """
+    This test needs to be called twice in a row.  The first call should fail as the
+    cookie hasn't been set.  The second should succeed.  If it doesn't, 
+    you need to enable cookies on the browser.
+    """
+    # test that the browser is supporting cookies so we can maintain our session state
+    if request.session.test_cookie_worked():
+        request.session.delete_test_cookie()
+        return render_to_response('home/cookie.html', {'message': 'Cookie Success'}, context_instance=RequestContext(request))
+    else:
+        request.session.set_test_cookie()
+        return render_to_response('home/cookie.html', {'message': 'Cookie Failure'}, context_instance=RequestContext(request))
+
 def login(request):
     """
     Logs the user in
@@ -605,16 +616,13 @@ def login(request):
 
     global session_data
 
+    # ignore GET
+    if not request.POST:
+        return login_error(request, '')
+
     cleanup_session(session_data)
 
     b = request.user.is_authenticated()
-
-    # test that the browser is supporting cookies so we can maintain our session state
-    if request.session.test_cookie_worked():
-        request.session.delete_test_cookie()
-    else:
-        return login_error(request, \
-                            'Cookie test failed.  If cookies are disabled, please enable cookies and try again.')
 
     session_data.user = request.POST['username']
     session_data.password = request.POST['password']

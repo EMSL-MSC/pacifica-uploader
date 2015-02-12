@@ -15,6 +15,7 @@ urlpatterns = patterns('',
                        url(r'^admin/', include(admin.site.urls)),
                        url(r'^incStatus', 'home.views.incremental_status', name='incStatus'),
                        url(r'^modify/', 'home.views.modify', name='modify'),
+                       url(r'^cookie/', 'home.views.cookie_test', name='cookie'),
                        (r'^login/$', 'home.views.login'),
                        (r'^logout/$', 'home.views.logout'),)
 
