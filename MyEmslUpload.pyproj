@@ -47,7 +47,7 @@
     <Compile Include="home\views.py" />
     <Compile Include="home\__init__.py" />
     <Compile Include="manage.py" />
-    <Compile Include="uploader\Session.py" />
+    <Compile Include="uploader\PycurlSession.py" />
     <Compile Include="uploader\__init__.py" />
     <Compile Include="UploadServer\celery.py" />
     <Compile Include="UploadServer\settings.py" />
@@ -83,6 +83,7 @@
     <Content Include="home\templates\home\images\services.html" />
     <Content Include="home\templates\home\images\x_14x14.png" />
     <Content Include="home\templates\home\index.html" />
+    <Content Include="home\templates\home\cookie.html" />
     <Content Include="home\templates\home\login.html" />
     <Content Include="home\templates\home\status.html" />
     <Content Include="home\templates\home\uploader.html" />

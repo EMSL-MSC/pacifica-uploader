@@ -49,6 +49,9 @@ from django.contrib.auth.decorators import login_required
 # celery tasks
 from home import tasks
 
+# delay for celery heartbeat
+from time import sleep
+
 class MetaData(object):
     """
     structure used to pass upload metadata back and forth to the upload page
@@ -83,6 +86,9 @@ class SessionData(object):
     user = ''
     user_full_name = ''
     password = ''
+
+    current_user = None
+
     current_time = ''
     instrument = ''
     proposal_verbose = ''
@@ -151,12 +157,18 @@ def start_celery():
     """
     starts the celery process
     """
-    call(['StartCelery.bat', ''])
+    alive = celery_lives()
+    if not alive:
+        call(['StartCelery.bat', ''])
+
     count = 0
+    alive = False
     while not alive and count < 5:
         sleep (1)
         alive = celery_lives()
         count = count + 1
+
+    return alive
 
 def current_directory(history):
     """
@@ -350,7 +362,7 @@ def populate_upload_page(request):
          'selectedFiles': session_data.selected_files,
          'fileSizes': session_data.file_sizes,
          'current_time': session_data.current_time,
-         'user': session_data.user
+         'user': session_data.user_full_name
         },
                               context_instance=RequestContext(request))
 
@@ -362,19 +374,17 @@ def spin_off_upload(request, s_data):
     # check to see if background celery process is alive
     # if not, start it.  Wait 5 seconds, if it doesn't start,
     # we're boned.
-    alive = celery_lives()
+    alive = start_celery()
     print 'Celery lives = %s' % (alive)
     if not alive:
-        start_celery()
-        if not alive:
-            return render_to_response('home/status.html', \
-                                     {'instrument': s_data.instrument,
-                                      'status': 'Upload processor has failed',
-                                      'proposal':s_data.proposal_verbose,
-                                      'metaList':s_data. meta_list,
-                                      'current_time': s_data.current_time,
-                                      'user': s_data.user},
-                                     context_instance=RequestContext(request))
+        return render_to_response('home/status.html', \
+                                 {'instrument': s_data.instrument,
+                                  'status': 'Upload processor has failed',
+                                  'proposal':s_data.proposal_verbose,
+                                  'metaList':s_data. meta_list,
+                                  'current_time': s_data.current_time,
+                                  'user': s_data.user_full_name},
+                                 context_instance=RequestContext(request))
 
 
     root_dir = current_directory(s_data.directory_history)
@@ -414,7 +424,7 @@ def spin_off_upload(request, s_data):
     for meta in s_data.meta_list:
         groups[meta.name] = meta.value
 
-    s_data.current_time = datetime.datetime.now().time().strftime("%m.%d.%Y.%H.%M.%S")
+    s_data.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
 
     target_path = Filepath.objects.get(name="target")
     if target_path is not None:
@@ -546,6 +556,15 @@ def populate_user_info(session_data, info):
 
     print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
 
+    first_name = info["first_name"]
+    if not first_name:
+        first_name = '';
+    last_name = info["last_name"]
+    if not last_name:
+        last_name = ''
+
+    session_data.user_full_name = '%s (%s %s)' % (session_data.user, first_name, last_name);
+
     instruments = info["instruments"]
 
     valid_instrument = False
@@ -620,10 +639,18 @@ def login(request):
     if not request.POST:
         return login_error(request, '')
 
-    cleanup_session(session_data)
 
-    b = request.user.is_authenticated()
+    # check to see if there is an existing user logged in
+    if (session_data.current_user):
+        # if the current user is still logged in, throw an error
+        if (session_data.current_user.is_authenticated()):
+            return login_error(request, 'User %s is currently logged in' % session_data.user_full_name)
+    # if this was the last user logged in, maintain the session state
+    if (request.user is not session_data.current_user):
+        cleanup_session(session_data)
 
+
+    #even if this is the current user, we still need to re-authenticate them
     session_data.user = request.POST['username']
     session_data.password = request.POST['password']
 
@@ -664,6 +691,11 @@ def login(request):
     if not request.user.is_authenticated():
         return login_error(request, 'Problem with local authentication')
 
+    # ok, passed all EUS and local authorization tests, valid user data is loaded
+    # keep a copy of the user so we can keep other users from stepping on them if they are still 
+    # logged in
+    session_data.current_user = request.user
+
     return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
 def cleanup_session(s_data):
@@ -697,8 +729,12 @@ def logout(request):
 
     global session_data
 
-    session_data.user = session_data.password = ''
+    # clears session data.  This will be done in the Sessions table automatically
+    # when we move to a multi-user model
     cleanup_session(session_data)
+
+    #logs out local user session
+    logout(request)
 
     return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 

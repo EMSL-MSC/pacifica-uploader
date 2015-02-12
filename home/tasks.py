@@ -34,7 +34,6 @@ def upload_files(bundle_name='',
            file_list=file_list,
            groups=groups)
 
-
     current_task.update_state(state="PROGRESS", meta={'Status': "Starting Upload"})
 
     res = upload(bundle_name=bundle_name,
