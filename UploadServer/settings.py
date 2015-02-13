@@ -110,7 +110,7 @@ USE_TZ = True
 #Session stuff
 SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_AGE = 1 * 60 
+SESSION_COOKIE_AGE = 30 * 60 
 
 
 # Static files (CSS, JavaScript, Images)
