@@ -159,7 +159,10 @@ def start_celery():
     """
     alive = celery_lives()
     if not alive:
-        call(['StartCelery.bat', ''])
+        try:
+            call(['StartCelery.bat', ''])
+        except Exception,e:
+            print e
 
     count = 0
     alive = False
@@ -729,14 +732,11 @@ def logout(request):
 
     global session_data
 
-    # clears session data.  This will be done in the Sessions table automatically
-    # when we move to a multi-user model
-    cleanup_session(session_data)
-
     #logs out local user session
+    # if the LOGOUT_URL is set to this view, we create a recursive call to here
     logout(request)
 
-    return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
+    return HttpResponseRedirect(reverse('home.views.login'))
 
 def incremental_status(request):
     """
