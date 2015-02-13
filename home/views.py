@@ -642,7 +642,7 @@ def login(request):
     if not request.POST:
         return login_error(request, '')
 
-
+    """
     # check to see if there is an existing user logged in
     if (session_data.current_user):
         # if the current user is still logged in, throw an error
@@ -651,7 +651,9 @@ def login(request):
     # if this was the last user logged in, maintain the session state
     if (request.user is not session_data.current_user):
         cleanup_session(session_data)
+    """
 
+    cleanup_session(session_data)
 
     #even if this is the current user, we still need to re-authenticate them
     session_data.user = request.POST['username']
