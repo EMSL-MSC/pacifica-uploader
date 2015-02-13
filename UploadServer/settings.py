@@ -46,6 +46,7 @@ ALLOWED_HOSTS = []
 
 # URL of the login page.
 LOGIN_URL = '/login/'
+#LOGOUT_URL = '/logout/'
 
 # login view
 LOGIN_VIEW = 'home/login.html'
