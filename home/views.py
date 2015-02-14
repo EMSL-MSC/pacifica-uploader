@@ -91,7 +91,8 @@ class SessionData(object):
 
     current_time = ''
     instrument = ''
-    proposal_verbose = ''
+    instrument_friendly = ''
+    proposal_friendly = ''
     proposal_id = ''
     selected_dirs = []
     selected_files = []
@@ -147,7 +148,7 @@ def celery_lives():
         try:
             name = proc.name().lower()
             print name
-            if name == 'celery.exe':
+            if 'celery' in name:
                 return True
         except:
             pass
@@ -157,10 +158,14 @@ def start_celery():
     """
     starts the celery process
     """
+
     alive = celery_lives()
     if not alive:
         try:
-            call(['StartCelery.bat', ''])
+            print 'attempting to start Celery'
+            path = os.path.join('.', 'StartCelery.bat')
+            print path
+            call([path, ''])
         except Exception,e:
             print e
 
@@ -351,9 +356,9 @@ def populate_upload_page(request):
 
     # Render list page with the documents and the form
     return render_to_response('home/uploader.html', \
-        {'instrument': session_data.instrument,
+        {'instrument': session_data.instrument_friendly,
          'proposalList': session_data.proposal_list,
-         'proposal':session_data.proposal_verbose,
+         'proposal':session_data.proposal_friendly,
          'directoryHistory': session_data.directory_history,
          'metaList': session_data.meta_list,
          'checkedDirs': checked_dirs,
@@ -381,9 +386,9 @@ def spin_off_upload(request, s_data):
     print 'Celery lives = %s' % (alive)
     if not alive:
         return render_to_response('home/status.html', \
-                                 {'instrument': s_data.instrument,
-                                  'status': 'Upload processor has failed',
-                                  'proposal':s_data.proposal_verbose,
+                                 {'instrument': s_data.instrument_friendly,
+                                  'status': 'Celery background process is not started',
+                                  'proposal':s_data.proposal_friendly,
                                   'metaList':s_data. meta_list,
                                   'current_time': s_data.current_time,
                                   'user': s_data.user_full_name},
@@ -399,10 +404,10 @@ def spin_off_upload(request, s_data):
             meta.value = value
 
     # get the selected proposal string from the post
-    s_data.proposal_verbose = request.POST.get("proposal")
+    s_data.proposal_friendly = request.POST.get("proposal")
 
     # split the proposal string into ID and description
-    split = s_data.proposal_verbose.split()
+    split = s_data.proposal_friendly.split()
     s_data.proposal_id = split[0]
 
     # get the root directory from the database
@@ -426,6 +431,7 @@ def spin_off_upload(request, s_data):
     groups = {}
     for meta in s_data.meta_list:
         groups[meta.name] = meta.value
+    groups['Instrument.%s' % (s_data.instrument)] = 'NMR Spectrometer: 600-MHz NB Varian NMR System'
 
     s_data.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
 
@@ -456,9 +462,9 @@ def spin_off_upload(request, s_data):
                                          password=s_data.password)
 
     return render_to_response('home/status.html', \
-                {'instrument': s_data.instrument,
+                {'instrument': s_data.instrument_friendly,
                  'status': 'Starting Upload',
-                 'proposal':s_data.proposal_verbose,
+                 'proposal':s_data.proposal_friendly,
                  'metaList':s_data. meta_list,
                  'current_time': s_data.current_time,
                  'user': s_data.user},
@@ -575,7 +581,9 @@ def populate_user_info(session_data, info):
         inst_name = inst_block.get("instrument_name")
         inst_str = inst_id + "  " + inst_name
         if session_data.instrument == inst_id:
+            session_data.instrument_friendly = inst_name
             valid_instrument = True
+
         print inst_str
         print ""
 
@@ -736,7 +744,7 @@ def logout(request):
 
     #logs out local user session
     # if the LOGOUT_URL is set to this view, we create a recursive call to here
-    logout(request)
+    #logout(request)
 
     return HttpResponseRedirect(reverse('home.views.login'))
 
