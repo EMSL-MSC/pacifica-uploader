@@ -646,6 +646,14 @@ def login(request):
 
     global session_data
 
+    # timeout
+    try:
+        timeout = Filepath.objects.get(name="timeout")
+        minutes = int(timeout.fullpath)
+        SESSION_COOKIE_AGE = minutes * 60
+    except Filepath.DoesNotExist:
+        SESSION_COOKIE_AGE = 30 * 60 
+
     # ignore GET
     if not request.POST:
         return login_error(request, '')
