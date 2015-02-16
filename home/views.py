@@ -739,6 +739,18 @@ def cleanup_session(s_data):
     s_data.password = ''
     s_data.user_full_name = ''
 
+def cleanup_upload(s_data):
+    """
+    resets a session to a clean state
+    """
+    s_data.bundle_process = None
+    s_data.current_time = None
+    s_data.dir_sizes = []
+    s_data.directory_history = []
+    s_data.file_sizes = []
+    s_data.selected_dirs = []
+    s_data.selected_files = []
+
 def logout(request):
     """
     logs the user out and returns to the main page
@@ -781,6 +793,8 @@ def incremental_status(request):
         if "http" in result:
             state = 'DONE'
             result = result.strip('"')
+            #if we have successfully uploaded, cleanup the lists
+            cleanup_upload(session_data)
 
     # create json structure
     retval = json.dumps({'state':state, 'result':result})
