@@ -745,6 +745,7 @@ def cleanup_upload(s_data):
     """
     s_data.bundle_process = None
     s_data.current_time = None
+    s_data.meta_list = []
     s_data.dir_sizes = []
     s_data.directory_history = []
     s_data.file_sizes = []
