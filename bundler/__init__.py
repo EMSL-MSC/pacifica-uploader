@@ -85,7 +85,7 @@ class FileBundler():
         """
         Bundle in the metadata for the bundled files
         """
-        # version 1.2.0 pushes the data to a "data" directory while the 
+        # version 1.2.0 pushes the data to a "data" directory while the
         # metadata.txt file lives in the root.  This keeps us from collisions with users
         # having their own versions of metadata.txt
         metadata = '{"version":"1.2.0","eusInfo":{'
@@ -120,8 +120,12 @@ class FileBundler():
         for (file_arcname, file_hash) in self.hash_dict.items():
             # prepend the file paths and destination filepaths with the data\ directory to keep from
             # metadata collisions with user files
-            modified_name = 'data/%s' % (file_arcname)
+            modified_name = os.path.join('data', file_arcname)
             (file_dir, file_name) = os.path.split(modified_name)
+
+            # linuxfy the directory
+            file_dir = file_dir.replace('\\', '/')
+
             metadata += '{"sha1Hash":"%s","fileName":"%s", "destinationDirectory":"%s"},\n' \
                 % (file_hash, file_name, file_dir)
 
@@ -299,10 +303,10 @@ class TarBundler(FileBundler):
             self.empty_tar = False
         else:
             tarball = tarfile.TarFile(name=self.bundle_path, mode='a')
-        
+
         # for version 1.2, push files to a data/ directory to avoid collisions with metadata.txt
         # in the root
-        modified_arc_name = 'data/%s' % (file_arcname)
+        modified_arc_name = os.path.join('data', file_arcname)
         tarball.add(file_path, arcname=modified_arc_name, recursive=False)
         tarball.close()
 

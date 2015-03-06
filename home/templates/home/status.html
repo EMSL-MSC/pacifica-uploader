@@ -16,9 +16,10 @@
                     $('#currState').html(dataObj.state);
                     if (dataObj.state == 'DONE') {
                         var statusPage = dataObj.result;
-                        var win = window.open(statusPage, '_blank');
+                        //var win = window.open(statusPage, '_blank');
+                        window.open(statusPage, '_blank');
                         window.location.href = '/';
-                        win.focus();
+                        //win.focus();
                     }
                 })
                 .fail(function(obj, textStatus, error){

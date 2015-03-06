@@ -48,6 +48,10 @@ class UploaderError(Exception):
         current_task.update_state(state='FAILURE', meta={'info': self.msg})
         return "Uploader failed: %s" % self.msg
 
+def raise_upload_status(status, info):
+    current_task.update_state(state=status, meta={'info': info})
+    print >> sys.stderr, info
+
 def pycurl_session(protocol='https',
                    server='dev1.my.emsl.pnl.gov',
                    user='',
@@ -254,7 +258,7 @@ def upload(bundle_name='',
 
     #**************************************************
     # Pre-allocate with cURL
-    print >> sys.stderr, 'Performing cURL preallocation'
+    raise_upload_status ('UPLOAD', 'Performing cURL preallocation *status*')
 
     try:
         # Set the URL for the curl query.
@@ -277,14 +281,16 @@ def upload(bundle_name='',
         server = re.search(r'Server: ([\w\.-]*)', odata.getvalue()).group(1)
         location = re.search(r'Location: ([\w\./-@]*)', odata.getvalue()).group(1)
 
+        if server == '' or location == '':
+            raise UploaderError("Got invalid server and/or location information from server")
+
     except pycurl.error:
         raise UploaderError("cURL operations failed for preallocation:\n    %s" % curl.errstr())
 
     except:
-        raise UploaderError("Backend appears to be tits up")
+        raise UploaderError("Unknown error during preallocation")
 
-    if server == '' or location == '':
-        raise UploaderError("Got invalid server and/or location information from server")
+    
 
     #*********************************************************************
 
@@ -299,7 +305,7 @@ def upload(bundle_name='',
     print >> sys.stderr, 'New Server URL: %s' % url
 
     # Upload bundle with cURL
-    print >> sys.stderr, 'Peforming cURL upload of bundle of %s' % bundle_path
+    raise_upload_status ('UPLOAD', 'Peforming cURL upload of bundle of %s' % bundle_path)
 
     try:
         # Set the URL for the curl query.
@@ -335,7 +341,7 @@ def upload(bundle_name='',
 
     #************************************************************************
     # Finalize the upload
-    print >> sys.stderr, 'Peforming cURL finalization of upload'
+    raise_upload_status ('UPLOAD', 'Peforming cURL finalization of upload')
 
     try:
         #turn off upload
@@ -345,7 +351,6 @@ def upload(bundle_name='',
         # Set the URL for the curl query.
         pyurl = url + "/myemsl/cgi-bin/finish" + location
         curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
-        #curl.setopt( pycurl.URL, url + "/myemsl/cgi-bin/finish" + location )
         curl.perform()
 
         curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
@@ -364,22 +369,20 @@ def upload(bundle_name='',
     except pycurl.error:
         raise UploaderError("cURL operations failed for finalization:\n    %s" % curl.errstr())
     except:
-        raise UploaderError("The Uploader 'as buggered off before finalization:\n")
+        raise UploaderError("Unknown error during finalization:\n")
 
     try:
         # Set the URL for the curl query.
+        raise_upload_status ('UPLOAD', 'Logging out')
         pyurl = url + "/myemsl/logout"
         curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
 
         curl.perform()
 
-
-
     except pycurl.error:
-        raise UploaderError("cURL operations failed for finalization:\n    %s" % curl.errstr())
-
-    # dfh fix this when tempfile permissions are fixed
-    #cookie_file.close()
+        raise UploaderError("cURL operations failed for logout:\n    %s" % curl.errstr())
+    except:
+        raise UploaderError("Unknown error on logout:\n    %s" % curl.errstr())
 
     #************************************************************************
 

@@ -166,13 +166,13 @@ def start_celery():
             path = os.path.join('.', 'StartCelery.bat')
             print path
             call([path, ''])
-        except Exception,e:
+        except Exception, e:
             print e
 
     count = 0
     alive = False
     while not alive and count < 5:
-        sleep (1)
+        sleep(1)
         alive = celery_lives()
         count = count + 1
 
@@ -182,11 +182,9 @@ def current_directory(history):
     """
     builds the current directory based on the navigation history
     """
-
     directory = ''
     for path in history:
         directory = os.path.join(directory, path)
-        directory = directory + "/"
 
     return directory
 
@@ -231,7 +229,7 @@ def file_tuples_recursively(folder, tuple_list, root_dir):
     for item in os.listdir(folder):
         path = os.path.join(folder, item)
         if os.path.isfile(path):
-            relative_path = path.replace(root_dir, '')
+            relative_path = os.path.relpath(path, root_dir)
             tuple_list.append((path, relative_path))
         elif os.path.isdir(path):
             file_tuples_recursively(path, tuple_list, root_dir)
@@ -245,7 +243,7 @@ def file_tuples(selected_list, tuple_list, root_dir):
     for path in selected_list:
         if os.path.isfile(path):
             # the relative path is the path without the root directory
-            relative_path = path.replace(root_dir, '')
+            relative_path = os.path.relpath(path, root_dir)
             tuple_list.append((path, relative_path))
         elif os.path.isdir(path):
             file_tuples_recursively(path, tuple_list, root_dir)
@@ -315,10 +313,10 @@ def populate_upload_page(request):
         data_path = Filepath.objects.get(name="dataRoot")
         if data_path is not None:
             root_dir = data_path.fullpath
-        elif "Linux" in platform.platform(aliased=0, terse=0):
-            root_dir = "/home"
+            root_dir = os.path.normpath(root_dir)
         else:
-            root_dir = "c:\\"
+            return "error no root directory"
+
 
         if root_dir.endswith("\\"):
             root_dir = root_dir[:-1]
@@ -392,7 +390,7 @@ def spin_off_upload(request, s_data):
                                   'metaList':s_data. meta_list,
                                   'current_time': s_data.current_time,
                                   'user': s_data.user_full_name},
-                                 context_instance=RequestContext(request))
+                                  context_instance=RequestContext(request))
 
 
     root_dir = current_directory(s_data.directory_history)
@@ -418,8 +416,7 @@ def spin_off_upload(request, s_data):
         # handle error here
         root_dir = ""
 
-    # get the correct \/ orientation for the OS
-    root = root_dir.replace("\\", "/")
+    root = root_dir
 
     #create a list of tuples (filepath, arcpath)
     tuples = []
@@ -431,7 +428,9 @@ def spin_off_upload(request, s_data):
     groups = {}
     for meta in s_data.meta_list:
         groups[meta.name] = meta.value
-    groups['Instrument.%s' % (s_data.instrument)] = 'NMR Spectrometer: 600-MHz NB Varian NMR System'
+
+    insty = 'Instrument.%s' % (s_data.instrument)
+    groups[insty] = s_data.instrument_friendly
 
     s_data.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
 
@@ -552,7 +551,8 @@ def login_error(request, error_string):
     """
     returns to the login page with an error message
     """
-    return render_to_response(settings.LOGIN_VIEW, {'message': error_string}, context_instance=RequestContext(request))
+    return render_to_response(settings.LOGIN_VIEW, \
+                              {'message': error_string}, context_instance=RequestContext(request))
 
 def populate_user_info(session_data, info):
     """
@@ -567,12 +567,12 @@ def populate_user_info(session_data, info):
 
     first_name = info["first_name"]
     if not first_name:
-        first_name = '';
+        first_name = ''
     last_name = info["last_name"]
     if not last_name:
         last_name = ''
 
-    session_data.user_full_name = '%s (%s %s)' % (session_data.user, first_name, last_name);
+    session_data.user_full_name = '%s (%s %s)' % (session_data.user, first_name, last_name)
 
     instruments = info["instruments"]
 
@@ -625,16 +625,18 @@ def populate_user_info(session_data, info):
 def cookie_test(request):
     """
     This test needs to be called twice in a row.  The first call should fail as the
-    cookie hasn't been set.  The second should succeed.  If it doesn't, 
+    cookie hasn't been set.  The second should succeed.  If it doesn't,
     you need to enable cookies on the browser.
     """
     # test that the browser is supporting cookies so we can maintain our session state
     if request.session.test_cookie_worked():
         request.session.delete_test_cookie()
-        return render_to_response('home/cookie.html', {'message': 'Cookie Success'}, context_instance=RequestContext(request))
+        return render_to_response('home/cookie.html', {'message': 'Cookie Success'}, \
+                                  context_instance=RequestContext(request))
     else:
         request.session.set_test_cookie()
-        return render_to_response('home/cookie.html', {'message': 'Cookie Failure'}, context_instance=RequestContext(request))
+        return render_to_response('home/cookie.html', {'message': 'Cookie Failure'}, \
+            context_instance=RequestContext(request))
 
 def login(request):
     """
@@ -652,7 +654,7 @@ def login(request):
         minutes = int(timeout.fullpath)
         SESSION_COOKIE_AGE = minutes * 60
     except Filepath.DoesNotExist:
-        SESSION_COOKIE_AGE = 30 * 60 
+        SESSION_COOKIE_AGE = 30 * 60
 
     # ignore GET
     if not request.POST:
@@ -691,9 +693,9 @@ def login(request):
 
     # get the user's info from EUS
     info = user_info(protocol="https",
-                        server=full_server_path,
-                        user=session_data.user,
-                        password=session_data.password)
+                     server=full_server_path,
+                     user=session_data.user,
+                     password=session_data.password)
 
     inst = Filepath.objects.get(name="instrument")
     if inst and inst is not '':
@@ -713,7 +715,7 @@ def login(request):
         return login_error(request, 'Problem with local authentication')
 
     # ok, passed all EUS and local authorization tests, valid user data is loaded
-    # keep a copy of the user so we can keep other users from stepping on them if they are still 
+    # keep a copy of the user so we can keep other users from stepping on them if they are still
     # logged in
     session_data.current_user = request.user
 
@@ -778,16 +780,14 @@ def incremental_status(request):
 
     global session_data
 
-    output = session_data.bundle_process.status
-    if output is None:
-        output = "FAILURE"
-    state = output
+    state = session_data.bundle_process.status
+    if state is None:
+        state = "FAILURE"
     print state
 
-    output = session_data.bundle_process.result
-    if output is None:
-        output = "FAILURE"
-    result = output
+    result = session_data.bundle_process.result
+    if result is None:
+        result = "FAILURE"
     print result
 
     if result is not None:
