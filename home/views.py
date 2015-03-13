@@ -607,14 +607,13 @@ def populate_user_info(session_data, info):
         instruments = prop_block.get("instruments")
 
         try:
-            if instruments is not None and instruments.count > 0:
+            if instruments is not None and len(instruments) > 0:
                 for inst_id in instruments: # eh.  inst_id is a list of 1 element.
-                    id = str(inst_id[0])
-                    if session_data.instrument == id:
+                    if session_data.instrument == str(inst_id):
                         session_data.proposal_list.append(prop_str)
 
         except Exception, err:
-            print err.msg
+            print err
 
     if len(session_data.proposal_list) == 0:
         return 'No valid proposals for this user on this instrument'
