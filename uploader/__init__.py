@@ -351,7 +351,12 @@ def upload(bundle_name='',
         # Set the URL for the curl query.
         pyurl = url + "/myemsl/cgi-bin/finish" + location
         curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
+        
+        print "pyurl " + pyurl
         curl.perform()
+        print "after perform"
+
+        print curl_http_code
 
         curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
         if curl_http_code == 503:
@@ -359,17 +364,23 @@ def upload(bundle_name='',
             raise UploaderError(odata.read(), outage=True)
 
         print "curl_http_code " + str(curl_http_code)
-        print pyurl
+        
+        print  odata.getvalue()
 
-        status = re.search(r'Status: (.*)', odata.getvalue()).group(1)
-        # Make sure that the upload was accepted
+        if re.search(r'Error', odata.getvalue()) is not None:
+            raise UploaderError(odata.getvalue())
+
         if re.search(r'Accepted', odata.getvalue()) == None:
             raise UploaderError("Upload was not accepted")
 
+        status = re.search(r'Status: (.*)', odata.getvalue()).group(1)
+        print "status " + status
+
     except pycurl.error:
         raise UploaderError("cURL operations failed for finalization:\n    %s" % curl.errstr())
-    except:
-        raise UploaderError("Unknown error during finalization:\n")
+    except Exception, e:
+        raise UploaderError(e.message)
+        #raise UploaderError("Unknown error during finalization:\n")
 
     try:
         # Set the URL for the curl query.
