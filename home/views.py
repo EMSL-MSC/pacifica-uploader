@@ -52,6 +52,9 @@ from home import tasks
 # delay for celery heartbeat
 from time import sleep
 
+# for restarting Celery
+from subprocess import Popen
+
 class MetaData(object):
     """
     structure used to pass upload metadata back and forth to the upload page
@@ -109,6 +112,12 @@ class SessionData(object):
     # process that handles bundling and uploading
     bundle_process = None
 
+    # size of the current bundle
+    bundle_size = 0
+
+    # free disk space
+    free_space = 0
+
 # Module level variables
 session_data = SessionData()
 
@@ -165,13 +174,13 @@ def start_celery():
             print 'attempting to start Celery'
             path = os.path.join('.', 'StartCelery.bat')
             print path
-            call([path, ''])
+            Popen([path, ''])
         except Exception, e:
             print e
 
     count = 0
     alive = False
-    while not alive and count < 5:
+    while not alive and count < 10:
         sleep(1)
         alive = celery_lives()
         count = count + 1
@@ -187,6 +196,17 @@ def current_directory(history):
         directory = os.path.join(directory, path)
 
     return directory
+
+def bundle_size(file_list):
+    """
+    totals up total size of the files in the bundle
+    """
+    total_size = 0
+
+    for (file_path, file_arcname) in file_list:
+        total_size += os.path.getsize(file_path)
+
+    return total_size
 
 def folder_size(folder):
     """
@@ -248,7 +268,7 @@ def file_tuples(selected_list, tuple_list, root_dir):
         elif os.path.isdir(path):
             file_tuples_recursively(path, tuple_list, root_dir)
 
-def upload_size_string(total_size):
+def size_string(total_size):
     """
     returns the upload size as a string with the appropriate units
     """
@@ -280,7 +300,7 @@ def upload_meta_string(folder):
 
     meta.dir_count -= 1
     meta_str = 'folders {0} | files {1} | {2}'.\
-        format(str(meta.dir_count), str(meta.fileCount), upload_size_string(meta.totalBytes))
+        format(str(meta.dir_count), str(meta.fileCount), size_string(meta.totalBytes))
 
     return meta_str
 
@@ -291,7 +311,7 @@ def file_size_string(filename):
 
     total_size = os.path.getsize(filename)
 
-    return upload_size_string(total_size)
+    return size_string(total_size)
 
 @login_required(login_url=settings.LOGIN_URL)
 def populate_upload_page(request):
@@ -372,6 +392,33 @@ def populate_upload_page(request):
         },
                               context_instance=RequestContext(request))
 
+def show_status(request, s_data, message):
+
+    bundle_size_str = size_string(s_data.bundle_size)
+    free_size_str = size_string(s_data.free_space)
+
+    return render_to_response('home/status.html', \
+                                 {'instrument': s_data.instrument_friendly,
+                                  'status': message,
+                                  'proposal':s_data.proposal_friendly,
+                                  'metaList':s_data. meta_list,
+                                  'current_time': s_data.current_time,
+                                  'bundle_size': bundle_size_str,
+                                  'free_size': free_size_str,
+                                  'user': s_data.user_full_name},
+                                  context_instance=RequestContext(request))
+
+
+def validate_space_available(s_data, target_dir):
+    # get the disk usage
+    space = psutil.disk_usage(target_dir)
+
+    #give ourselves a cushion for other processes
+    s_data.free_space = int(.9 * space.free)
+
+    return (s_data.bundle_size <  s_data.free_space)
+
+
 def spin_off_upload(request, s_data):
     """
     spins the upload process off to a background celery process
@@ -383,14 +430,7 @@ def spin_off_upload(request, s_data):
     alive = start_celery()
     print 'Celery lives = %s' % (alive)
     if not alive:
-        return render_to_response('home/status.html', \
-                                 {'instrument': s_data.instrument_friendly,
-                                  'status': 'Celery background process is not started',
-                                  'proposal':s_data.proposal_friendly,
-                                  'metaList':s_data. meta_list,
-                                  'current_time': s_data.current_time,
-                                  'user': s_data.user_full_name},
-                                  context_instance=RequestContext(request))
+        return show_status(request, s_data, 'Celery background process is not started')
 
 
     root_dir = current_directory(s_data.directory_history)
@@ -440,6 +480,11 @@ def spin_off_upload(request, s_data):
     else:
         target_dir = root_dir
 
+    s_data.bundle_size = bundle_size(tuples)
+
+    if not validate_space_available(s_data, target_dir):
+        return show_status(request, s_data, 'Bundle size exceeds available space')
+
     bundle_name = os.path.join(target_dir, s_data.current_time + ".tar")
 
     server_path = Filepath.objects.get(name="server")
@@ -460,14 +505,7 @@ def spin_off_upload(request, s_data):
                                          user=s_data.user,
                                          password=s_data.password)
 
-    return render_to_response('home/status.html', \
-                {'instrument': s_data.instrument_friendly,
-                 'status': 'Starting Upload',
-                 'proposal':s_data.proposal_friendly,
-                 'metaList':s_data. meta_list,
-                 'current_time': s_data.current_time,
-                 'user': s_data.user},
-                              context_instance=RequestContext(request))
+    return show_status(request, s_data, 'Starting Upload')
 
 def clear_upload_lists(s_data):
     """
@@ -567,33 +605,36 @@ def populate_user_info(session_data, info):
 
     first_name = info["first_name"]
     if not first_name:
-        first_name = ''
+        return 'Unable to parse user name'
     last_name = info["last_name"]
     if not last_name:
-        last_name = ''
+        return 'Unable to parse user name'
 
     session_data.user_full_name = '%s (%s %s)' % (session_data.user, first_name, last_name)
 
     instruments = info["instruments"]
 
-    valid_instrument = False
-    for inst_id, inst_block in instruments.iteritems():
-        inst_name = inst_block.get("instrument_name")
-        inst_str = inst_id + "  " + inst_name
-        if session_data.instrument == inst_id:
-            session_data.instrument_friendly = inst_name
-            valid_instrument = True
+    try:
+        valid_instrument = False
+        for inst_id, inst_block in instruments.iteritems():
+            inst_name = inst_block.get("instrument_name")
+            inst_str = inst_id + "  " + inst_name
+            if session_data.instrument == inst_id:
+                session_data.instrument_friendly = inst_name
+                valid_instrument = True
 
-        print inst_str
-        print ""
+            print inst_str
+            print ""
 
-    if not valid_instrument:
-        return 'User is not valid for this instrument'
+        if not valid_instrument:
+            return 'User is not valid for this instrument'
+    except Exception:
+        return 'Unable to parse user instruments'
 
     """
     need to filter proposals based on the existing instrument 
     if there is no valid proposal for the user for this instrument
-    throw and error
+    throw an error
     """
     print "props"
     props = info["proposals"]
@@ -601,7 +642,6 @@ def populate_user_info(session_data, info):
     for prop_id, prop_block in props.iteritems():
         title = prop_block.get("title")
         prop_str = prop_id + "  " + title
-        # session_data.proposal_list.append(prop_str)
 
         # list only proposals valid for this instrument
         instruments = prop_block.get("instruments")
@@ -613,7 +653,7 @@ def populate_user_info(session_data, info):
                         session_data.proposal_list.append(prop_str)
 
         except Exception, err:
-            print err
+            return 'No valid proposals for this user on this instrument'
 
     if len(session_data.proposal_list) == 0:
         return 'No valid proposals for this user on this instrument'
