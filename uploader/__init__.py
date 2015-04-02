@@ -201,12 +201,10 @@ def progress(download_t, download_d, upload_t, upload_d):
     """
     gets the progress of the current pycurl upload
     """
-
-    sleep(1)
-    print "Total to download", download_t
-    print "Total downloaded", download_d
     print "Total to upload", upload_t
     print "Total uploaded", upload_d
+    percent = float(upload_d) / float (upload_t)
+    #print "percent uploaded %3." % (str(percent)
 
 def upload(bundle_name='',
            protocol='https',
@@ -322,8 +320,8 @@ def upload(bundle_name='',
         size = os.lstat(bundle_path)[stat.ST_SIZE]
         curl.setopt(pycurl.INFILESIZE_LARGE, size)
 
-        #curl.setopt(pycurl.NOPROGRESS, 0)
-        #curl.setopt(pycurl.PROGRESSFUNCTION, progress)
+        curl.setopt(pycurl.NOPROGRESS, 0)
+        curl.setopt(pycurl.PROGRESSFUNCTION, progress)
         curl.perform()
 
         curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
