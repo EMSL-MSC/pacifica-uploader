@@ -3,7 +3,7 @@ FROM ubuntu:trusty
 MAINTAINER david.brown@pnnl.gov
 
 RUN apt-get update && apt-get -y dist-upgrade && apt-get install -y python-dev python-pip rabbitmq-server python-pycurl
-RUN pip install django celery
+RUN pip install django celery psutil
 RUN mkdir /app
 ADD . /app
 RUN chown -R daemon:nogroup -R /app
