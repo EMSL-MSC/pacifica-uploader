@@ -8,6 +8,7 @@
 *.pyc
 *.pyo
 db.sqlite3
+celery_worker_state
 
 # Build results
 [Dd]ebug/
