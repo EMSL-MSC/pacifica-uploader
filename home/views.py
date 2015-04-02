@@ -114,6 +114,8 @@ class SessionData(object):
 
     # size of the current bundle
     bundle_size = 0
+    bundle_size_str = ""
+    free_size_str = ""
 
     # free disk space
     free_space = 0
@@ -197,14 +199,17 @@ def current_directory(history):
 
     return directory
 
-def bundle_size(file_list):
+def bundle_size(files, folders):
     """
     totals up total size of the files in the bundle
     """
     total_size = 0
 
-    for (file_path, file_arcname) in file_list:
+    for file_path in files:
         total_size += os.path.getsize(file_path)
+
+    for folder in folders:
+        total_size += folder_size(folder)
 
     return total_size
 
@@ -313,12 +318,12 @@ def file_size_string(filename):
 
     return size_string(total_size)
 
+
 @login_required(login_url=settings.LOGIN_URL)
 def populate_upload_page(request):
     """
     formats the main uploader page
     """
-
     global session_data
 
     # if not logged in
@@ -372,6 +377,14 @@ def populate_upload_page(request):
             else:
                 unchecked_files.append(path)
 
+    # validate that the currently selected bundle will fit in the target space
+    uploadEnabled = validate_space_available(session_data)
+    message = 'Bundle: %s, Free: %s' % (session_data.bundle_size_str, session_data.free_size_str)
+    if not uploadEnabled:
+        message += ": Bundle exceeds free space"
+    elif session_data.bundle_size==0:
+        uploadEnabled = False
+
     # Render list page with the documents and the form
     return render_to_response('home/uploader.html', \
         {'instrument': session_data.instrument_friendly,
@@ -388,6 +401,8 @@ def populate_upload_page(request):
          'selectedFiles': session_data.selected_files,
          'fileSizes': session_data.file_sizes,
          'current_time': session_data.current_time,
+         'message': message,
+         'uploadEnabled': uploadEnabled,
          'user': session_data.user_full_name
         },
                               context_instance=RequestContext(request))
@@ -409,13 +424,27 @@ def show_status(request, s_data, message):
                                   context_instance=RequestContext(request))
 
 
-def validate_space_available(s_data, target_dir):
+def validate_space_available(s_data):
+
+    target_path = Filepath.objects.get(name="target")
+    if target_path is not None:
+        target_dir = target_path.fullpath
+    else:
+        target_dir = root_dir
+
+    s_data.bundle_size = bundle_size(s_data.selected_files, s_data.selected_dirs,)
+
     # get the disk usage
     space = psutil.disk_usage(target_dir)
 
     #give ourselves a cushion for other processes
     s_data.free_space = int(.9 * space.free)
 
+    s_data.bundle_size_str = size_string(s_data.bundle_size)
+    s_data.free_size_str = size_string(s_data.free_space)
+
+    if (s_data.bundle_size == 0):
+        return True
     return (s_data.bundle_size <  s_data.free_space)
 
 
@@ -479,11 +508,6 @@ def spin_off_upload(request, s_data):
         target_dir = target_path.fullpath
     else:
         target_dir = root_dir
-
-    s_data.bundle_size = bundle_size(tuples)
-
-    if not validate_space_available(s_data, target_dir):
-        return show_status(request, s_data, 'Bundle size exceeds available space')
 
     bundle_name = os.path.join(target_dir, s_data.current_time + ".tar")
 
