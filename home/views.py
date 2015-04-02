@@ -676,12 +676,13 @@ def populate_user_info(session_data, info):
                     if session_data.instrument == str(inst_id):
                         if prop_str not in session_data.proposal_list:
                             session_data.proposal_list.append(prop_str)
-
         except Exception, err:
             return 'No valid proposals for this user on this instrument'
 
     if len(session_data.proposal_list) == 0:
         return 'No valid proposals for this user on this instrument'
+
+    session_data.proposal_list.sort(key=lambda x: int(x.split(' ')[0]))
 
     # no errors found
     return ''
