@@ -16,6 +16,7 @@ def upload_files(bundle_name='',
                  instrument_name='',
                  proposal='',
                  file_list=None,
+                 bundle_size=1,
                  groups=None,
                  server='',
                  user='',
@@ -32,7 +33,8 @@ def upload_files(bundle_name='',
            instrument_name=instrument_name,
            proposal=proposal,
            file_list=file_list,
-           groups=groups)
+           groups=groups,
+           bundle_size=bundle_size)
 
     current_task.update_state(state="PROGRESS", meta={'Status': "Starting Upload"})
 

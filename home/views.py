@@ -519,11 +519,23 @@ def spin_off_upload(request, s_data):
         full_server_path = "dev1.my.emsl.pnl.gov"
 
     # spin this off as a background process and load the status page
-    s_data.bundle_process = \
+    if True:
+        s_data.bundle_process = \
                 tasks.upload_files.delay(bundle_name=bundle_name,
                                          instrument_name=s_data.instrument,
                                          proposal=s_data.proposal_id,
                                          file_list=tuples,
+                                         bundle_size=s_data.bundle_size,
+                                         groups=groups,
+                                         server=full_server_path,
+                                         user=s_data.user,
+                                         password=s_data.password)
+    else: # for debug purposes
+        tasks.upload_files(bundle_name=bundle_name,
+                                         instrument_name=s_data.instrument,
+                                         proposal=s_data.proposal_id,
+                                         file_list=tuples,
+                                         bundle_size=s_data.bundle_size,
                                          groups=groups,
                                          server=full_server_path,
                                          user=s_data.user,
@@ -682,7 +694,7 @@ def populate_user_info(session_data, info):
     if len(session_data.proposal_list) == 0:
         return 'No valid proposals for this user on this instrument'
 
-    session_data.proposal_list.sort(key=lambda x: int(x.split(' ')[0]))
+    session_data.proposal_list.sort(key=lambda x: int(x.split(' ')[0]), reverse=True)
 
     # no errors found
     return ''
@@ -753,6 +765,7 @@ def login(request):
                                     server=full_server_path,
                                     user=session_data.user,
                                     password=session_data.password)
+
     if not authorized:
         return login_error(request, 'User or Password is incorrect')
 

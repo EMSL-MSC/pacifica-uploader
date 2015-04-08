@@ -203,8 +203,9 @@ def progress(download_t, download_d, upload_t, upload_d):
     """
     print "Total to upload", upload_t
     print "Total uploaded", upload_d
-    percent = float(upload_d) / float (upload_t)
-    #print "percent uploaded %3." % (str(percent)
+    if (upload_t > 0):
+        percent = float(upload_d) / float (upload_t)
+        print "percent uploaded %3.3f" % (percent)
 
 def upload(bundle_name='',
            protocol='https',
@@ -320,8 +321,8 @@ def upload(bundle_name='',
         size = os.lstat(bundle_path)[stat.ST_SIZE]
         curl.setopt(pycurl.INFILESIZE_LARGE, size)
 
-        curl.setopt(pycurl.NOPROGRESS, 0)
-        curl.setopt(pycurl.PROGRESSFUNCTION, progress)
+        #curl.setopt(pycurl.NOPROGRESS, 0)
+        #curl.setopt(pycurl.PROGRESSFUNCTION, progress)
         curl.perform()
 
         curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
@@ -350,9 +351,7 @@ def upload(bundle_name='',
         pyurl = url + "/myemsl/cgi-bin/finish" + location
         curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
         
-        print "pyurl " + pyurl
         curl.perform()
-        print "after perform"
 
         print curl_http_code
 

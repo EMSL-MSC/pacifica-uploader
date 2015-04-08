@@ -34,10 +34,9 @@ class BundlerError(Exception):
         @param msg: A custom message packaged with the exception
         """
         super(BundlerError, self).__init__(msg)
-
-        # super(BundlerError, self, Exception).__init__()
         self.msg = msg
 
+        # send message to the front end
         current_task.update_state(state='FAILURE', meta={'info': msg})
 
     def __str__(self):
@@ -118,7 +117,7 @@ class FileBundler():
 
         # Add metadata for each file
         for (file_arcname, file_hash) in self.hash_dict.items():
-            # prepend the file paths and destination filepaths with the data\ directory to keep from
+            # prepend the file paths and destination filepaths with the data directory to keep from
             # metadata collisions with user files
             modified_name = os.path.join('data', file_arcname)
             (file_dir, file_name) = os.path.split(modified_name)
@@ -138,7 +137,7 @@ class FileBundler():
 
 
 
-    def bundle_file(self, file_path, file_arcname):
+    def hash_file(self, file_path, file_arcname):
         """
         Bundle in a file or directory
 
@@ -151,11 +150,12 @@ class FileBundler():
 
         file_path = os.path.abspath(file_path)
 
-        print >> sys.stderr, "Preparing to bundle %s" % file_path
+        #print >> sys.stderr, "Preparing to bundle %s" % file_path
 
-        if file_path == self.bundle_path:
-            print >> sys.stderr, "Skipping bundle file %s" % file_path
-            return
+        # dfh, I don't see how this could ever happen
+        #if file_path == self.bundle_path:
+        #    print >> sys.stderr, "Skipping bundle file %s" % file_path
+        #    return
 
         # If the file_arcname argument is None use the base file name as the
         # arc name
@@ -167,30 +167,9 @@ class FileBundler():
         if not os.access(file_path, os.R_OK):
             raise BundlerError("Can't read from %s" % file_path)
 
-        # removed for version 1.2 support that doesn't have this limitation.
-        # if 'metadata' in os.path.basename(file_path):
-        #     raise BundlerError("A metadata file may not be explicitly added to the bundle")
-
         file_mode = os.stat(file_path)[stat.ST_MODE]
         if not stat.S_ISDIR(file_mode) and not stat.S_ISREG(file_mode):
             raise BundlerError("Unknown file type for %s" % file_path)
-
-        """
-        # If the file is a directory and recursing is enabled, recursively add
-        # its children
-        if stat.S_ISDIR(file_mode):
-            if self.recursive:
-                print >> sys.stderr, "Recursing into subdirectory %s" % file_path
-                for child in os.listdir(file_path):
-                    child_path = os.path.join(file_path, child)
-                    child_arcname = os.path.join(file_arcname, child)
-                    self.bundle_file(child_path, child_arcname)
-            else:
-                print >> sys.stderr, "Skipping subdirectory %s" % file_path
-            return
-        """
-
-        print >> sys.stderr, "Generating hash %s" % file_path
 
         file_in = None
         try:
@@ -198,9 +177,9 @@ class FileBundler():
         except IOError:
             raise BundlerError("Couldn't read from file: %s" % file_path)
 
+        # hash file 1Mb at a time
         hashval = hashlib.sha1()
         while True:
-            # dfh need define
             data = file_in.read(1024 * 1024)
             if not data:
                 break
@@ -211,14 +190,8 @@ class FileBundler():
         if file_arcname in self.hash_dict:
             if hash != self.hash_dict[file_arcname]:
                 raise BundlerError("Different file with the same arcname is already in the bundle")
-            print >> sys.stderr, "File already in bundle: %s.  Skipping" % file_path
             return
         self.hash_dict[file_arcname] = file_hash
-
-        print >> sys.stderr, "Bundling %s" % file_path
-        self._bundle_file(file_path, file_arcname)
-
-
 
     def _bundle_metadata(self, metadata):
         """
@@ -229,7 +202,7 @@ class FileBundler():
 
 
 
-    def _bundle_file(self, file_name, file_arcname=None):
+    def _bundle_file(self, file_paths):
         """
         A 'Pure Virtual' function that will perform file bundling in a child class
 
@@ -287,7 +260,7 @@ class TarBundler(FileBundler):
 
         print >> sys.stderr, "Successfully created tarfile bundle %s" % self.bundle_path
 
-    def _bundle_file(self, file_path, file_arcname=None):
+    def bundle_file(self, file_paths, bundle_size=1):
         """
         Bundles files into a tarfile formatted bundle
 
@@ -304,10 +277,31 @@ class TarBundler(FileBundler):
         else:
             tarball = tarfile.TarFile(name=self.bundle_path, mode='a')
 
-        # for version 1.2, push files to a data/ directory to avoid collisions with metadata.txt
-        # in the root
-        modified_arc_name = os.path.join('data', file_arcname)
-        tarball.add(file_path, arcname=modified_arc_name, recursive=False)
+        running_size = 0
+        last_percent = 0
+        try:
+            for (file_path, file_arcname) in file_paths:
+                running_size += os.path.getsize(file_path)
+                percent_complete = 100.0 * running_size / bundle_size
+
+                # hash the file and store in hash_dict
+                self.hash_file(file_path, file_arcname)
+
+                # for version 1.2, push files to a data/ directory to avoid collisions with metadata.txt
+                # in the root
+                modified_arc_name = os.path.join('data', file_arcname)
+                tarball.add(file_path, arcname=modified_arc_name, recursive=False)
+
+                #print >> sys.stderr, "percent complete %s" % str(percent_complete)
+                # only update significant progress
+                if percent_complete - last_percent > 1:
+                    current_task.update_state(state=str(percent_complete), \
+                        meta={'Status': "Bundling percent complete: " + str(percent_complete)})
+                    last_percent = percent_complete
+
+        except BundlerError, err:
+            raise BundlerError("Failed to bundle file: %s" % (err.msg))
+
         tarball.close()
 
     def _bundle_metadata(self, metadata):
@@ -316,8 +310,8 @@ class TarBundler(FileBundler):
 
         @param metadata: The metadata string to bundle
         """
-        print >> sys.stderr, "Bundle meta!"
-        print >> sys.stderr, metadata
+        #print >> sys.stderr, "Bundle meta!"
+        #print >> sys.stderr, metadata
 
         metadata_file = None
         try:
@@ -333,6 +327,7 @@ class TarBundler(FileBundler):
             self.empty_tar = False
         else:
             tarball = tarfile.TarFile(name=self.bundle_path, mode='a')
+
         tar_info = tarfile.TarInfo("metadata.txt")
         tar_info.size = len(metadata)
         tar_info.mtime = time.time()
@@ -345,7 +340,8 @@ def bundle(bundle_name='',
            instrument_name='',
            proposal='',
            file_list=None,
-           groups=None):
+           groups=None,
+           bundle_size=1):
     """
     Bundles a list of files into a single aggregated bundle file
 
@@ -380,11 +376,11 @@ def bundle(bundle_name='',
     if groups == None or groups == '':
         raise BundlerError("Missing groups")
 
-    print >> sys.stderr, "Start bundling %s" % bundle_name
+    #print >> sys.stderr, "Start bundling %s" % bundle_name
 
     # Set up the bundle file
     bundle_path = os.path.abspath(bundle_name)
-    print >> sys.stderr, "Bundle file set to %s" % bundle_path
+    #print >> sys.stderr, "Bundle file set to %s" % bundle_path
 
     # Set up the bundler object
     bundler = None
@@ -398,31 +394,12 @@ def bundle(bundle_name='',
                          instrument_ID=instrument_name,
                          groups=groups)
 
-    bundle_size = 0
-    for (file_path, file_arcname) in file_list:
-        bundle_size += os.path.getsize(file_path)
-
-    print >> sys.stderr, "bundle size %s" % str(bundle_size)
-
-    running_size = 0
-    for (file_path, file_arcname) in file_list:
-        try:
-            running_size += os.path.getsize(file_path)
-            percent_complete = 100.0 * running_size / bundle_size
-
-            bundler.bundle_file(file_path, file_arcname)
-
-            print >> sys.stderr, "percent complete %s" % str(percent_complete)
-
-            current_task.update_state(state=str(percent_complete), \
-                meta={'Status': "Bundling percent complete: " + str(percent_complete)})
-
-        except BundlerError, err:
-            raise BundlerError("Failed to bundle file: %s: %s" % (file_path, err.msg))
+    bundler.bundle_file(file_list, bundle_size)
 
     bundler.bundle_metadata()
 
-    print >> sys.stderr, "Finished bundling"
+    #print >> sys.stderr, "Finished bundling"
+    current_task.update_state(state='Bundle complete', meta={'Status': "Bundling complete"})
 
 def main():
     """
