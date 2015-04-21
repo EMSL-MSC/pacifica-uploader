@@ -43,7 +43,6 @@
     <Compile Include="home\tasks.py" />
     <Compile Include="home\templatetags\app_filters.py" />
     <Compile Include="home\templatetags\__init__.py" />
-    <Compile Include="home\tests.py" />
     <Compile Include="home\views.py" />
     <Compile Include="home\__init__.py" />
     <Compile Include="manage.py" />
@@ -51,6 +50,9 @@
     <Compile Include="uploader\__init__.py" />
     <Compile Include="UploadServer\celery.py" />
     <Compile Include="UploadServer\settings.py" />
+    <Compile Include="home\tar_man.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="UploadServer\urls.py" />
     <Compile Include="UploadServer\wsgi.py" />
     <Compile Include="UploadServer\__init__.py" />
@@ -70,7 +72,6 @@
     <Folder Include="UploadServer\static\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="home\forms.pyc" />
     <Content Include="home\templates\home\css\bunny.jpg" />
     <Content Include="home\templates\home\css\style.css" />
     <Content Include="home\templates\home\error.html" />
