@@ -9,6 +9,40 @@ import sys
 
 from bundler import bundle
 from uploader import upload
+from uploader import job_status
+
+from home import tar_man
+
+import os
+import json
+
+def clean_target_directory(target_dir = '', server='', user='', password=''):
+    """
+    deletes local files that have made it to the archive
+    """
+    tm = tar_man.tar_management()
+    
+    # get job list from file
+    jobs = tm.job_list()
+
+    if not jobs:
+        return
+
+    # fake job list
+    #jobs = ['2001066', '2001067','2001068']
+
+    # get jobs state from database
+    jobs_state = job_status(protocol="https",
+                                    server=server,
+                                    user=user,
+                                    password=password,
+                                    job_list=jobs)
+
+    # fake job state
+    #jobs_state = '[{?20001066? : {?state_name?:?Received?, ?state?:?1"}},{?20001067? : {?state_name?:?Available?, ?state?:?5"}},{?20001068? : {?state_name?:?Available?, ?state?:?5"}}]'
+
+    tm.clean_tar_directory(target_dir, jobs_state)
+
 
 #tag to show this def as a celery task
 @shared_task
@@ -25,6 +59,10 @@ def upload_files(bundle_name='',
     task created on a separate Celery process to bundle and upload in the background
     status and errors are pushed by celery to the main server through RabbitMQ
     """
+
+    #clean tar directory
+    target_dir = os.path.dirname(bundle_name)
+    clean_target_directory(target_dir, server, user, password)
 
     # initial state pushed through celery
     current_task.update_state("PROGRESS", meta={'Status': "Starting Bundle/Upload Process"})

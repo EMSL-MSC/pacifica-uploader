@@ -18,6 +18,7 @@ from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 from django.core.urlresolvers import reverse
 
+
 import json
 
 import datetime
@@ -34,6 +35,7 @@ from subprocess import call
 
 #uploader
 from uploader import test_authorization
+from uploader import job_status
 from uploader import user_info
 
 #database imports
@@ -48,6 +50,7 @@ from django.contrib.auth.decorators import login_required
 
 # celery tasks
 from home import tasks
+from home import tar_man
 
 # delay for celery heartbeat
 from time import sleep
@@ -112,10 +115,11 @@ class SessionData(object):
     # process that handles bundling and uploading
     bundle_process = None
 
+    bundle_filepath = ''
     # size of the current bundle
     bundle_size = 0
-    bundle_size_str = ""
-    free_size_str = ""
+    bundle_size_str = ''
+    free_size_str = ''
 
     # free disk space
     free_space = 0
@@ -158,7 +162,6 @@ def celery_lives():
     for proc in psutil.process_iter():
         try:
             name = proc.name().lower()
-            print name
             if 'celery' in name:
                 return True
         except:
@@ -509,7 +512,7 @@ def spin_off_upload(request, s_data):
     else:
         target_dir = root_dir
 
-    bundle_name = os.path.join(target_dir, s_data.current_time + ".tar")
+    s_data.bundle_filepath = os.path.join(target_dir, s_data.current_time + ".tar")
 
     server_path = Filepath.objects.get(name="server")
     if server_path is not None:
@@ -521,7 +524,7 @@ def spin_off_upload(request, s_data):
     # spin this off as a background process and load the status page
     if True:
         s_data.bundle_process = \
-                tasks.upload_files.delay(bundle_name=bundle_name,
+                tasks.upload_files.delay(bundle_name=s_data.bundle_filepath,
                                          instrument_name=s_data.instrument,
                                          proposal=s_data.proposal_id,
                                          file_list=tuples,
@@ -531,7 +534,7 @@ def spin_off_upload(request, s_data):
                                          user=s_data.user,
                                          password=s_data.password)
     else: # for debug purposes
-        tasks.upload_files(bundle_name=bundle_name,
+        tasks.upload_files(bundle_name=s_data.bundle_filepath,
                                          instrument_name=s_data.instrument,
                                          proposal=s_data.proposal_id,
                                          file_list=tuples,
@@ -760,6 +763,7 @@ def login(request):
     else:
         return login_error(request, 'Server path does not exist')
 
+    
     # test to see if the user authorizes against EUS
     authorized = test_authorization(protocol="https",
                                     server=full_server_path,
@@ -872,6 +876,13 @@ def incremental_status(request):
         if "http" in result:
             state = 'DONE'
             result = result.strip('"')
+            job_id =  result
+            tm = tar_man.tar_management()
+            job_id = tm.parse_job(result)
+
+            if (job_id is not ''):
+                tm.add_tar(session_data.bundle_filepath, job_id)
+
             #if we have successfully uploaded, cleanup the lists
             cleanup_upload(session_data)
 
