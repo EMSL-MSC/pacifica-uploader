@@ -16,6 +16,8 @@ import bundler
 from getpass import getpass
 from StringIO import StringIO
 
+import json
+
 from PycurlSession import PycurlSession
 
 from time import sleep
@@ -196,6 +198,53 @@ def test_authorization(protocol='https',
             return True
 
     return False
+
+def job_status(protocol='https',
+                       server='',
+                       user='',
+                       password=':',
+                       job_list = []):
+
+    """
+    Validates the user as a MyEMSL user
+    """
+
+    session = pycurl_session(protocol, server, user, password)
+
+    curl = session.curl
+
+    # cookie!!!
+    pyurl = session.url + "/myemsl/testauth"
+    curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
+    odata = StringIO()
+    curl.setopt(pycurl.WRITEFUNCTION, odata.write)
+
+    curl.perform()
+
+
+    pyurl = session.url + '/myemsl/status/index.php/status/job_status'
+    curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
+    odata = StringIO()
+    
+    curl.setopt(pycurl.WRITEFUNCTION, odata.write)
+    curl.setopt(pycurl.POST, 1)
+
+    data = json.dumps(job_list)
+    curl.setopt(pycurl.POSTFIELDS, data)
+
+    curl.perform()
+
+    # Verify that authentication was successful
+    curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
+    if curl_http_code / 100 == 4:
+        return False
+    else:
+        odata.seek(0)
+        reply = odata.read()
+        print reply
+        return reply
+
+    return ''
 
 def progress(download_t, download_d, upload_t, upload_d):
     """
