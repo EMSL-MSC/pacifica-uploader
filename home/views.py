@@ -254,11 +254,16 @@ def file_tuples_recursively(folder, tuple_list, root_dir):
     recursively gets file tuples for a folder
     """
 
+    #if we don't have access to this folder, bail
+    if not os.access(root_dir, os.R_OK):
+        return
+
     for item in os.listdir(folder):
         path = os.path.join(folder, item)
         if os.path.isfile(path):
-            relative_path = os.path.relpath(path, root_dir)
-            tuple_list.append((path, relative_path))
+            if os.access(path, os.R_OK):
+                relative_path = os.path.relpath(path, root_dir)
+                tuple_list.append((path, relative_path))
         elif os.path.isdir(path):
             file_tuples_recursively(path, tuple_list, root_dir)
 
@@ -270,9 +275,10 @@ def file_tuples(selected_list, tuple_list, root_dir):
     """
     for path in selected_list:
         if os.path.isfile(path):
-            # the relative path is the path without the root directory
-            relative_path = os.path.relpath(path, root_dir)
-            tuple_list.append((path, relative_path))
+            if os.access(path, os.R_OK):
+                # the relative path is the path without the root directory
+                relative_path = os.path.relpath(path, root_dir)
+                tuple_list.append((path, relative_path))
         elif os.path.isdir(path):
             file_tuples_recursively(path, tuple_list, root_dir)
 
@@ -593,7 +599,9 @@ def modify(request):
 
         if mod_type == 'enterDir':
             root_dir = os.path.join(root_dir, path)
-            session_data.directory_history.append(path)
+            # check to see if we have read permissions to this directory
+            if (os.access(root_dir, os.R_OK)):
+              session_data.directory_history.append(path)
 
         elif mod_type == 'toggleFile':
             if full not in session_data.selected_files:
