@@ -416,7 +416,7 @@ def show_status(request, s_data, message):
     free_size_str = size_string(s_data.free_space)
 
     return render_to_response('home/status.html', \
-                                 {'instrument': s_data.instrument_friendly,
+                                 {'instrument':s_data.instrument + " " + s_data.instrument_friendly,
                                   'status': message,
                                   'proposal':s_data.proposal_friendly,
                                   'metaList':s_data. meta_list,
