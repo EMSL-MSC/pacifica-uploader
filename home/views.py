@@ -562,7 +562,7 @@ def modify(request):
         upload request
     """
 
-    print 'modify ' + request.get_full_path()
+    # print 'modify ' + request.get_full_path()
 
     global session_data
 
@@ -640,7 +640,7 @@ def populate_user_info(session_data, info):
     except Exception:
         return 'Unable to parse user information'
 
-    print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
+    # print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
 
     first_name = info["first_name"]
     if not first_name:
@@ -662,8 +662,8 @@ def populate_user_info(session_data, info):
                 session_data.instrument_friendly = inst_name
                 valid_instrument = True
 
-            print inst_str
-            print ""
+            #print inst_str
+            #print ""
 
         if not valid_instrument:
             return 'User is not valid for this instrument'
@@ -675,7 +675,7 @@ def populate_user_info(session_data, info):
     if there is no valid proposal for the user for this instrument
     throw an error
     """
-    print "props"
+    #print "props"
     props = info["proposals"]
     session_data.proposal_list = []
     for prop_id, prop_block in props.iteritems():
