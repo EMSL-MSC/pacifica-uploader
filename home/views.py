@@ -124,6 +124,9 @@ class SessionData(object):
     # free disk space
     free_space = 0
 
+    def concatenated_instrument(self):
+        return self.instrument + " " + self.instrument_friendly
+
 # Module level variables
 session_data = SessionData()
 
@@ -396,7 +399,7 @@ def populate_upload_page(request):
 
     # Render list page with the documents and the form
     return render_to_response('home/uploader.html', \
-        {'instrument': session_data.instrument_friendly,
+        {'instrument': session_data.concatenated_instrument(),
          'proposalList': session_data.proposal_list,
          'proposal':session_data.proposal_friendly,
          'directoryHistory': session_data.directory_history,
@@ -422,7 +425,7 @@ def show_status(request, s_data, message):
     free_size_str = size_string(s_data.free_space)
 
     return render_to_response('home/status.html', \
-                                 {'instrument':s_data.instrument + " " + s_data.instrument_friendly,
+                                 {'instrument':s_data.concatenated_instrument(),
                                   'status': message,
                                   'proposal':s_data.proposal_friendly,
                                   'metaList':s_data. meta_list,
