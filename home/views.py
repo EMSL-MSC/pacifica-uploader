@@ -205,6 +205,11 @@ def current_directory(history):
 
     return directory
 
+def undo_directory():
+    index = len(session_data.directory_history) - 1
+    del session_data.directory_history[index:]
+    print current_directory(session_data.directory_history)
+
 def bundle_size(files, folders):
     """
     totals up total size of the files in the bundle
@@ -258,7 +263,7 @@ def file_tuples_recursively(folder, tuple_list, root_dir):
     """
 
     #if we don't have access to this folder, bail
-    if not os.access(root_dir, os.R_OK):
+    if not os.access(folder, os.R_OK & os.X_OK):
         return
 
     for item in os.listdir(folder):
@@ -373,7 +378,12 @@ def populate_upload_page(request):
     checked_files = []
     unchecked_files = []
 
-    contents = os.listdir(root_dir)
+    try:
+        contents = os.listdir(root_dir)
+    except Exception:
+        undo_directory()
+        return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
+    
 
     for path in contents:
         full_path = os.path.join(root_dir, path)
@@ -603,8 +613,8 @@ def modify(request):
         if mod_type == 'enterDir':
             root_dir = os.path.join(root_dir, path)
             # check to see if we have read permissions to this directory
-            if (os.access(root_dir, os.R_OK)):
-              session_data.directory_history.append(path)
+            if (os.access(root_dir, os.R_OK & os.X_OK)):
+                session_data.directory_history.append(path)
 
         elif mod_type == 'toggleFile':
             if full not in session_data.selected_files:
@@ -617,8 +627,14 @@ def modify(request):
 
         elif mod_type == 'toggleDir':
             if full not in session_data.selected_dirs:
-                session_data.selected_dirs.append(full)
-                session_data.dir_sizes.append(upload_meta_string(full))
+                if (os.access(root_dir, os.R_OK & os.X_OK)):
+                    # test to see if we can get access
+                    try:
+                        files = os.listdir(full)
+                        session_data.selected_dirs.append(full)
+                        session_data.dir_sizes.append(upload_meta_string(full))
+                    except Exception:
+                        return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
             else:
                 index = session_data.selected_dirs.index(full)
                 session_data.selected_dirs.remove(full)
