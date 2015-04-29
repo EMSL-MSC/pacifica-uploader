@@ -22,6 +22,4 @@ ENV DJANGO_SETTINGS_MODULE UploadServer.settings_production
 ENV PYTHONPATH /app
 RUN python manage.py migrate
 RUN ./setup-superuser
-RUN chown -R daemon:nogroup -R /app
-EXPOSE 8000
-ENTRYPOINT ["/bin/bash", "startme.sh"]
+RUN chown -R 1:1 -R /app
