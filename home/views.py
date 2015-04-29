@@ -124,6 +124,9 @@ class SessionData(object):
     # free disk space
     free_space = 0
 
+    def concatenated_instrument(self):
+        return self.instrument + " " + self.instrument_friendly
+
 # Module level variables
 session_data = SessionData()
 
@@ -254,11 +257,16 @@ def file_tuples_recursively(folder, tuple_list, root_dir):
     recursively gets file tuples for a folder
     """
 
+    #if we don't have access to this folder, bail
+    if not os.access(root_dir, os.R_OK):
+        return
+
     for item in os.listdir(folder):
         path = os.path.join(folder, item)
         if os.path.isfile(path):
-            relative_path = os.path.relpath(path, root_dir)
-            tuple_list.append((path, relative_path))
+            if os.access(path, os.R_OK):
+                relative_path = os.path.relpath(path, root_dir)
+                tuple_list.append((path, relative_path))
         elif os.path.isdir(path):
             file_tuples_recursively(path, tuple_list, root_dir)
 
@@ -270,9 +278,10 @@ def file_tuples(selected_list, tuple_list, root_dir):
     """
     for path in selected_list:
         if os.path.isfile(path):
-            # the relative path is the path without the root directory
-            relative_path = os.path.relpath(path, root_dir)
-            tuple_list.append((path, relative_path))
+            if os.access(path, os.R_OK):
+                # the relative path is the path without the root directory
+                relative_path = os.path.relpath(path, root_dir)
+                tuple_list.append((path, relative_path))
         elif os.path.isdir(path):
             file_tuples_recursively(path, tuple_list, root_dir)
 
@@ -390,7 +399,7 @@ def populate_upload_page(request):
 
     # Render list page with the documents and the form
     return render_to_response('home/uploader.html', \
-        {'instrument': session_data.instrument_friendly,
+        {'instrument': session_data.concatenated_instrument(),
          'proposalList': session_data.proposal_list,
          'proposal':session_data.proposal_friendly,
          'directoryHistory': session_data.directory_history,
@@ -416,7 +425,7 @@ def show_status(request, s_data, message):
     free_size_str = size_string(s_data.free_space)
 
     return render_to_response('home/status.html', \
-                                 {'instrument': s_data.instrument_friendly,
+                                 {'instrument':s_data.concatenated_instrument(),
                                   'status': message,
                                   'proposal':s_data.proposal_friendly,
                                   'metaList':s_data. meta_list,
@@ -562,7 +571,7 @@ def modify(request):
         upload request
     """
 
-    print 'modify ' + request.get_full_path()
+    # print 'modify ' + request.get_full_path()
 
     global session_data
 
@@ -593,7 +602,9 @@ def modify(request):
 
         if mod_type == 'enterDir':
             root_dir = os.path.join(root_dir, path)
-            session_data.directory_history.append(path)
+            # check to see if we have read permissions to this directory
+            if (os.access(root_dir, os.R_OK)):
+              session_data.directory_history.append(path)
 
         elif mod_type == 'toggleFile':
             if full not in session_data.selected_files:
@@ -640,7 +651,7 @@ def populate_user_info(session_data, info):
     except Exception:
         return 'Unable to parse user information'
 
-    print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
+    # print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
 
     first_name = info["first_name"]
     if not first_name:
@@ -662,8 +673,8 @@ def populate_user_info(session_data, info):
                 session_data.instrument_friendly = inst_name
                 valid_instrument = True
 
-            print inst_str
-            print ""
+            #print inst_str
+            #print ""
 
         if not valid_instrument:
             return 'User is not valid for this instrument'
@@ -675,7 +686,7 @@ def populate_user_info(session_data, info):
     if there is no valid proposal for the user for this instrument
     throw an error
     """
-    print "props"
+    #print "props"
     props = info["proposals"]
     session_data.proposal_list = []
     for prop_id, prop_block in props.iteritems():

@@ -162,7 +162,7 @@ def user_info(protocol='https',
     else:
         odata.seek(0)
         reply = odata.read()
-        print reply
+        # print reply
         return reply
 
 def test_authorization(protocol='https',

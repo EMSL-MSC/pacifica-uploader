@@ -75,6 +75,32 @@ class tar_management(object):
         #write the state file
         self.write_tar_state(dict)
 
+    def remove_orphans(self):
+        # read the state file
+        dict = self.read_tar_state()
+        if not dict:
+            return
+
+        job_files = dict.values()
+        if not job_files:
+            return
+
+        path = job_files[0]
+        if not path:
+            return
+
+        dir = os.path.dirname(path)
+        dir_files = os.listdir(dir)
+
+        # compare the files to the contents of the directory
+        for file in dir_files:
+            # if a file is in the directory but not the tar state, remove it
+            full_path = os.path.join (dir, file)
+            if not full_path in job_files:
+                # remove from directory
+                if (os.path.isfile(full_path)):
+                    os.remove(full_path)
+
     def job_list(self):
         # read the state
         dict = self.read_tar_state()
@@ -87,6 +113,7 @@ class tar_management(object):
         return job_list
 
     def clean_tar_directory(self, tar_dir, jobs_state):
+
         # read the state
         dict = self.read_tar_state()
 
@@ -104,6 +131,8 @@ class tar_management(object):
                         self.remove_tar_file(job)
             except Exception:
                 self.remove_tar_file(job)
+
+        self.remove_orphans()
 
     def __init__(self):
         pass
