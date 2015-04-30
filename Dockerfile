@@ -9,6 +9,7 @@ RUN apt-get update && \
       python-pip \
       rabbitmq-server \
       python-pycurl \
+      curl \
       expect && \
     apt-get clean all
 RUN pip install \
