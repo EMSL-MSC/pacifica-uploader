@@ -22,4 +22,5 @@ ENV DJANGO_SETTINGS_MODULE UploadServer.settings_production
 ENV PYTHONPATH /app
 RUN python manage.py migrate
 RUN ./setup-superuser
+RUN chmod og+r /etc/resolv.conf
 RUN chown -R 1:1 -R /app
