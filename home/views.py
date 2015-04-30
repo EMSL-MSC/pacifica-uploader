@@ -57,7 +57,7 @@ from home import tar_man
 from time import sleep
 
 # for restarting Celery
-from subprocess import Popen
+import subprocess
 
 class MetaData(object):
     """
@@ -181,10 +181,7 @@ def start_celery():
     if not alive:
         try:
             print 'attempting to start Celery'
-            path = os.path.join('.', 'StartCelery.bat')
-            print path
-            os.chmod(path, stat.S_IEXEC)
-            Popen([path, ''])
+            subprocess.Popen('celery -A UploadServer worker --loglevel=info', shell=True )
         except Exception, e:
             print e
 
