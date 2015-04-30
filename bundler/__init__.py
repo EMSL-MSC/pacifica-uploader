@@ -150,13 +150,6 @@ class FileBundler():
 
         file_path = os.path.abspath(file_path)
 
-        #print >> sys.stderr, "Preparing to bundle %s" % file_path
-
-        # dfh, I don't see how this could ever happen
-        #if file_path == self.bundle_path:
-        #    print >> sys.stderr, "Skipping bundle file %s" % file_path
-        #    return
-
         # If the file_arcname argument is None use the base file name as the
         # arc name
         if file_arcname == None:
@@ -279,8 +272,13 @@ class TarBundler(FileBundler):
 
         running_size = 0
         last_percent = 0
+        percent_complete = 0
+
         try:
+            current_task.update_state(state=str(percent_complete), \
+                        meta={'Status': "Bundling percent complete: " + str(percent_complete)})
             for (file_path, file_arcname) in file_paths:
+
                 running_size += os.path.getsize(file_path)
                 percent_complete = 100.0 * running_size / bundle_size
 
@@ -334,7 +332,6 @@ class TarBundler(FileBundler):
         tarball.addfile(tar_info, metadata_file)
         metadata_file.close()
         tarball.close()
-
 
 def bundle(bundle_name='',
            instrument_name='',
