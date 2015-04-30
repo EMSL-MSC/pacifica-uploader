@@ -28,6 +28,7 @@ from urlparse import urlparse
 #operating system and platform
 import os
 import platform
+import stat
 
 #celery heartbeat
 import psutil
@@ -182,6 +183,7 @@ def start_celery():
             print 'attempting to start Celery'
             path = os.path.join('.', 'StartCelery.bat')
             print path
+            os.chmod(path, stat.S_IEXEC)
             Popen([path, ''])
         except Exception, e:
             print e
