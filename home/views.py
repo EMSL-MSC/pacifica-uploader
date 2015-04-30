@@ -888,14 +888,22 @@ def incremental_status(request):
 
     global session_data
 
+    if request.POST:
+        if request.POST.get("Cancel Upload"):
+            session_data.bundle_process.revoke(terminate=True)
+            cleanup_upload(session_data)
+            return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
+
+
+
     state = session_data.bundle_process.status
     if state is None:
-        state = "FAILURE"
+        state = "UNKNOWN"
     print state
 
     result = session_data.bundle_process.result
     if result is None:
-        result = "FAILURE"
+        result = "UNKNOWN"
     print result
 
     if result is not None:
