@@ -50,6 +50,9 @@ class UploaderError(Exception):
         current_task.update_state(state='FAILURE', meta={'info': self.msg})
         return "Uploader failed: %s" % self.msg
 
+# Module level variables
+last_percent = 0;
+
 def raise_upload_status(status, info):
     current_task.update_state(state=status, meta={'info': info})
     print >> sys.stderr, info
@@ -250,11 +253,18 @@ def progress(download_t, download_d, upload_t, upload_d):
     """
     gets the progress of the current pycurl upload
     """
-    print "Total to upload", upload_t
-    print "Total uploaded", upload_d
+
+    global last_percent
+
     if (upload_t > 0):
-        percent = float(upload_d) / float (upload_t)
-        print "percent uploaded %3.3f" % (percent)
+        percent = 100.0 * float(upload_d) / float (upload_t)
+        #print "percent uploaded %3.3f" % (percent)
+        
+        if percent - last_percent > 5:
+            current_task.update_state(state=str(percent), \
+                                     meta={'Status': "upload percent complete: " + str(percent)})
+            last_percent = percent
+            print percent
 
 def upload(bundle_name='',
            protocol='https',
@@ -278,6 +288,9 @@ def upload(bundle_name='',
     @note This function assumes a bundle has been created already and is ready to upload
     """
     status = None
+
+    global last_percent
+    last_percent = 0
 
     bundle_path = os.path.abspath(bundle_name)
     if not os.path.exists(bundle_path):
@@ -370,8 +383,8 @@ def upload(bundle_name='',
         size = os.lstat(bundle_path)[stat.ST_SIZE]
         curl.setopt(pycurl.INFILESIZE_LARGE, size)
 
-        #curl.setopt(pycurl.NOPROGRESS, 0)
-        #curl.setopt(pycurl.PROGRESSFUNCTION, progress)
+        curl.setopt(pycurl.NOPROGRESS, 0)
+        curl.setopt(pycurl.PROGRESSFUNCTION, progress)
         curl.perform()
 
         curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
