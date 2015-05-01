@@ -2,6 +2,8 @@ from settings import *
 
 DEBUG = False
 
+DATABASES['default']['NAME'] = '/srv/db.sqlite3'
+
 if not 'AMQP_PORT_5672_TCP_ADDR' in os.environ:
   os.environ['AMQP_PORT_5672_TCP_ADDR'] = 'localhost'
   os.environ['AMQP_PORT_5672_TCP_PORT'] = '5672'
