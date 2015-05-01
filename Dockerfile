@@ -10,6 +10,7 @@ RUN apt-get update && \
       rabbitmq-server \
       python-pycurl \
       curl \
+      sqlite3 \
       expect && \
     apt-get clean all
 RUN pip install \
