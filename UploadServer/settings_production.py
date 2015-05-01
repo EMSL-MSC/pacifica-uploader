@@ -1,6 +1,6 @@
 from settings import *
 
-DEBUG = False
+DEBUG = True
 
 if not 'AMQP_PORT_5672_TCP_ADDR' in os.environ:
   os.environ['AMQP_PORT_5672_TCP_ADDR'] = 'localhost'
