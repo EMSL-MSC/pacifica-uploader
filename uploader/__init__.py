@@ -260,7 +260,7 @@ def progress(download_t, download_d, upload_t, upload_d):
         percent = 100.0 * float(upload_d) / float (upload_t)
         #print "percent uploaded %3.3f" % (percent)
         
-        if percent - last_percent > 5:
+        if percent - last_percent > 5: 
             current_task.update_state(state=str(percent), \
                                      meta={'Status': "upload percent complete: " + str(percent)})
             last_percent = percent
