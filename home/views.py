@@ -159,17 +159,22 @@ def login_user_locally(request):
             auth.login(request, user)
 
 
-def celery_lives():
+def ping_celery():
     """
     check to see if the celery process to bundle and upload is alive, alive!
     """
-    for proc in psutil.process_iter():
-        try:
-            name = proc.name().lower()
-            if 'celery' in name:
+    ping_process = tasks.ping.delay();
+
+    tries = 0
+    while tries < 5:
+        state = ping_process.status
+        if state is not None:
+            print state
+            if state == "PING" or state == "SUCCESS":
                 return True
-        except:
-            pass
+        sleep (1)
+        tries += 1
+
     return False
 
 def start_celery():
@@ -177,7 +182,7 @@ def start_celery():
     starts the celery process
     """
 
-    alive = celery_lives()
+    alive = ping_celery()
     if not alive:
         try:
             print 'attempting to start Celery'
@@ -477,7 +482,7 @@ def spin_off_upload(request, s_data):
     # check to see if background celery process is alive
     # if not, start it.  Wait 5 seconds, if it doesn't start,
     # we're boned.
-    alive = start_celery()
+    alive = ping_celery()
     print 'Celery lives = %s' % (alive)
     if not alive:
         return show_status(request, s_data, 'Celery background process is not started')

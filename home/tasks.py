@@ -43,6 +43,10 @@ def clean_target_directory(target_dir = '', server='', user='', password=''):
 
     tm.clean_tar_directory(target_dir, jobs_state)
 
+@shared_task
+def ping():
+    print "Pinged!"
+    current_task.update_state(state = 'PING', meta={'Status': "Background process is alive"})
 
 #tag to show this def as a celery task
 @shared_task
