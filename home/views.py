@@ -59,6 +59,8 @@ from time import sleep
 # for restarting Celery
 import subprocess
 
+from home import session_data
+
 class MetaData(object):
     """
     structure used to pass upload metadata back and forth to the upload page
@@ -133,7 +135,7 @@ class SessionData(object):
         return self.instrument + " " + self.instrument_friendly
 
 # Module level variables
-session_data = SessionData()
+session = SessionData()
 
 def login_user_locally(request):
     """
@@ -214,9 +216,9 @@ def current_directory(history):
     return directory
 
 def undo_directory():
-    index = len(session_data.directory_history) - 1
-    del session_data.directory_history[index:]
-    print current_directory(session_data.directory_history)
+    index = len(session.directory_history) - 1
+    del session.directory_history[index:]
+    print current_directory(session.directory_history)
 
 def bundle_size(files, folders):
     """
@@ -349,15 +351,15 @@ def populate_upload_page(request):
     """
     formats the main uploader page
     """
-    global session_data
+    global session
 
     # if not logged in
-    if session_data.password == '':
+    if session.password == '':
         # call login error with no error message
         b = request.user.is_authenticated()
         return login_error(request, '')
 
-    root_dir = current_directory(session_data.directory_history)
+    root_dir = current_directory(session.directory_history)
 
     if root_dir == "": # first time through, initialize
         data_path = Filepath.objects.get(name="dataRoot")
@@ -370,8 +372,8 @@ def populate_upload_page(request):
 
         if root_dir.endswith("\\"):
             root_dir = root_dir[:-1]
-        session_data.directory_history.append(root_dir)
-        root_dir = current_directory(session_data.directory_history)
+        session.directory_history.append(root_dir)
+        root_dir = current_directory(session.directory_history)
 
         # create a list of metadata entries to pass to the list upload page
         for meta in Metadata.objects.all():
@@ -379,7 +381,7 @@ def populate_upload_page(request):
             meta_entry.label = meta.label
             meta_entry.name = meta.name
             meta_entry.value = ""
-            session_data.meta_list.append(meta_entry)
+            session.meta_list.append(meta_entry)
 
     checked_dirs = []
     unchecked_dirs = []
@@ -397,44 +399,44 @@ def populate_upload_page(request):
         full_path = os.path.join(root_dir, path)
 
         if os.path.isdir(full_path):
-            if full_path in session_data.selected_dirs:
+            if full_path in session.selected_dirs:
                 checked_dirs.append(path)
             else:
                 unchecked_dirs.append(path)
         else:
-            if full_path in session_data.selected_files:
+            if full_path in session.selected_files:
                 checked_files.append(path)
             else:
                 unchecked_files.append(path)
 
     # validate that the currently selected bundle will fit in the target space
-    uploadEnabled = validate_space_available(session_data)
-    message = 'Bundle: %s, Free: %s' % (session_data.bundle_size_str, session_data.free_size_str)
+    uploadEnabled = validate_space_available(session)
+    message = 'Bundle: %s, Free: %s' % (session.bundle_size_str, session.free_size_str)
     if not uploadEnabled:
         message += ": Bundle exceeds free space"
-    elif session_data.bundle_size==0:
+    elif session.bundle_size==0:
         uploadEnabled = False
 
     # Render list page with the documents and the form
     return render_to_response('home/uploader.html', \
-        {'instrument': session_data.concatenated_instrument(),
-         'proposalList': session_data.proposal_list,
-         'user_list': session_data.proposal_users,
-         'proposal':session_data.proposal_friendly,
-         'directoryHistory': session_data.directory_history,
-         'metaList': session_data.meta_list,
+        {'instrument': session.concatenated_instrument(),
+         'proposalList': session.proposal_list,
+         'user_list': session.proposal_users,
+         'proposal':session.proposal_friendly,
+         'directoryHistory': session.directory_history,
+         'metaList': session.meta_list,
          'checkedDirs': checked_dirs,
          'uncheckedDirs': unchecked_dirs,
          'checkedFiles': checked_files,
          'uncheckedFiles': unchecked_files,
-         'selectedDirs': session_data.selected_dirs,
-         'dirSizes': session_data.dir_sizes,
-         'selectedFiles': session_data.selected_files,
-         'fileSizes': session_data.file_sizes,
-         'current_time': session_data.current_time,
+         'selectedDirs': session.selected_dirs,
+         'dirSizes': session.dir_sizes,
+         'selectedFiles': session.selected_files,
+         'fileSizes': session.file_sizes,
+         'current_time': session.current_time,
          'message': message,
          'uploadEnabled': uploadEnabled,
-         'user': session_data.user_full_name
+         'user': session.user_full_name
         },
                               context_instance=RequestContext(request))
 
@@ -591,23 +593,23 @@ def modify(request):
 
     # print 'modify ' + request.get_full_path()
 
-    global session_data
+    global session
 
-    root_dir = current_directory(session_data.directory_history)
+    root_dir = current_directory(session.directory_history)
 
     if request.POST:
 
         print request.POST
 
         if request.POST.get("Clear"):
-            clear_upload_lists(session_data)
+            clear_upload_lists(session)
 
         if request.POST.get("Upload Files & Metadata"):
-            return spin_off_upload(request, session_data)
+            return spin_off_upload(request, session)
 
         if request.POST.get("Submit Proposal"):
-            load_request_proposal(request, session_data)
-            populate_proposal_users(session_data)
+            load_request_proposal(request, session)
+            populate_proposal_users(session)
 
     else:
         value_pair = urlparse(request.get_full_path())
@@ -626,36 +628,36 @@ def modify(request):
             root_dir = os.path.join(root_dir, path)
             # check to see if we have read permissions to this directory
             if (os.access(root_dir, os.R_OK & os.X_OK)):
-                session_data.directory_history.append(path)
+                session.directory_history.append(path)
 
         elif mod_type == 'toggleFile':
-            if full not in session_data.selected_files:
-                session_data.selected_files.append(full)
-                session_data.file_sizes.append(file_size_string(full))
+            if full not in session.selected_files:
+                session.selected_files.append(full)
+                session.file_sizes.append(file_size_string(full))
             else:
-                index = session_data.selected_files.index(full)
-                session_data.selected_files.remove(full)
-                del session_data.file_sizes[index]
+                index = session.selected_files.index(full)
+                session.selected_files.remove(full)
+                del session.file_sizes[index]
 
         elif mod_type == 'toggleDir':
-            if full not in session_data.selected_dirs:
+            if full not in session.selected_dirs:
                 if (os.access(root_dir, os.R_OK & os.X_OK)):
                     # test to see if we can get access
                     try:
                         files = os.listdir(full)
-                        session_data.selected_dirs.append(full)
-                        session_data.dir_sizes.append(upload_meta_string(full))
+                        session.selected_dirs.append(full)
+                        session.dir_sizes.append(upload_meta_string(full))
                     except Exception:
                         return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
             else:
-                index = session_data.selected_dirs.index(full)
-                session_data.selected_dirs.remove(full)
-                del session_data.dir_sizes[index]
+                index = session.selected_dirs.index(full)
+                session.selected_dirs.remove(full)
+                del session.dir_sizes[index]
 
         elif mod_type == "upDir":
             index = int(path)
-            del session_data.directory_history[index:]
-            print current_directory(session_data.directory_history)
+            del session.directory_history[index:]
+            print current_directory(session.directory_history)
 
     return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
@@ -670,7 +672,7 @@ def login_error(request, error_string):
     return render_to_response(settings.LOGIN_VIEW, \
                               {'message': error_string}, context_instance=RequestContext(request))
 
-def populate_user_info(session_data, info):
+def populate_user_info(session, info):
     """
     parses user information from a json struct
     """
@@ -688,7 +690,7 @@ def populate_user_info(session_data, info):
     if not last_name:
         return 'Unable to parse user name'
 
-    session_data.user_full_name = '%s (%s %s)' % (session_data.user, first_name, last_name)
+    session.user_full_name = '%s (%s %s)' % (session.user, first_name, last_name)
 
     instruments = info["instruments"]
 
@@ -697,8 +699,8 @@ def populate_user_info(session_data, info):
         for inst_id, inst_block in instruments.iteritems():
             inst_name = inst_block.get("instrument_name")
             inst_str = inst_id + "  " + inst_name
-            if session_data.instrument == inst_id:
-                session_data.instrument_friendly = inst_name
+            if session.instrument == inst_id:
+                session.instrument_friendly = inst_name
                 valid_instrument = True
 
             #print inst_str
@@ -716,7 +718,7 @@ def populate_user_info(session_data, info):
     """
     #print "props"
     props = info["proposals"]
-    session_data.proposal_list = []
+    session.proposal_list = []
     for prop_id, prop_block in props.iteritems():
         title = prop_block.get("title")
         prop_str = prop_id + "  " + title
@@ -727,31 +729,31 @@ def populate_user_info(session_data, info):
         try:
             if instruments is not None and len(instruments) > 0:
                 for inst_id in instruments: # eh.  inst_id is a list of 1 element.
-                    if session_data.instrument == str(inst_id):
-                        if prop_str not in session_data.proposal_list:
-                            session_data.proposal_list.append(prop_str)
+                    if session.instrument == str(inst_id):
+                        if prop_str not in session.proposal_list:
+                            session.proposal_list.append(prop_str)
         except Exception, err:
             return 'No valid proposals for this user on this instrument'
 
-    if len(session_data.proposal_list) == 0:
+    if len(session.proposal_list) == 0:
         return 'No valid proposals for this user on this instrument'
 
-    session_data.proposal_list.sort(key=lambda x: int(x.split(' ')[0]), reverse=True)
+    session.proposal_list.sort(key=lambda x: int(x.split(' ')[0]), reverse=True)
 
     # no errors found
     return ''
 
-def populate_proposal_users(session_data):
+def populate_proposal_users(session):
     """
     parses user for a proposal and instrument from a json struct
     """
 
     # get the user's info from EUS
     info = get_info(protocol="https",
-                     server=session_data.server_path,
-                     user=session_data.user,
-                     password=session_data.password,
-                     info_type = 'proposalinfo/' + session_data.proposal_id)
+                     server=session.server_path,
+                     user=session.user,
+                     password=session.password,
+                     info_type = 'proposalinfo/' + session.proposal_id)
 
     try:
         info = json.loads(info)
@@ -764,7 +766,7 @@ def populate_proposal_users(session_data):
     if not members:
         return 'Unable to parse proposal members'
 
-    session_data.proposal_users = []
+    session.proposal_users = []
 
     for member in members.iteritems():
         id =  member[1]
@@ -774,7 +776,7 @@ def populate_proposal_users(session_data):
         last_name = id["last_name"]
         if not last_name:
             return 'Unable to parse user name'
-        session_data.proposal_users.append(first_name + " " + last_name)
+        session.proposal_users.append(first_name + " " + last_name)
 
 def cookie_test(request):
     """
@@ -800,7 +802,7 @@ def login(request):
     Otherwise, gets the user data to populate the main page
     """
 
-    global session_data
+    global session
 
     # timeout
     try:
@@ -816,51 +818,51 @@ def login(request):
 
     """
     # check to see if there is an existing user logged in
-    if (session_data.current_user):
+    if (session.current_user):
         # if the current user is still logged in, throw an error
-        if (session_data.current_user.is_authenticated()):
-            return login_error(request, 'User %s is currently logged in' % session_data.user_full_name)
+        if (session.current_user.is_authenticated()):
+            return login_error(request, 'User %s is currently logged in' % session.user_full_name)
     # if this was the last user logged in, maintain the session state
-    if (request.user is not session_data.current_user):
-        cleanup_session(session_data)
+    if (request.user is not session.current_user):
+        cleanup_session(session)
     """
 
-    cleanup_session(session_data)
+    cleanup_session(session)
 
     #even if this is the current user, we still need to re-authenticate them
-    session_data.user = request.POST['username']
-    session_data.password = request.POST['password']
+    session.user = request.POST['username']
+    session.password = request.POST['password']
 
     server_path = Filepath.objects.get(name="server")
     if server_path is not None:
-        session_data.server_path = server_path.fullpath
+        session.server_path = server_path.fullpath
     else:
         return login_error(request, 'Server path does not exist')
 
     
     # test to see if the user authorizes against EUS
     authorized = test_authorization(protocol="https",
-                                    server=session_data.server_path,
-                                    user=session_data.user,
-                                    password=session_data.password)
+                                    server=session.server_path,
+                                    user=session.user,
+                                    password=session.password)
 
     if not authorized:
         return login_error(request, 'User or Password is incorrect')
 
     # get the user's info from EUS
     info = get_info(protocol="https",
-                     server=session_data.server_path,
-                     user=session_data.user,
-                     password=session_data.password,
+                     server=session.server_path,
+                     user=session.user,
+                     password=session.password,
                      info_type = 'userinfo')
 
     inst = Filepath.objects.get(name="instrument")
     if inst and inst is not '':
-        session_data.instrument = inst.fullpath
+        session.instrument = inst.fullpath
     else:
         return login_error(request, 'This instrument is undefined')
 
-    err_str = populate_user_info(session_data, info)
+    err_str = populate_user_info(session, info)
     if err_str is not '':
         return login_error(request, err_str)
 
@@ -874,7 +876,7 @@ def login(request):
     # ok, passed all EUS and local authorization tests, valid user data is loaded
     # keep a copy of the user so we can keep other users from stepping on them if they are still
     # logged in
-    session_data.current_user = request.user
+    session.current_user = request.user
 
     return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
@@ -921,7 +923,7 @@ def logout(request):
     # pass pylint
     request = request
 
-    global session_data
+    global session
 
     #logs out local user session
     # if the LOGOUT_URL is set to this view, we create a recursive call to here
@@ -936,22 +938,22 @@ def incremental_status(request):
     # pass pylint
     request = request
 
-    global session_data
+    global session
 
     if request.POST:
         if request.POST.get("Cancel Upload"):
-            session_data.bundle_process.revoke(terminate=True)
-            cleanup_upload(session_data)
+            session.bundle_process.revoke(terminate=True)
+            cleanup_upload(session)
             return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
 
 
-    state = session_data.bundle_process.status
+    state = session.bundle_process.status
     if state is None:
         state = "UNKNOWN"
     print state
 
-    result = session_data.bundle_process.result
+    result = session.bundle_process.result
     if result is None:
         result = "UNKNOWN"
     print result
@@ -965,10 +967,10 @@ def incremental_status(request):
             job_id = tm.parse_job(result)
 
             if (job_id is not ''):
-                tm.add_tar(session_data.bundle_filepath, job_id)
+                tm.add_tar(session.bundle_filepath, job_id)
 
             #if we have successfully uploaded, cleanup the lists
-            cleanup_upload(session_data)
+            cleanup_upload(session)
 
     # create json structure
     retval = json.dumps({'state':state, 'result':result})
