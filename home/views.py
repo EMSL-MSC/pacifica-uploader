@@ -390,24 +390,24 @@ def populate_upload_page(request):
         },
                               context_instance=RequestContext(request))
 
-def show_status(request, s_data, message):
+def show_status(request, session, message):
 
-    bundle_size_str = size_string(s_data.bundle_size)
-    free_size_str = size_string(s_data.free_space)
+    bundle_size_str = size_string(session.bundle_size)
+    free_size_str = size_string(session.free_space)
 
     return render_to_response('home/status.html', \
-                                 {'instrument':s_data.concatenated_instrument(),
+                                 {'instrument':session.concatenated_instrument(),
                                   'status': message,
-                                  'proposal':s_data.proposal_friendly,
-                                  'metaList':s_data. meta_list,
-                                  'current_time': s_data.current_time,
+                                  'proposal':session.proposal_friendly,
+                                  'metaList':session. meta_list,
+                                  'current_time': session.current_time,
                                   'bundle_size': bundle_size_str,
                                   'free_size': free_size_str,
-                                  'user': s_data.user_full_name},
+                                  'user': session.user_full_name},
                                   context_instance=RequestContext(request))
 
 
-def validate_space_available(s_data):
+def validate_space_available(session):
 
     target_path = Filepath.objects.get(name="target")
     if target_path is not None:
@@ -415,22 +415,22 @@ def validate_space_available(s_data):
     else:
         target_dir = root_dir
 
-    s_data.bundle_size = bundle_size(s_data.selected_files, s_data.selected_dirs,)
+    session.bundle_size = bundle_size(session.selected_files, session.selected_dirs,)
 
     # get the disk usage
     space = psutil.disk_usage(target_dir)
 
     #give ourselves a cushion for other processes
-    s_data.free_space = int(.9 * space.free)
+    session.free_space = int(.9 * space.free)
 
-    s_data.bundle_size_str = size_string(s_data.bundle_size)
-    s_data.free_size_str = size_string(s_data.free_space)
+    session.bundle_size_str = size_string(session.bundle_size)
+    session.free_size_str = size_string(session.free_space)
 
-    if (s_data.bundle_size == 0):
+    if (session.bundle_size == 0):
         return True
-    return (s_data.bundle_size <  s_data.free_space)
+    return (session.bundle_size <  session.free_space)
 
-def spin_off_upload(request, s_data):
+def spin_off_upload(request, session):
     """
     spins the upload process off to a background celery process
     """
@@ -440,19 +440,19 @@ def spin_off_upload(request, s_data):
     alive = ping_celery()
     print 'Celery lives = %s' % (alive)
     if not alive:
-        return show_status(request, s_data, 'Celery background process is not started')
+        return show_status(request, session, 'Celery background process is not started')
 
 
-    root_dir = current_directory(s_data.directory_history)
+    root_dir = current_directory(session.directory_history)
 
     # get the meta data values from the post
-    for meta in s_data. meta_list:
+    for meta in session. meta_list:
         value = request.POST.get(meta.name)
         if value:
             meta.value = value
 
     # get the selected proposal string from the post
-    s_data.load_request_proposal(request)
+    session.load_request_proposal(request)
 
     # get the root directory from the database
     data_path = Filepath.objects.get(name="dataRoot")
@@ -466,19 +466,19 @@ def spin_off_upload(request, s_data):
 
     #create a list of tuples (filepath, arcpath)
     tuples = []
-    file_tuples(s_data.selected_files, tuples, root)
-    file_tuples(s_data.selected_dirs, tuples, root)
+    file_tuples(session.selected_files, tuples, root)
+    file_tuples(session.selected_dirs, tuples, root)
 
     # create the groups dictionary
     #{"groups":[{"name":"FOO1", "type":"Tag"}]}
     groups = {}
-    for meta in s_data.meta_list:
+    for meta in session.meta_list:
         groups[meta.name] = meta.value
 
-    insty = 'Instrument.%s' % (s_data.instrument)
-    groups[insty] = s_data.instrument_friendly
+    insty = 'Instrument.%s' % (session.instrument)
+    groups[insty] = session.instrument_friendly
 
-    s_data.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
+    session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
 
     target_path = Filepath.objects.get(name="target")
     if target_path is not None:
@@ -486,32 +486,32 @@ def spin_off_upload(request, s_data):
     else:
         target_dir = root_dir
 
-    s_data.bundle_filepath = os.path.join(target_dir, s_data.current_time + ".tar")
+    session.bundle_filepath = os.path.join(target_dir, session.current_time + ".tar")
 
     # spin this off as a background process and load the status page
     if True:
-        s_data.bundle_process = \
-                tasks.upload_files.delay(bundle_name=s_data.bundle_filepath,
-                                         instrument_name=s_data.instrument,
-                                         proposal=s_data.proposal_id,
+        session.bundle_process = \
+                tasks.upload_files.delay(bundle_name=session.bundle_filepath,
+                                         instrument_name=session.instrument,
+                                         proposal=session.proposal_id,
                                          file_list=tuples,
-                                         bundle_size=s_data.bundle_size,
+                                         bundle_size=session.bundle_size,
                                          groups=groups,
-                                         server=s_data.server_path,
-                                         user=s_data.user,
-                                         password=s_data.password)
+                                         server=session.server_path,
+                                         user=session.user,
+                                         password=session.password)
     else: # for debug purposes
-        tasks.upload_files(bundle_name=s_data.bundle_filepath,
-                                         instrument_name=s_data.instrument,
-                                         proposal=s_data.proposal_id,
+        tasks.upload_files(bundle_name=session.bundle_filepath,
+                                         instrument_name=session.instrument,
+                                         proposal=session.proposal_id,
                                          file_list=tuples,
-                                         bundle_size=s_data.bundle_size,
+                                         bundle_size=session.bundle_size,
                                          groups=groups,
-                                         server=s_data.server_path,
-                                         user=s_data.user,
-                                         password=s_data.password)
+                                         server=session.server_path,
+                                         user=session.user,
+                                         password=session.password)
 
-    return show_status(request, s_data, 'Starting Upload')
+    return show_status(request, session, 'Starting Upload')
 
 def modify(request):
     """
