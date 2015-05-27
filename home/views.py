@@ -37,7 +37,6 @@ from subprocess import call
 #uploader
 from uploader import test_authorization
 from uploader import job_status
-from uploader import get_info
 
 #database imports
 from home.models import Filepath
@@ -87,55 +86,55 @@ class FolderMeta(object):
 
 
 
-class SessionData(object):
-    """
-    meta data about for a session
-    """
-    server_path = ''
+#class SessionData(object):
+#    """
+#    meta data about for a session
+#    """
+#    server_path = ''
 
-    user = ''
-    user_full_name = ''
-    password = ''
+#    user = ''
+#    user_full_name = ''
+#    password = ''
 
-    current_user = None
+#    current_user = None
 
-    current_time = ''
-    instrument = ''
-    instrument_friendly = ''
-    proposal_friendly = ''
-    proposal_id = ''
+#    current_time = ''
+#    instrument = ''
+#    instrument_friendly = ''
+#    proposal_friendly = ''
+#    proposal_id = ''
 
 
-    selected_dirs = []
-    selected_files = []
-    dir_sizes = []
-    file_sizes = []
-    directory_history = []
+#    selected_dirs = []
+#    selected_files = []
+#    dir_sizes = []
+#    file_sizes = []
+#    directory_history = []
 
-    # meta data values
-    meta_list = []
+#    # meta data values
+#    meta_list = []
 
-    # proposals
-    proposal_list = []
-    proposal_users = []
+#    # proposals
+#    proposal_list = []
+#    proposal_users = []
 
-    # process that handles bundling and uploading
-    bundle_process = None
+#    # process that handles bundling and uploading
+#    bundle_process = None
 
-    bundle_filepath = ''
-    # size of the current bundle
-    bundle_size = 0
-    bundle_size_str = ''
-    free_size_str = ''
+#    bundle_filepath = ''
+#    # size of the current bundle
+#    bundle_size = 0
+#    bundle_size_str = ''
+#    free_size_str = ''
 
-    # free disk space
-    free_space = 0
+#    # free disk space
+#    free_space = 0
 
-    def concatenated_instrument(self):
-        return self.instrument + " " + self.instrument_friendly
+#    def concatenated_instrument(self):
+#        return self.instrument + " " + self.instrument_friendly
 
 # Module level variables
-session = SessionData()
+session = session_data.session_state()
 
 def login_user_locally(request):
     """
@@ -215,7 +214,7 @@ def current_directory(history):
 
     return directory
 
-def undo_directory():
+def undo_directory(session):
     index = len(session.directory_history) - 1
     del session.directory_history[index:]
     print current_directory(session.directory_history)
@@ -361,7 +360,7 @@ def populate_upload_page(request):
 
     root_dir = current_directory(session.directory_history)
 
-    if root_dir == "": # first time through, initialize
+    if root_dir == '': # first time through, initialize
         data_path = Filepath.objects.get(name="dataRoot")
         if data_path is not None:
             root_dir = data_path.fullpath
@@ -391,7 +390,7 @@ def populate_upload_page(request):
     try:
         contents = os.listdir(root_dir)
     except Exception:
-        undo_directory()
+        undo_directory(session)
         return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
     
 
@@ -480,18 +479,6 @@ def validate_space_available(s_data):
         return True
     return (s_data.bundle_size <  s_data.free_space)
 
-def load_proposal (proposal, s_data):
-    s_data.proposal_friendly = proposal
-
-    # split the proposal string into ID and description
-    split = s_data.proposal_friendly.split()
-    s_data.proposal_id = split[0]
-
-def load_request_proposal (request, s_data):
-    # get the selected proposal string from the post
-    proposal = request.POST.get("proposal")
-    load_proposal(proposal, s_data)
-
 def spin_off_upload(request, s_data):
     """
     spins the upload process off to a background celery process
@@ -514,7 +501,7 @@ def spin_off_upload(request, s_data):
             meta.value = value
 
     # get the selected proposal string from the post
-    load_request_proposal(request, s_data)
+    s_data.load_request_proposal(request)
 
     # get the root directory from the database
     data_path = Filepath.objects.get(name="dataRoot")
@@ -575,12 +562,12 @@ def spin_off_upload(request, s_data):
 
     return show_status(request, s_data, 'Starting Upload')
 
-def clear_upload_lists(s_data):
-    """
-    clears the directory and file lists
-    """
-    s_data.selected_files = []
-    s_data.selected_dirs = []
+#def clear_upload_lists(s_data):
+#    """
+#    clears the directory and file lists
+#    """
+#    s_data.selected_files = []
+#    s_data.selected_dirs = []
 
 def modify(request):
     """
@@ -602,14 +589,14 @@ def modify(request):
         print request.POST
 
         if request.POST.get("Clear"):
-            clear_upload_lists(session)
+            session.clear_upload_lists()
 
         if request.POST.get("Upload Files & Metadata"):
             return spin_off_upload(request, session)
 
         if request.POST.get("Submit Proposal"):
-            load_request_proposal(request, session)
-            populate_proposal_users(session)
+            session.load_request_proposal(request)
+            session.populate_proposal_users()
 
     else:
         value_pair = urlparse(request.get_full_path())
@@ -743,40 +730,40 @@ def populate_user_info(session, info):
     # no errors found
     return ''
 
-def populate_proposal_users(session):
-    """
-    parses user for a proposal and instrument from a json struct
-    """
+#def populate_proposal_users(session):
+#    """
+#    parses user for a proposal and instrument from a json struct
+#    """
 
-    # get the user's info from EUS
-    info = get_info(protocol="https",
-                     server=session.server_path,
-                     user=session.user,
-                     password=session.password,
-                     info_type = 'proposalinfo/' + session.proposal_id)
+#    # get the user's info from EUS
+#    info = get_info(protocol="https",
+#                     server=session.server_path,
+#                     user=session.user,
+#                     password=session.password,
+#                     info_type = 'proposalinfo/' + session.proposal_id)
 
-    try:
-        info = json.loads(info)
-    except Exception:
-        return 'Unable to parse proposal user information'
+#    try:
+#        info = json.loads(info)
+#    except Exception:
+#        return 'Unable to parse proposal user information'
 
-    # print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
+#    # print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
 
-    members = info["members"]
-    if not members:
-        return 'Unable to parse proposal members'
+#    members = info["members"]
+#    if not members:
+#        return 'Unable to parse proposal members'
 
-    session.proposal_users = []
+#    session.proposal_users = []
 
-    for member in members.iteritems():
-        id =  member[1]
-        first_name = id["first_name"]
-        if not first_name:
-            return 'Unable to parse user name'
-        last_name = id["last_name"]
-        if not last_name:
-            return 'Unable to parse user name'
-        session.proposal_users.append(first_name + " " + last_name)
+#    for member in members.iteritems():
+#        id =  member[1]
+#        first_name = id["first_name"]
+#        if not first_name:
+#            return 'Unable to parse user name'
+#        last_name = id["last_name"]
+#        if not last_name:
+#            return 'Unable to parse user name'
+#        session.proposal_users.append(first_name + " " + last_name)
 
 def cookie_test(request):
     """
@@ -827,7 +814,7 @@ def login(request):
         cleanup_session(session)
     """
 
-    cleanup_session(session)
+    session.cleanup_session()
 
     #even if this is the current user, we still need to re-authenticate them
     session.user = request.POST['username']
@@ -849,20 +836,20 @@ def login(request):
     if not authorized:
         return login_error(request, 'User or Password is incorrect')
 
-    # get the user's info from EUS
-    info = get_info(protocol="https",
-                     server=session.server_path,
-                     user=session.user,
-                     password=session.password,
-                     info_type = 'userinfo')
-
     inst = Filepath.objects.get(name="instrument")
     if inst and inst is not '':
         session.instrument = inst.fullpath
     else:
         return login_error(request, 'This instrument is undefined')
 
-    err_str = populate_user_info(session, info)
+    ## get the user's info from EUS
+    #info = get_info(protocol="https",
+    #                 server=session.server_path,
+    #                 user=session.user,
+    #                 password=session.password,
+    #                 info_type = 'userinfo')
+
+    err_str = session.populate_user_info()
     if err_str is not '':
         return login_error(request, err_str)
 
@@ -880,39 +867,39 @@ def login(request):
 
     return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
-def cleanup_session(s_data):
-    """
-    resets a session to a clean state
-    """
+#def cleanup_session(s_data):
+#    """
+#    resets a session to a clean state
+#    """
 
-    s_data.meta_list = []
-    s_data.bundle_process = None
-    s_data.current_time = None
-    s_data.dir_sizes = []
-    s_data.directory_history = []
-    s_data.file_sizes = []
-    s_data.instrument = None
-    s_data.proposal_id = None
-    s_data.proposal_list = []
-    s_data.proposal_users = []
-    s_data.selected_dirs = []
-    s_data.selected_files = []
-    s_data.user = ''
-    s_data.password = ''
-    s_data.user_full_name = ''
+#    s_data.meta_list = []
+#    s_data.bundle_process = None
+#    s_data.current_time = None
+#    s_data.dir_sizes = []
+#    s_data.directory_history = []
+#    s_data.file_sizes = []
+#    s_data.instrument = None
+#    s_data.proposal_id = None
+#    s_data.proposal_list = []
+#    s_data.proposal_users = []
+#    s_data.selected_dirs = []
+#    s_data.selected_files = []
+#    s_data.user = ''
+#    s_data.password = ''
+#    s_data.user_full_name = ''
 
-def cleanup_upload(s_data):
-    """
-    resets a session to a clean state
-    """
-    s_data.bundle_process = None
-    s_data.current_time = None
-    s_data.meta_list = []
-    s_data.dir_sizes = []
-    s_data.directory_history = []
-    s_data.file_sizes = []
-    s_data.selected_dirs = []
-    s_data.selected_files = []
+#def cleanup_upload(s_data):
+#    """
+#    resets a session to a clean state
+#    """
+#    s_data.bundle_process = None
+#    s_data.current_time = None
+#    s_data.meta_list = []
+#    s_data.dir_sizes = []
+#    s_data.directory_history = []
+#    s_data.file_sizes = []
+#    s_data.selected_dirs = []
+#    s_data.selected_files = []
 
 def logout(request):
     """
@@ -970,7 +957,7 @@ def incremental_status(request):
                 tm.add_tar(session.bundle_filepath, job_id)
 
             #if we have successfully uploaded, cleanup the lists
-            cleanup_upload(session)
+            session.cleanup_upload()
 
     # create json structure
     retval = json.dumps({'state':state, 'result':result})
