@@ -37,7 +37,7 @@ from subprocess import call
 #uploader
 from uploader import test_authorization
 from uploader import job_status
-from uploader import user_info
+from uploader import get_info
 
 #database imports
 from home.models import Filepath
@@ -87,8 +87,9 @@ class FolderMeta(object):
 
 class SessionData(object):
     """
-    meta data about a folder, including filecount, directory count, and the total bytes.
+    meta data about for a session
     """
+    server_path = ''
 
     user = ''
     user_full_name = ''
@@ -101,6 +102,8 @@ class SessionData(object):
     instrument_friendly = ''
     proposal_friendly = ''
     proposal_id = ''
+
+
     selected_dirs = []
     selected_files = []
     dir_sizes = []
@@ -112,6 +115,7 @@ class SessionData(object):
 
     # proposals
     proposal_list = []
+    proposal_users = []
 
     # process that handles bundling and uploading
     bundle_process = None
@@ -415,6 +419,7 @@ def populate_upload_page(request):
     return render_to_response('home/uploader.html', \
         {'instrument': session_data.concatenated_instrument(),
          'proposalList': session_data.proposal_list,
+         'user_list': session_data.proposal_users,
          'proposal':session_data.proposal_friendly,
          'directoryHistory': session_data.directory_history,
          'metaList': session_data.meta_list,
@@ -473,12 +478,22 @@ def validate_space_available(s_data):
         return True
     return (s_data.bundle_size <  s_data.free_space)
 
+def load_proposal (proposal, s_data):
+    s_data.proposal_friendly = proposal
+
+    # split the proposal string into ID and description
+    split = s_data.proposal_friendly.split()
+    s_data.proposal_id = split[0]
+
+def load_request_proposal (request, s_data):
+    # get the selected proposal string from the post
+    proposal = request.POST.get("proposal")
+    load_proposal(proposal, s_data)
 
 def spin_off_upload(request, s_data):
     """
     spins the upload process off to a background celery process
     """
-
     # check to see if background celery process is alive
     # if not, start it.  Wait 5 seconds, if it doesn't start,
     # we're boned.
@@ -497,11 +512,7 @@ def spin_off_upload(request, s_data):
             meta.value = value
 
     # get the selected proposal string from the post
-    s_data.proposal_friendly = request.POST.get("proposal")
-
-    # split the proposal string into ID and description
-    split = s_data.proposal_friendly.split()
-    s_data.proposal_id = split[0]
+    load_request_proposal(request, s_data)
 
     # get the root directory from the database
     data_path = Filepath.objects.get(name="dataRoot")
@@ -537,13 +548,6 @@ def spin_off_upload(request, s_data):
 
     s_data.bundle_filepath = os.path.join(target_dir, s_data.current_time + ".tar")
 
-    server_path = Filepath.objects.get(name="server")
-    if server_path is not None:
-        full_server_path = server_path.fullpath
-    else:
-        #handle error here
-        full_server_path = "dev1.my.emsl.pnl.gov"
-
     # spin this off as a background process and load the status page
     if True:
         s_data.bundle_process = \
@@ -553,7 +557,7 @@ def spin_off_upload(request, s_data):
                                          file_list=tuples,
                                          bundle_size=s_data.bundle_size,
                                          groups=groups,
-                                         server=full_server_path,
+                                         server=s_data.server_path,
                                          user=s_data.user,
                                          password=s_data.password)
     else: # for debug purposes
@@ -563,7 +567,7 @@ def spin_off_upload(request, s_data):
                                          file_list=tuples,
                                          bundle_size=s_data.bundle_size,
                                          groups=groups,
-                                         server=full_server_path,
+                                         server=s_data.server_path,
                                          user=s_data.user,
                                          password=s_data.password)
 
@@ -600,6 +604,10 @@ def modify(request):
 
         if request.POST.get("Upload Files & Metadata"):
             return spin_off_upload(request, session_data)
+
+        if request.POST.get("Submit Proposal"):
+            load_request_proposal(request, session_data)
+            populate_proposal_users(session_data)
 
     else:
         value_pair = urlparse(request.get_full_path())
@@ -733,6 +741,41 @@ def populate_user_info(session_data, info):
     # no errors found
     return ''
 
+def populate_proposal_users(session_data):
+    """
+    parses user for a proposal and instrument from a json struct
+    """
+
+    # get the user's info from EUS
+    info = get_info(protocol="https",
+                     server=session_data.server_path,
+                     user=session_data.user,
+                     password=session_data.password,
+                     info_type = 'proposalinfo/' + session_data.proposal_id)
+
+    try:
+        info = json.loads(info)
+    except Exception:
+        return 'Unable to parse proposal user information'
+
+    # print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
+
+    members = info["members"]
+    if not members:
+        return 'Unable to parse proposal members'
+
+    session_data.proposal_users = []
+
+    for member in members.iteritems():
+        id =  member[1]
+        first_name = id["first_name"]
+        if not first_name:
+            return 'Unable to parse user name'
+        last_name = id["last_name"]
+        if not last_name:
+            return 'Unable to parse user name'
+        session_data.proposal_users.append(first_name + " " + last_name)
+
 def cookie_test(request):
     """
     This test needs to be called twice in a row.  The first call should fail as the
@@ -790,14 +833,14 @@ def login(request):
 
     server_path = Filepath.objects.get(name="server")
     if server_path is not None:
-        full_server_path = server_path.fullpath
+        session_data.server_path = server_path.fullpath
     else:
         return login_error(request, 'Server path does not exist')
 
     
     # test to see if the user authorizes against EUS
     authorized = test_authorization(protocol="https",
-                                    server=full_server_path,
+                                    server=session_data.server_path,
                                     user=session_data.user,
                                     password=session_data.password)
 
@@ -805,10 +848,11 @@ def login(request):
         return login_error(request, 'User or Password is incorrect')
 
     # get the user's info from EUS
-    info = user_info(protocol="https",
-                     server=full_server_path,
+    info = get_info(protocol="https",
+                     server=session_data.server_path,
                      user=session_data.user,
-                     password=session_data.password)
+                     password=session_data.password,
+                     info_type = 'userinfo')
 
     inst = Filepath.objects.get(name="instrument")
     if inst and inst is not '':
@@ -848,6 +892,7 @@ def cleanup_session(s_data):
     s_data.instrument = None
     s_data.proposal_id = None
     s_data.proposal_list = []
+    s_data.proposal_users = []
     s_data.selected_dirs = []
     s_data.selected_files = []
     s_data.user = ''

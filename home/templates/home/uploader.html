@@ -3,6 +3,15 @@
 <head>
 	<title>MyEMSL Instrument Data Uploader</title>
 	<style type="text/css">
+    <script src="{{ MEDIA_URL }}jquery-1.11.2.js"></script>
+
+    <script type="text/javascript">
+	    $.ajaxSetup({cache:false});
+        
+        $('#proposal').change(function() {
+            this.form.submit();
+        });
+    </script>
 body
 {
 	padding-top: 0;
@@ -190,7 +199,7 @@ li ul li
                 <strong>Proposal:</strong>
             </p>
             
-            <select name = "proposal" >
+            <select id ="proposal" name = "proposal" >
             
             {% for prop in proposalList %}
                 {% if proposal == prop %}
@@ -201,18 +210,31 @@ li ul li
             {% endfor %}
             
             </select>
+
+            <input type="submit" name = "Submit Proposal" value="Submit Proposal" />
+
+            <p class="tight">
+                <strong>User of record:</strong>
+            </p>
+            <select id ="proposal_user" name = "proposal_user" >
+            
+            {% for user in user_list %}
+                    <option value="{{user}}">{{user}}</option>
+            {% endfor %}
+            
+            </select>
             
 			{% for meta in metaList %}
                 <p class = "tight">
                     <strong>{{meta.label}}</strong><br />
                     <input type="text" size="35" name = "{{meta.name}}" value = "{{meta.value}}">                                           
-                </p>    
+                </p>
             {% endfor %}
 			
 			<div style="text-align: center; position: relative; margin-top: 2em;">	
                 {% if uploadEnabled %}
                     <input type="submit" name = "Upload Files & Metadata" value="Upload" />
-                {% else %}   
+                {% else %}
                     <input disabled type="submit" name = "Upload Files & Metadata" value="Upload" />
                 {% endif %}
 

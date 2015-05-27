@@ -138,10 +138,11 @@ def pycurl_session(protocol='https',
 
     return retval
 
-def user_info(protocol='https',
+def get_info(protocol='https',
               server='dev1.my.emsl.pnl.gov',
               user='',
-              password=':'):
+              password=':',
+              info_type = 'userinfo'):
 
     """
     gets the user info from the EUS database mirror on the backend server
@@ -151,7 +152,7 @@ def user_info(protocol='https',
 
     curl = session.curl
 
-    pyurl = session.url + "/myemsl/userinfo"
+    pyurl = session.url + '/myemsl/' + info_type
     curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
     odata = StringIO()
     curl.setopt(pycurl.WRITEFUNCTION, odata.write)
@@ -167,6 +168,7 @@ def user_info(protocol='https',
         reply = odata.read()
         # print reply
         return reply
+
 
 def test_authorization(protocol='https',
                        server='',

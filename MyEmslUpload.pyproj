@@ -41,6 +41,9 @@
     <Compile Include="home\forms.py" />
     <Compile Include="home\models.py" />
     <Compile Include="home\tasks.py" />
+    <Compile Include="home\session_data.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="home\templatetags\app_filters.py" />
     <Compile Include="home\templatetags\__init__.py" />
     <Compile Include="home\views.py" />
