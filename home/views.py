@@ -156,147 +156,146 @@ def start_celery():
     return alive
 
 #remove
-def current_directory(history):
-    """
-    builds the current directory based on the navigation history
-    """
-    directory = ''
-    for path in history:
-        directory = os.path.join(directory, path)
+#def current_directory(history):
+#    """
+#    builds the current directory based on the navigation history
+#    """
+#    directory = ''
+#    for path in history:
+#        directory = os.path.join(directory, path)
 
-    return directory
-
-#remove
-def undo_directory(session):
-    index = len(session.files.directory_history) - 1
-    del session.files.directory_history[index:]
-    print current_directory(session.files.directory_history)
+#    return directory
 
 #remove
-def bundle_size(files, folders):
-    """
-    totals up total size of the files in the bundle
-    """
-    total_size = 0
+#def undo_directory(session):
+#    index = len(session.files.directory_history) - 1
+#    del session.files.directory_history[index:]
 
-    for file_path in files:
-        total_size += os.path.getsize(file_path)
+#remove
+#def bundle_size(files, folders):
+#    """
+#    totals up total size of the files in the bundle
+#    """
+#    total_size = 0
 
-    for folder in folders:
-        total_size += folder_size(folder)
+#    for file_path in files:
+#        total_size += os.path.getsize(file_path)
 
-    return total_size
+#    for folder in folders:
+#        total_size += folder_size(folder)
 
-def folder_size(folder):
-    """
-    recursively totals up total size of the files in the folder and sub folders
-    """
+#    return total_size
 
-    total_size = os.path.getsize(folder)
-    for item in os.listdir(folder):
-        itempath = os.path.join(folder, item)
-        if os.path.isfile(itempath):
-            total_size += os.path.getsize(itempath)
-        elif os.path.isdir(itempath):
-            total_size += folder_size(itempath)
+#def folder_size(folder):
+#    """
+#    recursively totals up total size of the files in the folder and sub folders
+#    """
 
-    return total_size
+#    total_size = os.path.getsize(folder)
+#    for item in os.listdir(folder):
+#        itempath = os.path.join(folder, item)
+#        if os.path.isfile(itempath):
+#            total_size += os.path.getsize(itempath)
+#        elif os.path.isdir(itempath):
+#            total_size += folder_size(itempath)
 
-def folder_meta(folder, meta):
-    """
-    gets the meta data for a folder
-    number of folders
-    number of files
-    total size
-    """
+#    return total_size
 
-    meta.dir_count += 1
+#def folder_meta(folder, meta):
+#    """
+#    gets the meta data for a folder
+#    number of folders
+#    number of files
+#    total size
+#    """
 
-    for item in os.listdir(folder):
-        itempath = os.path.join(folder, item)
-        if os.path.isfile(itempath):
-            meta.totalBytes += os.path.getsize(itempath)
-            meta.fileCount += 1
-        elif os.path.isdir(itempath):
-            folder_meta(itempath, meta)
+#    meta.dir_count += 1
 
-def file_tuples_recursively(folder, tuple_list, root_dir):
-    """
-    recursively gets file tuples for a folder
-    """
+#    for item in os.listdir(folder):
+#        itempath = os.path.join(folder, item)
+#        if os.path.isfile(itempath):
+#            meta.totalBytes += os.path.getsize(itempath)
+#            meta.fileCount += 1
+#        elif os.path.isdir(itempath):
+#            folder_meta(itempath, meta)
 
-    #if we don't have access to this folder, bail
-    if not os.access(folder, os.R_OK & os.X_OK):
-        return
+#def file_tuples_recursively(folder, tuple_list, root_dir):
+#    """
+#    recursively gets file tuples for a folder
+#    """
 
-    for item in os.listdir(folder):
-        path = os.path.join(folder, item)
-        if os.path.isfile(path):
-            if os.access(path, os.R_OK):
-                relative_path = os.path.relpath(path, root_dir)
-                tuple_list.append((path, relative_path))
-        elif os.path.isdir(path):
-            file_tuples_recursively(path, tuple_list, root_dir)
+#    #if we don't have access to this folder, bail
+#    if not os.access(folder, os.R_OK & os.X_OK):
+#        return
 
-def file_tuples(selected_list, tuple_list, root_dir):
-    """
-    gets all the file tuples for a list of either folders or files
-    tuples consist of the absolute path where the local file can be found
-    and the relative path used to store the file in the archive
-    """
-    for path in selected_list:
-        if os.path.isfile(path):
-            if os.access(path, os.R_OK):
-                # the relative path is the path without the root directory
-                relative_path = os.path.relpath(path, root_dir)
-                tuple_list.append((path, relative_path))
-        elif os.path.isdir(path):
-            file_tuples_recursively(path, tuple_list, root_dir)
+#    for item in os.listdir(folder):
+#        path = os.path.join(folder, item)
+#        if os.path.isfile(path):
+#            if os.access(path, os.R_OK):
+#                relative_path = os.path.relpath(path, root_dir)
+#                tuple_list.append((path, relative_path))
+#        elif os.path.isdir(path):
+#            file_tuples_recursively(path, tuple_list, root_dir)
 
-def size_string(total_size):
-    """
-    returns the upload size as a string with the appropriate units
-    """
+#def file_tuples(selected_list, tuple_list, root_dir):
+#    """
+#    gets all the file tuples for a list of either folders or files
+#    tuples consist of the absolute path where the local file can be found
+#    and the relative path used to store the file in the archive
+#    """
+#    for path in selected_list:
+#        if os.path.isfile(path):
+#            if os.access(path, os.R_OK):
+#                # the relative path is the path without the root directory
+#                relative_path = os.path.relpath(path, root_dir)
+#                tuple_list.append((path, relative_path))
+#        elif os.path.isdir(path):
+#            file_tuples_recursively(path, tuple_list, root_dir)
 
-    # less than a Kb show b
-    if total_size < 1024:
-        return str(total_size) + " b"
-    # less than an Mb show Kb
-    if total_size < 1048576:
-        kilobytes = float(total_size) / 1024.0
-        return str(round(kilobytes, 2)) + " Kb"
-    # less than a Gb show Mb
-    elif total_size < 1073741824:
-        megabytes = float(total_size) / 1048576.0
-        return str(round(megabytes, 2)) + " Mb"
-    # else show in Gb
-    else:
-        gigabytes = float(total_size) / 1073741824.0
-        return str(round(gigabytes, 2)) + " Gb"
+#def size_string(total_size):
+#    """
+#    returns the upload size as a string with the appropriate units
+#    """
+
+#    # less than a Kb show b
+#    if total_size < 1024:
+#        return str(total_size) + " b"
+#    # less than an Mb show Kb
+#    if total_size < 1048576:
+#        kilobytes = float(total_size) / 1024.0
+#        return str(round(kilobytes, 2)) + " Kb"
+#    # less than a Gb show Mb
+#    elif total_size < 1073741824:
+#        megabytes = float(total_size) / 1048576.0
+#        return str(round(megabytes, 2)) + " Mb"
+#    # else show in Gb
+#    else:
+#        gigabytes = float(total_size) / 1073741824.0
+#        return str(round(gigabytes, 2)) + " Gb"
 
 def upload_meta_string(folder):
     """
     returns the meta data for a folder as a string to be displayed to the user
     """
     meta = FolderMeta()
-    folder_meta(folder, meta)
+    session.files.folder_meta(folder, meta)
 
     print '{0}|{1}'.format(str(meta.fileCount), str(meta.totalBytes))
 
     meta.dir_count -= 1
     meta_str = 'folders {0} | files {1} | {2}'.\
-        format(str(meta.dir_count), str(meta.fileCount), size_string(meta.totalBytes))
+        format(str(meta.dir_count), str(meta.fileCount), session.files.size_string(meta.totalBytes))
 
     return meta_str
 
-def file_size_string(filename):
-    """
-    returns a string with the file size in appropriate units
-    """
+#def file_size_string(filename):
+#    """
+#    returns a string with the file size in appropriate units
+#    """
 
-    total_size = os.path.getsize(filename)
+#    total_size = os.path.getsize(filename)
 
-    return size_string(total_size)
+#    return size_string(total_size)
 
 
 @login_required(login_url=settings.LOGIN_URL)
@@ -312,7 +311,7 @@ def populate_upload_page(request):
         b = request.user.is_authenticated()
         return login_error(request, '')
 
-    root_dir = current_directory(session.files.directory_history)
+    root_dir = session.files.current_directory()
 
     if root_dir == '': # first time through, initialize
         data_path = Filepath.objects.get(name="dataRoot")
@@ -326,7 +325,7 @@ def populate_upload_page(request):
         if root_dir.endswith("\\"):
             root_dir = root_dir[:-1]
         session.files.directory_history.append(root_dir)
-        root_dir = current_directory(session.files.directory_history)
+        root_dir = session.files.current_directory()
 
         # create a list of metadata entries to pass to the list upload page
         for meta in Metadata.objects.all():
@@ -344,7 +343,7 @@ def populate_upload_page(request):
     try:
         contents = os.listdir(root_dir)
     except Exception:
-        undo_directory(session)
+        session.files.undo_directory()
         return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
     
 
@@ -395,8 +394,8 @@ def populate_upload_page(request):
 
 def show_status(request, session, message):
 
-    bundle_size_str = size_string(session.bundle_size)
-    free_size_str = size_string(session.free_space)
+    bundle_size_str = session.files.size_string(session.bundle_size)
+    free_size_str = session.files.size_string(session.free_space)
 
     return render_to_response('home/status.html', \
                                  {'instrument':session.concatenated_instrument(),
@@ -418,7 +417,7 @@ def validate_space_available(session):
     else:
         target_dir = root_dir
 
-    session.bundle_size = bundle_size(session.files.selected_files, session.files.selected_dirs,)
+    session.bundle_size = session.files.bundle_size()
 
     # get the disk usage
     space = psutil.disk_usage(target_dir)
@@ -426,8 +425,8 @@ def validate_space_available(session):
     #give ourselves a cushion for other processes
     session.free_space = int(.9 * space.free)
 
-    session.bundle_size_str = size_string(session.bundle_size)
-    session.free_size_str = size_string(session.free_space)
+    session.bundle_size_str = session.files.size_string(session.bundle_size)
+    session.free_size_str = session.files.size_string(session.free_space)
 
     if (session.bundle_size == 0):
         return True
@@ -446,7 +445,7 @@ def spin_off_upload(request, session):
         return show_status(request, session, 'Celery background process is not started')
 
 
-    root_dir = current_directory(session.files.directory_history)
+    root_dir = session.files.current_directory()
 
     # get the meta data values from the post
     for meta in session. meta_list:
@@ -469,8 +468,8 @@ def spin_off_upload(request, session):
 
     #create a list of tuples (filepath, arcpath)
     tuples = []
-    file_tuples(session.files.selected_files, tuples, root)
-    file_tuples(session.files.selected_dirs, tuples, root)
+    session.files.file_tuples(session.files.selected_files, tuples, root)
+    session.files.file_tuples(session.files.selected_dirs, tuples, root)
 
     # create the groups dictionary
     #{"groups":[{"name":"FOO1", "type":"Tag"}]}
@@ -529,7 +528,7 @@ def modify(request):
 
     global session
 
-    root_dir = current_directory(session.files.directory_history)
+    root_dir = session.files.current_directory()
 
     if request.POST:
 
@@ -571,7 +570,7 @@ def modify(request):
         elif mod_type == 'toggleFile':
             if full not in session.files.selected_files:
                 session.files.selected_files.append(full)
-                session.files.file_sizes.append(file_size_string(full))
+                session.files.file_sizes.append(session.files.file_size_string(full))
             else:
                 index = session.files.selected_files.index(full)
                 session.files.selected_files.remove(full)
@@ -595,7 +594,6 @@ def modify(request):
         elif mod_type == "upDir":
             index = int(path)
             del session.files.directory_history[index:]
-            print current_directory(session.files.directory_history)
 
     return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 

@@ -3,6 +3,8 @@ import json
 
 from uploader import get_info
 
+from file_tools import file_manager
+
 
 class session_state(object):
     """description of class"""
@@ -23,11 +25,13 @@ class session_state(object):
     proposal_friendly = ''
     proposal_id = ''
 
-    selected_dirs = []
-    selected_files = []
-    dir_sizes = []
-    file_sizes = []
-    directory_history = []
+    #selected_dirs = []
+    #selected_files = []
+    #dir_sizes = []
+    #file_sizes = []
+    #directory_history = []
+
+    files = file_manager()
 
     # meta data values
     meta_list = []
