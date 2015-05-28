@@ -3,15 +3,6 @@
 <head>
 	<title>MyEMSL Instrument Data Uploader</title>
 	<style type="text/css">
-    <script src="{{ MEDIA_URL }}jquery-1.11.2.js"></script>
-
-    <script type="text/javascript">
-	    $.ajaxSetup({cache:false});
-        
-        $('#proposal').change(function() {
-            this.form.submit();
-        });
-    </script>
 body
 {
 	padding-top: 0;
@@ -249,5 +240,17 @@ li ul li
 </tr>
 
 </table>
+    <script src="{{ MEDIA_URL }}jquery-1.11.2.js"></script>
+
+    <script type="text/javascript">
+        $(function(){
+	        $.ajaxSetup({cache:false});
+	        debugger;
+            $('#proposal').change(function() {
+                debugger;
+                this.form.submit();
+            });
+        });
+    </script>
 </body>
 </html>
