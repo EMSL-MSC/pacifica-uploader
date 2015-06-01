@@ -184,6 +184,7 @@ def populate_upload_page(request):
          'proposalList': session.proposal_list,
          'user_list': session.proposal_users,
          'proposal':session.proposal_friendly,
+         'proposal_user':session.proposal_user,
          'directoryHistory': session.files.directory_history,
          'metaList': session.meta_list,
          'checkedDirs': checked_dirs,
@@ -252,6 +253,8 @@ def spin_off_upload(request, session):
     insty = 'Instrument.%s' % (session.instrument)
     groups[insty] = session.instrument_friendly
 
+    groups["EMSL User"] = session.proposal_user
+
     session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
 
     target_path = Filepath.objects.get(name="target")
@@ -312,13 +315,12 @@ def modify(request):
         if request.POST.get("Upload Files & Metadata"):
             return spin_off_upload(request, session)
 
-        if request.POST.get("Submit Proposal"):
-            session.load_request_proposal(request)
-            session.populate_proposal_users()
-
         if request.POST.get("proposal"):
             session.load_request_proposal(request)
             session.populate_proposal_users()
+
+        if request.POST.get("proposal_user"):
+            session.load_request_proposal_user(request)
 
     else:
         value_pair = urlparse(request.get_full_path())

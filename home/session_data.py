@@ -24,6 +24,7 @@ class session_state(object):
     instrument_friendly = ''
     proposal_friendly = ''
     proposal_id = ''
+    proposal_user = ''
 
     files = file_manager()
 
@@ -54,6 +55,10 @@ class session_state(object):
         # get the selected proposal string from the post
         proposal = request.POST.get("proposal")
         self.load_proposal(proposal)
+
+    def load_request_proposal_user (self, request):
+        # get the selected proposal string from the post
+        self.proposal_user = request.POST.get("proposal_user")
 
     def concatenated_instrument(self):
         """
@@ -152,40 +157,6 @@ class session_state(object):
         # no errors found
         return ''
 
-    #def populate_proposal_users(self):
-    #    """
-    #    parses user for a proposal and instrument from a json struct
-    #    """
-
-    #    # get the user's info from EUS
-    #    info = get_info(protocol="https",
-    #                     server=self.server_path,
-    #                     user=self.user,
-    #                     password=self.password,
-    #                     info_type = 'proposalinfo/' + self.proposal_id)
-
-    #    try:
-    #        info = json.loads(info)
-    #    except Exception:
-    #        return 'Unable to parse proposal user information'
-
-    #    # print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
-
-    #    members = info["members"]
-    #    if not members:
-    #        return 'Unable to parse proposal members'
-
-    #    self.proposal_users = []
-
-    #    for member in members.iteritems():
-    #        id =  member[1]
-    #        first_name = id["first_name"]
-    #        if not first_name:
-    #            return 'Unable to parse user name'
-    #        last_name = id["last_name"]
-    #        if not last_name:
-    #            return 'Unable to parse user name'
-    #        self.proposal_users.append(first_name + " " + last_name)
 
     def populate_proposal_users(self):
         """
