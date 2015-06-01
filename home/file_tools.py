@@ -22,10 +22,21 @@ class file_manager(object):
     directory_history = []
 
     bundle_filepath = ''
-    # size of the current bundle
     bundle_size = 0
     bundle_size_str = ''
-    free_size_str = ''
+
+    def cleanup_files(self):
+        """
+        resets a class to a clean state
+        """
+        self.dir_sizes = []
+        self.file_sizes = []
+        self.selected_dirs = []
+        self.selected_files = []
+
+        self.bundle_filepath = ''
+        self.bundle_size = 0
+        self.bundle_size_str = ''
 
     def current_directory(self):
         """
@@ -41,7 +52,7 @@ class file_manager(object):
         index = len(self.directory_history) - 1
         del self.directory_history[index:]
 
-    def bundle_size(self):
+    def calculate_bundle_size(self):
         """
         totals up total size of the files in the bundle
         """
@@ -52,6 +63,9 @@ class file_manager(object):
 
         for folder in self.selected_dirs:
             total_size += self.folder_size(folder)
+
+        self.bundle_size = total_size
+        self.bundle_size_str = self.size_string(total_size)
 
         return total_size
 
@@ -87,6 +101,21 @@ class file_manager(object):
                 meta.fileCount += 1
             elif os.path.isdir(itempath):
                 self.folder_meta(itempath, meta)
+
+    def folder_meta_string(self, folder):
+        """
+        returns the meta data for a folder as a string to be displayed to the user
+        """
+        meta = FolderMeta()
+        self.folder_meta(folder, meta)
+
+        print '{0}|{1}'.format(str(meta.fileCount), str(meta.totalBytes))
+
+        meta.dir_count -= 1
+        meta_str = 'folders {0} | files {1} | {2}'.\
+            format(str(meta.dir_count), str(meta.fileCount), self.size_string(meta.totalBytes))
+
+        return meta_str
 
     def file_tuples_recursively(self, folder, tuple_list, root_dir):
         """
@@ -165,3 +194,69 @@ class file_manager(object):
         total_size = os.path.getsize(filename)
 
         return self.size_string(total_size)
+
+    def get_display_values(self):
+        """
+        sorts the contents of the current directory into checked
+        or unchecked lists for display
+        """
+
+        checked_dirs = []
+        unchecked_dirs = []
+        checked_files = []
+        unchecked_files = []
+    
+        root_dir = self.current_directory()
+        contents = os.listdir(root_dir)
+
+        # test the selected paths and directories to see if they will be shown 
+        # checked or unchecked
+        for path in contents:
+            full_path = os.path.join(root_dir, path)
+
+            if os.path.isdir(full_path):
+                if full_path in self.selected_dirs:
+                    checked_dirs.append(path)
+                else:
+                    unchecked_dirs.append(path)
+            else:
+                if full_path in self.selected_files:
+                    checked_files.append(path)
+                else:
+                    unchecked_files.append(path)
+        return (checked_dirs, unchecked_dirs, checked_files, unchecked_files)
+
+    def get_bundle_files(self):
+        # get the root directory
+        root = self.directory_history[0]
+
+        #create a list of tuples (filepath, arcpath)
+        tuples = []
+        self.file_tuples(self.selected_files, tuples, root)
+        self.file_tuples(self.selected_dirs, tuples, root)
+        return tuples
+
+    def toggle_dir(self, fullpath):
+        if fullpath not in self.selected_dirs:
+            # test to see if we can get access
+            try:
+                files = os.listdir(fullpath)
+                self.selected_dirs.append(fullpath)
+                self.dir_sizes.append(self.folder_meta_string(fullpath))
+            except Exception:
+                return False
+        else:
+            index = self.selected_dirs.index(fullpath)
+            self.selected_dirs.remove(fullpath)
+            del self.dir_sizes[index]
+
+        return True
+
+    def toggle_file(self, fullpath):
+        if fullpath not in self.selected_files:
+            self.selected_files.append(fullpath)
+            self.file_sizes.append(self.file_size_string(fullpath))
+        else:
+            index = self.selected_files.index(fullpath)
+            self.selected_files.remove(fullpath)
+            self.file_sizes[index]

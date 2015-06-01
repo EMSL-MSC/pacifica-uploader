@@ -54,7 +54,7 @@ def upload_files(bundle_name='',
                  instrument_name='',
                  proposal='',
                  file_list=None,
-                 bundle_size=1,
+                 bundle_size=0,
                  groups=None,
                  server='',
                  user='',
@@ -63,6 +63,7 @@ def upload_files(bundle_name='',
     task created on a separate Celery process to bundle and upload in the background
     status and errors are pushed by celery to the main server through RabbitMQ
     """
+    print "tasks"
 
     #clean tar directory
     target_dir = os.path.dirname(bundle_name)
@@ -71,12 +72,16 @@ def upload_files(bundle_name='',
     # initial state pushed through celery
     current_task.update_state("PROGRESS", meta={'Status': "Starting Bundle/Upload Process"})
 
+    print "start bundle"
+
     bundle(bundle_name=bundle_name,
            instrument_name=instrument_name,
            proposal=proposal,
            file_list=file_list,
            groups=groups,
            bundle_size=bundle_size)
+
+    print "end bundle"
 
     current_task.update_state(state="PROGRESS", meta={'Status': "Starting Upload"})
 

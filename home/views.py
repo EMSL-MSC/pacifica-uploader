@@ -72,18 +72,6 @@ class MetaData(object):
     def __init__(self):
         pass
 
-class FolderMeta(object):
-    """
-    meta data about a folder, including filecount, directory count, and the total bytes.
-    """
-
-    fileCount = 0
-    dir_count = 0
-    totalBytes = 0
-
-    def __init__(self):
-        pass
-
 # Module level variables
 session = session_data.session_state()
 
@@ -155,149 +143,6 @@ def start_celery():
 
     return alive
 
-#remove
-#def current_directory(history):
-#    """
-#    builds the current directory based on the navigation history
-#    """
-#    directory = ''
-#    for path in history:
-#        directory = os.path.join(directory, path)
-
-#    return directory
-
-#remove
-#def undo_directory(session):
-#    index = len(session.files.directory_history) - 1
-#    del session.files.directory_history[index:]
-
-#remove
-#def bundle_size(files, folders):
-#    """
-#    totals up total size of the files in the bundle
-#    """
-#    total_size = 0
-
-#    for file_path in files:
-#        total_size += os.path.getsize(file_path)
-
-#    for folder in folders:
-#        total_size += folder_size(folder)
-
-#    return total_size
-
-#def folder_size(folder):
-#    """
-#    recursively totals up total size of the files in the folder and sub folders
-#    """
-
-#    total_size = os.path.getsize(folder)
-#    for item in os.listdir(folder):
-#        itempath = os.path.join(folder, item)
-#        if os.path.isfile(itempath):
-#            total_size += os.path.getsize(itempath)
-#        elif os.path.isdir(itempath):
-#            total_size += folder_size(itempath)
-
-#    return total_size
-
-#def folder_meta(folder, meta):
-#    """
-#    gets the meta data for a folder
-#    number of folders
-#    number of files
-#    total size
-#    """
-
-#    meta.dir_count += 1
-
-#    for item in os.listdir(folder):
-#        itempath = os.path.join(folder, item)
-#        if os.path.isfile(itempath):
-#            meta.totalBytes += os.path.getsize(itempath)
-#            meta.fileCount += 1
-#        elif os.path.isdir(itempath):
-#            folder_meta(itempath, meta)
-
-#def file_tuples_recursively(folder, tuple_list, root_dir):
-#    """
-#    recursively gets file tuples for a folder
-#    """
-
-#    #if we don't have access to this folder, bail
-#    if not os.access(folder, os.R_OK & os.X_OK):
-#        return
-
-#    for item in os.listdir(folder):
-#        path = os.path.join(folder, item)
-#        if os.path.isfile(path):
-#            if os.access(path, os.R_OK):
-#                relative_path = os.path.relpath(path, root_dir)
-#                tuple_list.append((path, relative_path))
-#        elif os.path.isdir(path):
-#            file_tuples_recursively(path, tuple_list, root_dir)
-
-#def file_tuples(selected_list, tuple_list, root_dir):
-#    """
-#    gets all the file tuples for a list of either folders or files
-#    tuples consist of the absolute path where the local file can be found
-#    and the relative path used to store the file in the archive
-#    """
-#    for path in selected_list:
-#        if os.path.isfile(path):
-#            if os.access(path, os.R_OK):
-#                # the relative path is the path without the root directory
-#                relative_path = os.path.relpath(path, root_dir)
-#                tuple_list.append((path, relative_path))
-#        elif os.path.isdir(path):
-#            file_tuples_recursively(path, tuple_list, root_dir)
-
-#def size_string(total_size):
-#    """
-#    returns the upload size as a string with the appropriate units
-#    """
-
-#    # less than a Kb show b
-#    if total_size < 1024:
-#        return str(total_size) + " b"
-#    # less than an Mb show Kb
-#    if total_size < 1048576:
-#        kilobytes = float(total_size) / 1024.0
-#        return str(round(kilobytes, 2)) + " Kb"
-#    # less than a Gb show Mb
-#    elif total_size < 1073741824:
-#        megabytes = float(total_size) / 1048576.0
-#        return str(round(megabytes, 2)) + " Mb"
-#    # else show in Gb
-#    else:
-#        gigabytes = float(total_size) / 1073741824.0
-#        return str(round(gigabytes, 2)) + " Gb"
-
-def upload_meta_string(folder):
-    """
-    returns the meta data for a folder as a string to be displayed to the user
-    """
-    meta = FolderMeta()
-    session.files.folder_meta(folder, meta)
-
-    print '{0}|{1}'.format(str(meta.fileCount), str(meta.totalBytes))
-
-    meta.dir_count -= 1
-    meta_str = 'folders {0} | files {1} | {2}'.\
-        format(str(meta.dir_count), str(meta.fileCount), session.files.size_string(meta.totalBytes))
-
-    return meta_str
-
-#def file_size_string(filename):
-#    """
-#    returns a string with the file size in appropriate units
-#    """
-
-#    total_size = os.path.getsize(filename)
-
-#    return size_string(total_size)
-
-
 @login_required(login_url=settings.LOGIN_URL)
 def populate_upload_page(request):
     """
@@ -310,63 +155,27 @@ def populate_upload_page(request):
         # call login error with no error message
         b = request.user.is_authenticated()
         return login_error(request, '')
-
+    
     root_dir = session.files.current_directory()
 
-    if root_dir == '': # first time through, initialize
-        data_path = Filepath.objects.get(name="dataRoot")
-        if data_path is not None:
-            root_dir = data_path.fullpath
-            root_dir = os.path.normpath(root_dir)
-        else:
-            return "error no root directory"
 
-
-        if root_dir.endswith("\\"):
-            root_dir = root_dir[:-1]
-        session.files.directory_history.append(root_dir)
-        root_dir = session.files.current_directory()
-
-        # create a list of metadata entries to pass to the list upload page
-        for meta in Metadata.objects.all():
-            meta_entry = MetaData()
-            meta_entry.label = meta.label
-            meta_entry.name = meta.name
-            meta_entry.value = ""
-            session.meta_list.append(meta_entry)
-
-    checked_dirs = []
-    unchecked_dirs = []
-    checked_files = []
-    unchecked_files = []
-
+    ## if we enter an empty directory, reverse back up the history
     try:
         contents = os.listdir(root_dir)
     except Exception:
         session.files.undo_directory()
         return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
     
-
-    for path in contents:
-        full_path = os.path.join(root_dir, path)
-
-        if os.path.isdir(full_path):
-            if full_path in session.files.selected_dirs:
-                checked_dirs.append(path)
-            else:
-                unchecked_dirs.append(path)
-        else:
-            if full_path in session.files.selected_files:
-                checked_files.append(path)
-            else:
-                unchecked_files.append(path)
+    # get the display values for the current directory
+    checked_dirs, unchecked_dirs, checked_files, unchecked_files = session.files.get_display_values()
 
     # validate that the currently selected bundle will fit in the target space
-    uploadEnabled = validate_space_available(session)
-    message = 'Bundle: %s, Free: %s' % (session.bundle_size_str, session.free_size_str)
+    uploadEnabled = session.validate_space_available(Filepath.objects.get(name="target"))
+
+    message = 'Bundle: %s, Free: %s' % (session.files.bundle_size_str, session.free_size_str)
     if not uploadEnabled:
         message += ": Bundle exceeds free space"
-    elif session.bundle_size==0:
+    elif session.files.bundle_size==0:
         uploadEnabled = False
 
     # Render list page with the documents and the form
@@ -394,7 +203,7 @@ def populate_upload_page(request):
 
 def show_status(request, session, message):
 
-    bundle_size_str = session.files.size_string(session.bundle_size)
+    session.files.calculate_bundle_size()
     free_size_str = session.files.size_string(session.free_space)
 
     return render_to_response('home/status.html', \
@@ -403,34 +212,10 @@ def show_status(request, session, message):
                                   'proposal':session.proposal_friendly,
                                   'metaList':session. meta_list,
                                   'current_time': session.current_time,
-                                  'bundle_size': bundle_size_str,
+                                  'bundle_size': session.files.bundle_size_str,
                                   'free_size': free_size_str,
                                   'user': session.user_full_name},
                                   context_instance=RequestContext(request))
-
-
-def validate_space_available(session):
-
-    target_path = Filepath.objects.get(name="target")
-    if target_path is not None:
-        target_dir = target_path.fullpath
-    else:
-        target_dir = root_dir
-
-    session.bundle_size = session.files.bundle_size()
-
-    # get the disk usage
-    space = psutil.disk_usage(target_dir)
-
-    #give ourselves a cushion for other processes
-    session.free_space = int(.9 * space.free)
-
-    session.bundle_size_str = session.files.size_string(session.bundle_size)
-    session.free_size_str = session.files.size_string(session.free_space)
-
-    if (session.bundle_size == 0):
-        return True
-    return (session.bundle_size <  session.free_space)
 
 def spin_off_upload(request, session):
     """
@@ -453,23 +238,10 @@ def spin_off_upload(request, session):
         if value:
             meta.value = value
 
-    # get the selected proposal string from the post
+    # get the selected proposal string from the post as it may not have been set in a previous post
     session.load_request_proposal(request)
 
-    # get the root directory from the database
-    data_path = Filepath.objects.get(name="dataRoot")
-    if data_path is not None:
-        root_dir = data_path.fullpath
-    else:
-        # handle error here
-        root_dir = ""
-
-    root = root_dir
-
-    #create a list of tuples (filepath, arcpath)
-    tuples = []
-    session.files.file_tuples(session.files.selected_files, tuples, root)
-    session.files.file_tuples(session.files.selected_dirs, tuples, root)
+    tuples = session.files.get_bundle_files()
 
     # create the groups dictionary
     #{"groups":[{"name":"FOO1", "type":"Tag"}]}
@@ -497,7 +269,7 @@ def spin_off_upload(request, session):
                                          instrument_name=session.instrument,
                                          proposal=session.proposal_id,
                                          file_list=tuples,
-                                         bundle_size=session.bundle_size,
+                                         bundle_size=session.files.bundle_size,
                                          groups=groups,
                                          server=session.server_path,
                                          user=session.user,
@@ -507,7 +279,7 @@ def spin_off_upload(request, session):
                                          instrument_name=session.instrument,
                                          proposal=session.proposal_id,
                                          file_list=tuples,
-                                         bundle_size=session.bundle_size,
+                                         bundle_size=session.files.bundle_size,
                                          groups=groups,
                                          server=session.server_path,
                                          user=session.user,
@@ -568,28 +340,10 @@ def modify(request):
                 session.files.directory_history.append(path)
 
         elif mod_type == 'toggleFile':
-            if full not in session.files.selected_files:
-                session.files.selected_files.append(full)
-                session.files.file_sizes.append(session.files.file_size_string(full))
-            else:
-                index = session.files.selected_files.index(full)
-                session.files.selected_files.remove(full)
-                session.files.file_sizes[index]
+            session.files.toggle_file(full)
 
         elif mod_type == 'toggleDir':
-            if full not in session.files.selected_dirs:
-                if (os.access(root_dir, os.R_OK & os.X_OK)):
-                    # test to see if we can get access
-                    try:
-                        files = os.listdir(full)
-                        session.files.selected_dirs.append(full)
-                        session.files.dir_sizes.append(upload_meta_string(full))
-                    except Exception:
-                        return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
-            else:
-                index = session.files.selected_dirs.index(full)
-                session.files.selected_dirs.remove(full)
-                del session.files.dir_sizes[index]
+            session.files.toggle_dir(full)
 
         elif mod_type == "upDir":
             index = int(path)
@@ -608,76 +362,6 @@ def login_error(request, error_string):
     return render_to_response(settings.LOGIN_VIEW, \
                               {'message': error_string}, context_instance=RequestContext(request))
 
-#def populate_user_info(session, info):
-#    """
-#    parses user information from a json struct
-#    """
-#    try:
-#        info = json.loads(info)
-#    except Exception:
-#        return 'Unable to parse user information'
-
-#    # print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
-
-#    first_name = info["first_name"]
-#    if not first_name:
-#        return 'Unable to parse user name'
-#    last_name = info["last_name"]
-#    if not last_name:
-#        return 'Unable to parse user name'
-
-#    session.user_full_name = '%s (%s %s)' % (session.user, first_name, last_name)
-
-#    instruments = info["instruments"]
-
-#    try:
-#        valid_instrument = False
-#        for inst_id, inst_block in instruments.iteritems():
-#            inst_name = inst_block.get("instrument_name")
-#            inst_str = inst_id + "  " + inst_name
-#            if session.instrument == inst_id:
-#                session.instrument_friendly = inst_name
-#                valid_instrument = True
-
-#            #print inst_str
-#            #print ""
-
-#        if not valid_instrument:
-#            return 'User is not valid for this instrument'
-#    except Exception:
-#        return 'Unable to parse user instruments'
-
-#    """
-#    need to filter proposals based on the existing instrument 
-#    if there is no valid proposal for the user for this instrument
-#    throw an error
-#    """
-#    #print "props"
-#    props = info["proposals"]
-#    session.proposal_list = []
-#    for prop_id, prop_block in props.iteritems():
-#        title = prop_block.get("title")
-#        prop_str = prop_id + "  " + title
-
-#        # list only proposals valid for this instrument
-#        instruments = prop_block.get("instruments")
-
-#        try:
-#            if instruments is not None and len(instruments) > 0:
-#                for inst_id in instruments: # eh.  inst_id is a list of 1 element.
-#                    if session.instrument == str(inst_id):
-#                        if prop_str not in session.proposal_list:
-#                            session.proposal_list.append(prop_str)
-#        except Exception, err:
-#            return 'No valid proposals for this user on this instrument'
-
-#    if len(session.proposal_list) == 0:
-#        return 'No valid proposals for this user on this instrument'
-
-#    session.proposal_list.sort(key=lambda x: int(x.split(' ')[0]), reverse=True)
-
-#    # no errors found
-#    return ''
 
 def cookie_test(request):
     """
@@ -694,6 +378,41 @@ def cookie_test(request):
         request.session.set_test_cookie()
         return render_to_response('home/cookie.html', {'message': 'Cookie Failure'}, \
             context_instance=RequestContext(request))
+
+def initialize_settings():
+    """
+    if the system hasn't been initialized, do so
+    """
+    try:
+        root_dir = session.files.current_directory()
+
+        if root_dir == '': # first time through, initialize
+            data_path = Filepath.objects.get(name="dataRoot")
+            if data_path is not None:
+                root_dir = data_path.fullpath
+                root_dir = os.path.normpath(root_dir)
+            else:
+                return False
+
+
+            if root_dir.endswith("\\"):
+                root_dir = root_dir[:-1]
+            session.files.directory_history.append(root_dir)
+            root_dir = session.files.current_directory()
+
+            # create a list of metadata entries to pass to the list upload page
+            for meta in Metadata.objects.all():
+                meta_entry = MetaData()
+                meta_entry.label = meta.label
+                meta_entry.name = meta.name
+                meta_entry.value = ""
+                session.meta_list.append(meta_entry)
+        else:
+            return True
+    except Exception, e:
+        return False
+
+    return True
 
 def login(request):
     """
@@ -771,6 +490,10 @@ def login(request):
     # keep a copy of the user so we can keep other users from stepping on them if they are still
     # logged in
     session.current_user = request.user
+
+    if not initialize_settings():
+        return login_error(request, 'Unable to initialize settings')
+
 
     return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 

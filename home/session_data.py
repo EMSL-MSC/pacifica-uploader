@@ -1,5 +1,5 @@
 import json
-
+import psutil
 
 from uploader import get_info
 
@@ -25,12 +25,6 @@ class session_state(object):
     proposal_friendly = ''
     proposal_id = ''
 
-    #selected_dirs = []
-    #selected_files = []
-    #dir_sizes = []
-    #file_sizes = []
-    #directory_history = []
-
     files = file_manager()
 
     # meta data values
@@ -44,9 +38,6 @@ class session_state(object):
     bundle_process = None
 
     bundle_filepath = ''
-    # size of the current bundle
-    bundle_size = 0
-    bundle_size_str = ''
     free_size_str = ''
 
     # free disk space
@@ -152,43 +143,49 @@ class session_state(object):
 
         self.proposal_list.sort(key=lambda x: int(x.split(' ')[0]), reverse=True)
 
+        # initialize the proposal to the first in the list
+        self.load_proposal(self.proposal_list[0])
+
+        # initialize the user list
+        self.populate_proposal_users()
+
         # no errors found
         return ''
 
-    def populate_proposal_users(self):
-        """
-        parses user for a proposal and instrument from a json struct
-        """
+    #def populate_proposal_users(self):
+    #    """
+    #    parses user for a proposal and instrument from a json struct
+    #    """
 
-        # get the user's info from EUS
-        info = get_info(protocol="https",
-                         server=self.server_path,
-                         user=self.user,
-                         password=self.password,
-                         info_type = 'proposalinfo/' + self.proposal_id)
+    #    # get the user's info from EUS
+    #    info = get_info(protocol="https",
+    #                     server=self.server_path,
+    #                     user=self.user,
+    #                     password=self.password,
+    #                     info_type = 'proposalinfo/' + self.proposal_id)
 
-        try:
-            info = json.loads(info)
-        except Exception:
-            return 'Unable to parse proposal user information'
+    #    try:
+    #        info = json.loads(info)
+    #    except Exception:
+    #        return 'Unable to parse proposal user information'
 
-        # print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
+    #    # print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
 
-        members = info["members"]
-        if not members:
-            return 'Unable to parse proposal members'
+    #    members = info["members"]
+    #    if not members:
+    #        return 'Unable to parse proposal members'
 
-        self.proposal_users = []
+    #    self.proposal_users = []
 
-        for member in members.iteritems():
-            id =  member[1]
-            first_name = id["first_name"]
-            if not first_name:
-                return 'Unable to parse user name'
-            last_name = id["last_name"]
-            if not last_name:
-                return 'Unable to parse user name'
-            self.proposal_users.append(first_name + " " + last_name)
+    #    for member in members.iteritems():
+    #        id =  member[1]
+    #        first_name = id["first_name"]
+    #        if not first_name:
+    #            return 'Unable to parse user name'
+    #        last_name = id["last_name"]
+    #        if not last_name:
+    #            return 'Unable to parse user name'
+    #        self.proposal_users.append(first_name + " " + last_name)
 
     def populate_proposal_users(self):
         """
@@ -246,7 +243,29 @@ class session_state(object):
         self.current_time = None
         self.meta_list = []
         self.dir_sizes = []
-        self.directory_history = []
-        self.file_sizes = []
-        self.selected_dirs = []
-        self.selected_files = []
+        self.files.cleanup_files()
+
+    def validate_space_available(self, target_path):
+        """
+        check the bundle size agains space available
+        """
+        if target_path is not None:
+            target_dir = target_path.fullpath
+        else:
+            return False
+
+        self.files.calculate_bundle_size()
+
+        # get the disk usage
+        space = psutil.disk_usage(target_dir)
+
+        #give ourselves a cushion for other processes
+        self.free_space = int(.9 * space.free)
+
+        self.free_size_str = self.files.size_string(self.free_space)
+
+        if (self.files.bundle_size == 0):
+            return True
+        return (self.files.bundle_size <  self.free_space)
+
+

@@ -255,16 +255,14 @@ def progress(download_t, download_d, upload_t, upload_d):
     """
     gets the progress of the current pycurl upload
     """
-
     global last_percent
 
     if (upload_t > 0):
         percent = 100.0 * float(upload_d) / float (upload_t)
-        #print "percent uploaded %3.3f" % (percent)
         
         if percent - last_percent > 5: 
             current_task.update_state(state=str(percent), \
-                                     meta={'Status': "upload percent complete: " + str(percent)})
+                                     meta={'Status': "upload percent complete: " + str(int(percent))})
             last_percent = percent
             print percent
 
