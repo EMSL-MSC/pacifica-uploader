@@ -212,8 +212,6 @@ class session_state(object):
         """
         self.bundle_process = None
         self.current_time = None
-        self.meta_list = []
-        self.dir_sizes = []
         self.files.cleanup_files()
 
     def validate_space_available(self, target_path):
