@@ -135,8 +135,6 @@ class FileBundler():
 
         self._bundle_metadata(metadata)
 
-
-
     def hash_file(self, file_path, file_arcname):
         """
         Bundle in a file or directory
@@ -163,6 +161,7 @@ class FileBundler():
         file_mode = os.stat(file_path)[stat.ST_MODE]
         if not stat.S_ISDIR(file_mode) and not stat.S_ISREG(file_mode):
             raise BundlerError("Unknown file type for %s" % file_path)
+
 
         file_in = None
         try:
@@ -253,7 +252,7 @@ class TarBundler(FileBundler):
 
         print >> sys.stderr, "Successfully created tarfile bundle %s" % self.bundle_path
 
-    def bundle_file(self, file_paths, bundle_size=1):
+    def bundle_file(self, file_paths, bundle_size=0):
         """
         Bundles files into a tarfile formatted bundle
 
@@ -276,7 +275,7 @@ class TarBundler(FileBundler):
 
         try:
             current_task.update_state(state=str(percent_complete), \
-                        meta={'Status': "Bundling percent complete: " + str(percent_complete)})
+                        meta={'Status': "Bundling percent complete: " + str(int(percent_complete))})
             for (file_path, file_arcname) in file_paths:
 
                 running_size += os.path.getsize(file_path)
@@ -294,7 +293,7 @@ class TarBundler(FileBundler):
                 # only update significant progress
                 if percent_complete - last_percent > 1:
                     current_task.update_state(state=str(percent_complete), \
-                        meta={'Status': "Bundling percent complete: " + str(percent_complete)})
+                        meta={'Status': "Bundling percent complete: " + str(int(percent_complete))})
                     last_percent = percent_complete
 
         except BundlerError, err:
@@ -338,7 +337,7 @@ def bundle(bundle_name='',
            proposal='',
            file_list=None,
            groups=None,
-           bundle_size=1):
+           bundle_size=0):
     """
     Bundles a list of files into a single aggregated bundle file
 
