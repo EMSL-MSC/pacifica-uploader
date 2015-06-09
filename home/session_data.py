@@ -18,7 +18,6 @@ class session_state(object):
     password = ''
 
     current_user = None
-
     current_time = ''
     instrument = ''
     instrument_friendly = ''

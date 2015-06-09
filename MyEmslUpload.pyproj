@@ -38,6 +38,9 @@
   <ItemGroup>
     <Compile Include="bundler\__init__.py" />
     <Compile Include="home\admin.py" />
+    <Compile Include="home\file_tools.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="home\forms.py" />
     <Compile Include="home\models.py" />
     <Compile Include="home\tasks.py" />

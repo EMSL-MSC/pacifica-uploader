@@ -11,7 +11,6 @@ Django views, handle requests from the client side pages
 from __future__ import absolute_import
 
 from django.conf import settings
-
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponseRedirect
