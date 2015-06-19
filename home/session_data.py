@@ -52,12 +52,12 @@ class session_state(object):
 
     def load_request_proposal (self, request):
         # get the selected proposal string from the post
-        proposal = request.POST.get("proposal")
+        proposal = request.POST.get('proposal')
         self.load_proposal(proposal)
 
     def load_request_proposal_user (self, request):
         # get the selected proposal string from the post
-        self.proposal_user = request.POST.get("proposal_user")
+        self.proposal_user = request.POST.get('proposal_user')
 
     def concatenated_instrument(self):
         """
@@ -77,12 +77,14 @@ class session_state(object):
         parses user information from a json struct
         """
         # get the user's info from EUS
-        info = get_info(protocol="https",
+        info = get_info(protocol='https',
             server=self.server_path,
             user=self.user,
             password=self.password,
             info_type = 'userinfo')
 
+        with open ('aslipton.json', 'r') as myfile:
+            info=myfile.read()
         try:
             info = json.loads(info)
         except Exception:
@@ -90,28 +92,34 @@ class session_state(object):
 
         # print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
 
-        first_name = info["first_name"]
+        first_name = info['first_name']
         if not first_name:
             return 'Unable to parse user name'
-        last_name = info["last_name"]
+        last_name = info['last_name']
         if not last_name:
             return 'Unable to parse user name'
 
         self.user_full_name = '%s (%s %s)' % (self.user, first_name, last_name)
 
-        instruments = info["instruments"]
+        instruments = info['instruments']
+        if not instruments:
+            return 'User is not valid for this instrument'
 
         try:
             valid_instrument = False
             for inst_id, inst_block in instruments.iteritems():
-                inst_name = inst_block.get("instrument_name")
-                inst_str = inst_id + "  " + inst_name
+                if not inst_id:
+                    continue
+                if not inst_block:
+                    continue
+                inst_name = inst_block.get('instrument_name')
+                if not inst_name:
+                    inst_name = 'unnamed'
+                inst_str = inst_id + ' ' + inst_name
                 if self.instrument == inst_id:
                     self.instrument_friendly = inst_name
                     valid_instrument = True
-
-                #print inst_str
-                #print ""
+                    break
 
             if not valid_instrument:
                 return 'User is not valid for this instrument'
@@ -123,29 +131,45 @@ class session_state(object):
         if there is no valid proposal for the user for this instrument
         throw an error
         """
-        #print "props"
         props = info["proposals"]
+        if not props:
+            return 'user has no proposals'
+
         self.proposal_list = []
         for prop_id, prop_block in props.iteritems():
-            title = prop_block.get("title")
+
+            if not prop_id:
+                continue
+
+            if not prop_block:
+                continue
+
+            title = prop_block.get('title')
+            if not title:
+                print 'missing title for proposal ' + prop_id
+                title = 'untitled'
             prop_str = prop_id + "  " + title
 
             # list only proposals valid for this instrument
-            instruments = prop_block.get("instruments")
+            instruments = prop_block.get('instruments')
+            if not instruments:
+                continue
 
             try:
-                if instruments is not None and len(instruments) > 0:
-                    for inst_id in instruments: # eh.  inst_id is a list of 1 element.
-                        if self.instrument == str(inst_id):
-                            if prop_str not in self.proposal_list:
-                                self.proposal_list.append(prop_str)
+                for inst_id in instruments:
+                    if not inst_id:
+                        continue;
+                    if self.instrument == str(inst_id):
+                        if prop_str not in self.proposal_list:
+                            self.proposal_list.append(prop_str)
             except Exception, err:
-                return 'No valid proposals for this user on this instrument'
+                return 'No valid proposals for this user on this instrument 166'
 
-        if len(self.proposal_list) == 0:
-            return 'No valid proposals for this user on this instrument'
+        if not self.proposal_list:
+            return 'No valid proposals for this user on this instrument 169'
 
-        self.proposal_list.sort(key=lambda x: int(x.split(' ')[0]), reverse=True)
+        #self.proposal_list.sort(key=lambda x: int(x.split(' ')[0]), reverse=True)
+        self.proposal_list.sort(reverse=True)
 
         # initialize the proposal to the first in the list
         self.load_proposal(self.proposal_list[0])
@@ -163,7 +187,7 @@ class session_state(object):
         """
 
         # get the user's info from EUS
-        info = get_info(protocol="https",
+        info = get_info(protocol='https',
                          server=self.server_path,
                          user=self.user,
                          password=self.password,
@@ -176,20 +200,22 @@ class session_state(object):
 
         # print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
 
-        members = info["members"]
-        if not members:
-            return 'Unable to parse proposal members'
-
         self.proposal_users = []
+
+        members = info['members']
+        # is this an error?  
+        if not members:
+            self.proposal_users.append('No users for this proposal')
+            return
 
         for member in members.iteritems():
             id =  member[1]
-            first_name = id["first_name"]
+            first_name = id['first_name']
             if not first_name:
-                return 'Unable to parse user name'
-            last_name = id["last_name"]
+                first_name = "?"
+            last_name = id['last_name']
             if not last_name:
-                return 'Unable to parse user name'
+                last_name = '?'
             self.proposal_users.append(first_name + " " + last_name)
 
     def cleanup_session(self):
