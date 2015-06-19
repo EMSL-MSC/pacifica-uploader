@@ -83,8 +83,8 @@ class session_state(object):
             password=self.password,
             info_type = 'userinfo')
 
-        with open ('aslipton.json', 'r') as myfile:
-            info=myfile.read()
+        #with open ('aslipton.json', 'r') as myfile:
+        #    info=myfile.read()
         try:
             info = json.loads(info)
         except Exception:
@@ -145,9 +145,11 @@ class session_state(object):
                 continue
 
             title = prop_block.get('title')
+            # if the title is missing we've established that it isn't in the db
+            # so skip it
             if not title:
-                print 'missing title for proposal ' + prop_id
-                title = 'untitled'
+                continue;
+
             prop_str = prop_id + "  " + title
 
             # list only proposals valid for this instrument
