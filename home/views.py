@@ -169,7 +169,7 @@ def populate_upload_page(request):
     checked_dirs, unchecked_dirs, checked_files, unchecked_files = session.files.get_display_values()
 
     # validate that the currently selected bundle will fit in the target space
-    uploadEnabled = session.validate_space_available(Filepath.objects.get(name="target"))
+    uploadEnabled = session.validate_space_available(session.configuration["target"])
 
     message = 'Bundle: %s, Free: %s' % (session.files.bundle_size_str, session.free_size_str)
     if not uploadEnabled:
@@ -256,7 +256,7 @@ def spin_off_upload(request, session):
 
     session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
 
-    target_path = Filepath.objects.get(name="target")
+    target_path = session.configuration["target"]
     if target_path is not None:
         target_dir = target_path.fullpath
     else:
@@ -388,10 +388,9 @@ def initialize_settings():
         root_dir = session.files.current_directory()
 
         if root_dir == '': # first time through, initialize
-            data_path = Filepath.objects.get(name="dataRoot")
+            data_path = session.configuration["dataRoot"]
             if data_path is not None:
-                root_dir = data_path.fullpath
-                root_dir = os.path.normpath(root_dir)
+                root_dir = os.path.normpath(data_path)
             else:
                 return False
 
@@ -411,6 +410,7 @@ def initialize_settings():
         else:
             return True
     except Exception, e:
+        print e
         return False
 
     return True
@@ -425,10 +425,15 @@ def login(request):
 
     global session
 
+    config_file = 'UploaderConfig.json'
+    if not os.path.isfile(config_file):
+        session.write_default_config(config_file)
+    session.read_config(config_file)
+
     # timeout
     try:
-        timeout = Filepath.objects.get(name="timeout")
-        minutes = int(timeout.fullpath)
+        timeout = session.configuration["timeout"]
+        minutes = int(timeout)
         SESSION_COOKIE_AGE = minutes * 60
     except Filepath.DoesNotExist:
         SESSION_COOKIE_AGE = 30 * 60
@@ -454,9 +459,9 @@ def login(request):
     session.user = request.POST['username']
     session.password = request.POST['password']
 
-    server_path = Filepath.objects.get(name="server")
+    server_path = session.configuration["server"]
     if server_path is not None:
-        session.server_path = server_path.fullpath
+        session.server_path = server_path
     else:
         return login_error(request, 'Server path does not exist')
 
@@ -470,9 +475,9 @@ def login(request):
     if not authorized:
         return login_error(request, 'User or Password is incorrect')
 
-    inst = Filepath.objects.get(name="instrument")
+    inst = session.configuration["instrument"]
     if inst and inst is not '':
-        session.instrument = inst.fullpath
+        session.instrument = inst
     else:
         return login_error(request, 'This instrument is undefined')
 

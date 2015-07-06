@@ -43,6 +43,9 @@ class session_state(object):
     # free disk space
     free_space = 0
 
+    # configuration dictionary
+    configuration = {}
+
     def load_proposal (self, proposal):
         self.proposal_friendly = proposal
 
@@ -245,15 +248,13 @@ class session_state(object):
         """
         check the bundle size agains space available
         """
-        if target_path is not None:
-            target_dir = target_path.fullpath
-        else:
+        if target_path is None:
             return False
 
         self.files.calculate_bundle_size()
 
         # get the disk usage
-        space = psutil.disk_usage(target_dir)
+        space = psutil.disk_usage(target_path)
 
         #give ourselves a cushion for other processes
         self.free_space = int(.9 * space.free)
@@ -264,4 +265,18 @@ class session_state(object):
             return True
         return (self.files.bundle_size <  self.free_space)
 
+    def write_default_config (self, filename):
+        d = {}
+        d['target'] = '/srv/localdata'
+        d['dataRoot '] = '/srv/home'
+        d['timeout'] = '10'
+        d['server'] = 'dev1.my.emsl.pnl.gov'
+        d['instrument'] = '0a'
 
+        with open (filename, 'w') as fp:
+            json.dump(d, fp)
+
+    def read_config (self, filename):
+
+        with open (filename, 'r') as fp:
+            self.configuration = json.load(fp)
