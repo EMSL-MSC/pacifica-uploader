@@ -425,7 +425,7 @@ def login(request):
     global session
 
     #config_file = 'UploaderConfig.json'
-    config_file = 'developmentUploaderConfig.json'
+    config_file = 'UploaderConfig.json'
     if not os.path.isfile(config_file):
         session.write_default_config(config_file)
     session.read_config(config_file)
