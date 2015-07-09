@@ -19,10 +19,10 @@ RUN pip install \
     psutil
 RUN mkdir /app
 ADD . /app
+RUN rm -f /app/home/UploaderConfig.json /app/UploaderConfig.json && ln -sf /srv/UploaderConfig.json /app/UploaderConfig.json
 WORKDIR /app
 ENV DJANGO_SETTINGS_MODULE UploadServer.settings_production
 ENV PYTHONPATH /app
 RUN python manage.py migrate
 RUN ./setup-superuser
-RUN chmod og+r /etc/resolv.conf
 RUN chown -R 1:1 -R /app
