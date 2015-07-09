@@ -1,1 +1,7 @@
-{"dataRoot": "/srv/home", "instrument": "34075", "target": "/srv/localdata", "timeout": "10", "server": "dev1.my.emsl.pnl.gov"}
+{
+  "dataRoot": "/srv/home",
+  "instrument": "34075",
+  "target": "/srv/localdata",
+  "timeout": "10",
+  "server": "dev1.my.emsl.pnl.gov"
+}
