@@ -223,6 +223,10 @@ class session_state(object):
                 last_name = '?'
             self.proposal_users.append(first_name + " " + last_name)
 
+        #initialize the selected user
+        if self.proposal_users:
+            self.proposal_user = self.proposal_users[0]
+
     def cleanup_session(self):
         """
         resets a session to a clean state

@@ -240,6 +240,7 @@ def spin_off_upload(request, session):
 
     # get the selected proposal string from the post as it may not have been set in a previous post
     session.load_request_proposal(request)
+    session.load_request_proposal_user(request)
 
     tuples = session.files.get_bundle_files()
 
@@ -257,12 +258,10 @@ def spin_off_upload(request, session):
     session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
 
     target_path = session.configuration["target"]
-    if target_path is not None:
-        target_dir = target_path.fullpath
-    else:
-        target_dir = root_dir
+    if target_path is None:
+        login_error(request, "Missing upload target path")
 
-    session.bundle_filepath = os.path.join(target_dir, session.current_time + ".tar")
+    session.bundle_filepath = os.path.join(target_path, session.current_time + ".tar")
 
     # spin this off as a background process and load the status page
     if True:
@@ -425,7 +424,8 @@ def login(request):
 
     global session
 
-    config_file = 'UploaderConfig.json'
+    #config_file = 'UploaderConfig.json'
+    config_file = 'developmentUploaderConfig.json'
     if not os.path.isfile(config_file):
         session.write_default_config(config_file)
     session.read_config(config_file)
