@@ -531,7 +531,8 @@ def incremental_status(request):
 
     if request.POST:
         if request.POST.get("Cancel Upload"):
-            session.bundle_process.revoke(terminate=True)
+            if session.bundle_process:
+                session.bundle_process.revoke(terminate=True)
             session.cleanup_upload()
             return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
