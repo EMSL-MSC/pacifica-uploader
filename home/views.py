@@ -560,6 +560,8 @@ def incremental_status(request):
             #if we have successfully uploaded, cleanup the lists
             session.cleanup_upload()
 
+            result = "https://%s/myemsl/status/index.php/status/view/j/%s" % (session.server_path, job_id)
+
     # create json structure
     retval = json.dumps({'state':state, 'result':result})
 
