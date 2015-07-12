@@ -95,6 +95,7 @@
     <Content Include="home\templates\home\status.html" />
     <Content Include="home\templates\home\uploader.html" />
     <Content Include="db.sqlite3" />
+    <Content Include="home\UploaderConfig.json" />
     <Content Include="media\.DS_Store" />
     <Content Include="media\bunny.jpg" />
     <Content Include="media\checkbox-checked.png" />
