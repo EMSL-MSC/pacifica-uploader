@@ -178,31 +178,32 @@ def test_authorization(protocol='https',
     """
     Validates the user as a MyEMSL user
     """
+    try:
+        session = pycurl_session(protocol, server, user, password)
 
-    session = pycurl_session(protocol, server, user, password)
+        curl = session.curl
 
-    curl = session.curl
+        pyurl = session.url + "/myemsl/testauth"
+        curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
+        odata = StringIO()
+        curl.setopt(pycurl.WRITEFUNCTION, odata.write)
 
-    pyurl = session.url + "/myemsl/testauth"
-    curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
-    odata = StringIO()
-    curl.setopt(pycurl.WRITEFUNCTION, odata.write)
+        curl.perform()
 
-    curl.perform()
-
-    # Verify that authentication was successful
-    curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
-    if curl_http_code / 100 == 4:
-        return False
-    else:
-        odata.seek(0)
-        reply = odata.read()
-        print reply
-        if "ok" in reply:
-            print "True"
-            return True
-
-    return False
+        # Verify that authentication was successful
+        curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
+        if curl_http_code / 100 == 4:
+            return 'User or Password is incorrect'
+        else:
+            odata.seek(0)
+            reply = odata.read()
+            print reply
+            if "ok" in reply:
+                return None
+    except pycurl.error:
+        return curl.errstr()
+    except:
+        return "Unknown error during authorization"
 
 def job_status(protocol='https',
                        server='',
