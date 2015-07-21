@@ -113,26 +113,29 @@ class tar_management(object):
         return job_list
 
     def clean_tar_directory(self, tar_dir, jobs_state):
+        
+        try:
+            # read the state
+            dict = self.read_tar_state()
 
-        # read the state
-        dict = self.read_tar_state()
+            ##jobs_state = '[{?20001066? : {?state_name?:?Received?, ?state?:?1"}},{?20001067? : {?state_name?:?Available?, ?state?:?5"}},{?20001068? : {?state_name?:?Available?, ?state?:?5"}}]'
+            info = json.loads(jobs_state)
 
-        ##jobs_state = '[{?20001066? : {?state_name?:?Received?, ?state?:?1"}},{?20001067? : {?state_name?:?Available?, ?state?:?5"}},{?20001068? : {?state_name?:?Available?, ?state?:?5"}}]'
-        info = json.loads(jobs_state)
+            jobs = dict.keys()
+            for job in jobs:
+                try:
+                    job_state = info[job]
+                    if job_state is not None:
+                        state_index = job_state['state']
+                        val = int(state_index)
+                        if val > 4:
+                            self.remove_tar_file(job)
+                except Exception:
+                    self.remove_tar_file(job)
 
-        jobs = dict.keys()
-        for job in jobs:
-            try:
-                job_state = info[job]
-                if job_state is not None:
-                    state_index = job_state['state']
-                    val = int(state_index)
-                    if val > 4:
-                        self.remove_tar_file(job)
-            except Exception:
-                self.remove_tar_file(job)
-
-        self.remove_orphans()
+            self.remove_orphans()
+        except:
+            return 'clean tar failed'
 
     def __init__(self):
         pass
