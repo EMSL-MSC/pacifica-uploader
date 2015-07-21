@@ -467,13 +467,13 @@ def login(request):
 
     
     # test to see if the user authorizes against EUS
-    authorized = test_authorization(protocol="https",
+    err_str = test_authorization(protocol="https",
                                     server=session.server_path,
                                     user=session.user,
                                     password=session.password)
 
-    if not authorized:
-        return login_error(request, 'User or Password is incorrect')
+    if err_str:
+        return login_error(request, err_str)
 
     inst = session.configuration["instrument"]
     if inst and inst is not '':
