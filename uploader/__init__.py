@@ -58,7 +58,7 @@ def raise_upload_status(status, info):
     print >> sys.stderr, info
 
 def pycurl_session(protocol='https',
-                   server='dev1.my.emsl.pnl.gov',
+                   server='dev2.my.emsl.pnl.gov',
                    user='',
                    password=':'):
     """
@@ -139,7 +139,7 @@ def pycurl_session(protocol='https',
     return retval
 
 def get_info(protocol='https',
-              server='dev1.my.emsl.pnl.gov',
+              server='dev2.my.emsl.pnl.gov',
               user='',
               password=':',
               info_type = 'userinfo'):

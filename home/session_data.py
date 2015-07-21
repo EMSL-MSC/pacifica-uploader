@@ -274,7 +274,7 @@ class session_state(object):
         d['target'] = '/srv/localdata'
         d['dataRoot '] = '/srv/home'
         d['timeout'] = '10'
-        d['server'] = 'dev1.my.emsl.pnl.gov'
+        d['server'] = 'dev2.my.emsl.pnl.gov'
         d['instrument'] = '0a'
 
         with open (filename, 'w') as fp:

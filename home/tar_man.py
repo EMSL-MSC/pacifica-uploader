@@ -36,7 +36,7 @@ class tar_management(object):
     def parse_job(self, url):
         """
         parse job id from status url, ex:
-        https://dev1.my.emsl.pnl.gov/myemsl/cgi-bin/status/2000796
+        https://dev2.my.emsl.pnl.gov/myemsl/cgi-bin/status/2000796
         """
         list = url.split('/')
         job_id = list[-1]
