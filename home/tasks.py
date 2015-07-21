@@ -40,8 +40,13 @@ def clean_target_directory(target_dir = '', server='', user='', password=''):
 
     # fake job state
     #jobs_state = '[{?20001066? : {?state_name?:?Received?, ?state?:?1"}},{?20001067? : {?state_name?:?Available?, ?state?:?5"}},{?20001068? : {?state_name?:?Available?, ?state?:?5"}}]'
+    if jobs_state:
+        err_str = tm.clean_tar_directory(target_dir, jobs_state)
+        if err_str:
+            current_task.update_state(state = 'PROGRESS', meta={'Status': err_str})
+    else:
+        current_task.update_state(state = 'PROGRESS', meta={'Status': 'unable to fetch job status'})
 
-    tm.clean_tar_directory(target_dir, jobs_state)
 
 @shared_task
 def ping():
@@ -64,6 +69,8 @@ def upload_files(bundle_name='',
     status and errors are pushed by celery to the main server through RabbitMQ
     """
     print "tasks"
+
+    current_task.update_state("PROGRESS", meta={'Status': "Cleaning previous uploads"})
 
     #clean tar directory
     target_dir = os.path.dirname(bundle_name)
