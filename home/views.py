@@ -157,13 +157,19 @@ def populate_upload_page(request):
     
     root_dir = session.files.current_directory()
 
+    if not root_dir or root_dir == '':
+        return login_error(request, 'Data share is not configured')
+
 
     ## if we enter an empty directory, reverse back up the history
     try:
         contents = os.listdir(root_dir)
     except Exception:
-        session.files.undo_directory()
-        return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
+        if len(self.directory_history) > 1:
+            session.files.undo_directory()
+            return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
+        else:
+            return login_error(request, 'error accessing Data share')
     
     # get the display values for the current directory
     checked_dirs, unchecked_dirs, checked_files, unchecked_files = session.files.get_display_values()
