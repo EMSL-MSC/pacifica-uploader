@@ -50,7 +50,8 @@ class file_manager(object):
 
     def undo_directory(self):
         index = len(self.directory_history) - 1
-        del self.directory_history[index:]
+        if index > 0:
+            del self.directory_history[index:]
 
     def calculate_bundle_size(self):
         """
