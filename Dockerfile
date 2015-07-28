@@ -26,3 +26,4 @@ ENV PYTHONPATH /app
 RUN python manage.py migrate
 RUN ./setup-superuser
 RUN chown -R 1:1 -R /app
+RUN chmod og+rwx -R /app
