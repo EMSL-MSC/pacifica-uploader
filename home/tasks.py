@@ -21,9 +21,12 @@ def clean_target_directory(target_dir = '', server='', user='', password=''):
     deletes local files that have made it to the archive
     """
     tm = tar_man.tar_management()
+
+    # remove old files that were not uploaded    
+    tm.remove_orphans(target_dir)
     
     # get job list from file
-    jobs = tm.job_list()
+    jobs = tm.job_list(target_dir)
 
     if not jobs:
         return
@@ -42,10 +45,9 @@ def clean_target_directory(target_dir = '', server='', user='', password=''):
     #jobs_state = '[{?20001066? : {?state_name?:?Received?, ?state?:?1"}},{?20001067? : {?state_name?:?Available?, ?state?:?5"}},{?20001068? : {?state_name?:?Available?, ?state?:?5"}}]'
     if jobs_state:
         err_str = tm.clean_tar_directory(target_dir, jobs_state)
-        if err_str:
-            current_task.update_state(state = 'PROGRESS', meta={'Status': err_str})
+        return err_str
     else:
-        current_task.update_state(state = 'PROGRESS', meta={'Status': 'unable to fetch job status'})
+        return 'unable to fetch job status'
 
 
 @shared_task
@@ -68,18 +70,17 @@ def upload_files(bundle_name='',
     task created on a separate Celery process to bundle and upload in the background
     status and errors are pushed by celery to the main server through RabbitMQ
     """
-    print "tasks"
 
     current_task.update_state("PROGRESS", meta={'Status': "Cleaning previous uploads"})
 
     #clean tar directory
     target_dir = os.path.dirname(bundle_name)
-    clean_target_directory(target_dir, server, user, password)
+    err_str = clean_target_directory(target_dir, server, user, password)
+    if err_str:
+        current_task.update_state(state = 'PROGRESS', meta={'Status': err_str})
 
     # initial state pushed through celery
     current_task.update_state("PROGRESS", meta={'Status': "Starting Bundle/Upload Process"})
-
-    print "start bundle"
 
     bundle(bundle_name=bundle_name,
            instrument_name=instrument_name,
@@ -87,8 +88,6 @@ def upload_files(bundle_name='',
            file_list=file_list,
            groups=groups,
            bundle_size=bundle_size)
-
-    print "end bundle"
 
     current_task.update_state(state="PROGRESS", meta={'Status': "Starting Upload"})
 
@@ -100,15 +99,23 @@ def upload_files(bundle_name='',
 
     if res is None:
         current_task.update_state("FAILURE", \
-            meta={'Status': "Uploader dieded. We don't know whyitded"})
+            meta={'Status': "Uploader dieded. We don't know why it did"})
 
     print >> sys.stderr, "upload completed"
 
     current_task.update_state("PROGRESS", meta={'Status': "Completing Upload Process"})
 
     if "http" in res:
+        
+        print "rename"
+        tm = tar_man.tar_management()
+        job_id = tm.parse_job(res)
+        print job_id
+        tm.rename_tar_file(target_dir, bundle_name, job_id)
+
         print >> sys.stderr, "Status Page: {0}".format(res)
         current_task.update_state(state='SUCCESS', meta={'url': res})
+
         return res
     else:
         current_task.update_state("FAILURE", meta={'Status': "No URL"})

@@ -506,6 +506,10 @@ def login(request):
     if not initialize_settings():
         return login_error(request, 'Unable to initialize settings')
 
+    try:
+        tasks.clean_target_directory(session.configuration["target"], session.configuration["server"], session.current_user, session.password)
+    except:
+        return login_error(request, "failed to clear tar directory")
 
     return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
@@ -559,9 +563,6 @@ def incremental_status(request):
             job_id =  result
             tm = tar_man.tar_management()
             job_id = tm.parse_job(result)
-
-            if (job_id is not ''):
-                tm.add_tar(session.bundle_filepath, job_id)
 
             #if we have successfully uploaded, cleanup the lists
             session.cleanup_upload()
