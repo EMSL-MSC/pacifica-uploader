@@ -393,7 +393,7 @@ def initialize_settings():
         root_dir = session.files.current_directory()
 
         if root_dir == '': # first time through, initialize
-            data_path = session.configuration["dataRoot"]
+            data_path = session.configuration['dataRoot']
             if data_path is not None:
                 root_dir = os.path.normpath(data_path)
             else:
@@ -406,11 +406,11 @@ def initialize_settings():
             root_dir = session.files.current_directory()
 
             # create a list of metadata entries to pass to the list upload page
-            for meta in Metadata.objects.all():
+            for meta in session.configuration['metadata']:
                 meta_entry = MetaData()
-                meta_entry.label = meta.label
-                meta_entry.name = meta.name
-                meta_entry.value = ""
+                meta_entry.name = meta[0]
+                meta_entry.label = meta[1]
+                meta_entry.value = ''
                 session.meta_list.append(meta_entry)
         else:
             return True

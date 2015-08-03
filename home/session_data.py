@@ -277,6 +277,8 @@ class session_state(object):
         d['server'] = 'dev2.my.emsl.pnl.gov'
         d['instrument'] = '0a'
 
+        d['metadata'] = (('Tag', 'Tag'), ('Tag1', 'Taggy'), ('Tag2', 'Taggier'))
+
         with open (filename, 'w') as fp:
             json.dump(d, fp)
 
