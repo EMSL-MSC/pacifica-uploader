@@ -80,6 +80,11 @@ class FileBundler():
         self.instrument_id = instrument_id
         self.hash_dict = {}
 
+        self.percent_complete = 0
+        self.running_size = 0
+        self.last_percent = 0
+        self.bundle_size = 0
+
     def bundle_metadata(self):
         """
         Bundle in the metadata for the bundled files
@@ -165,7 +170,8 @@ class FileBundler():
 
         file_in = None
         try:
-            file_in = open(file_path, 'r')
+            # open to read binary.  This is important.
+            file_in = open(file_path, 'rb')
         except IOError:
             raise BundlerError("Couldn't read from file: %s" % file_path)
 
@@ -176,7 +182,21 @@ class FileBundler():
             if not data:
                 break
             hashval.update(data)
+
+            # update file bundle status
+
+            self.running_size += len(data)
+
+            self.percent_complete = 100.0 * self.running_size / self.bundle_size
+
+            # only update significant progress
+            if self.percent_complete - self.last_percent > 1:
+                self.report_percent_complete()
+                self.last_percent = self.percent_complete
+
         file_hash = hashval.hexdigest()
+
+        print 'hash:  ' + file_hash
         file_in.close()
 
         if file_arcname in self.hash_dict:
@@ -269,19 +289,21 @@ class TarBundler(FileBundler):
         else:
             tarball = tarfile.TarFile(name=self.bundle_path, mode='a')
 
-        running_size = 0
-        last_percent = 0
-        percent_complete = 0
+        self.running_size = 0
+        self.last_percent = 0
+        self.percent_complete = 0
+        self.bundle_size = bundle_size
 
         try:
-            current_task.update_state(state=str(percent_complete), \
-                        meta={'Status': "Bundling percent complete: " + str(int(percent_complete))})
+            self.report_percent_complete()
+
             for (file_path, file_arcname) in file_paths:
 
-                running_size += os.path.getsize(file_path)
-                percent_complete = 100.0 * running_size / bundle_size
+                file_size = os.path.getsize(file_path)
 
                 # hash the file and store in hash_dict
+                # percent complete is reported only as read and hashed
+                # hopefully that being the slowest part and all we have access to for completion statistics
                 self.hash_file(file_path, file_arcname)
 
                 # for version 1.2, push files to a data/ directory to avoid collisions with metadata.txt
@@ -289,17 +311,14 @@ class TarBundler(FileBundler):
                 modified_arc_name = os.path.join('data', file_arcname)
                 tarball.add(file_path, arcname=modified_arc_name, recursive=False)
 
-                #print >> sys.stderr, "percent complete %s" % str(percent_complete)
-                # only update significant progress
-                if percent_complete - last_percent > 1:
-                    current_task.update_state(state=str(percent_complete), \
-                        meta={'Status': "Bundling percent complete: " + str(int(percent_complete))})
-                    last_percent = percent_complete
-
         except BundlerError, err:
             raise BundlerError("Failed to bundle file: %s" % (err.msg))
 
         tarball.close()
+
+    def report_percent_complete(self):
+        current_task.update_state(state=str(self.percent_complete), \
+                        meta={'Status': "Bundling percent complete: " + str(int(self.percent_complete))})
 
     def _bundle_metadata(self, metadata):
         """
