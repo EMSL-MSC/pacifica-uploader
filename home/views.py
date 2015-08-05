@@ -365,8 +365,9 @@ def login_error(request, error_string):
     """
     returns to the login page with an error message
     """
+    instrument = session.configuration['instrument']
     return render_to_response(settings.LOGIN_VIEW, \
-                              {'message': error_string}, context_instance=RequestContext(request))
+                              {'instrument': instrument, 'message': error_string}, context_instance=RequestContext(request))
 
 
 def cookie_test(request):
