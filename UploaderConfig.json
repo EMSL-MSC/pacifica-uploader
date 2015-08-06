@@ -1,7 +1,10 @@
 {
-  "dataRoot": "/srv/home",
-  "instrument": "34075",
-  "target": "/srv/localdata",
-  "timeout": "10",
-  "server": "dev1.my.emsl.pnl.gov"
-}
+    "dataRoot": "Y:\\7_Representative_Data",
+    "instrument": "34075",
+    "target": "e:\\tar",
+    "timeout": "10",
+    "server": "dev2.my.emsl.pnl.gov",
+    "metadata": [
+        [ "Tag", "Tag" ],
+        [ "Tag1", "Taggy" ],
+        [ "Tag2", "Taggier" ] ] }
