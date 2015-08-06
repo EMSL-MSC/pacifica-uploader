@@ -59,18 +59,6 @@ import subprocess
 
 from home import session_data
 
-class MetaData(object):
-    """
-    structure used to pass upload metadata back and forth to the upload page
-    """
-
-    label = ''
-    value = ''
-    name = ''
-
-    def __init__(self):
-        pass
-
 # Module level variables
 session = session_data.session_state()
 
@@ -165,7 +153,7 @@ def populate_upload_page(request):
     try:
         contents = os.listdir(root_dir)
     except Exception:
-        if len(self.directory_history) > 1:
+        if len(session.directory_history) > 1:
             session.files.undo_directory()
             return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
         else:
@@ -175,7 +163,7 @@ def populate_upload_page(request):
     checked_dirs, unchecked_dirs, checked_files, unchecked_files = session.files.get_display_values()
 
     # validate that the currently selected bundle will fit in the target space
-    uploadEnabled = session.validate_space_available(session.configuration["target"])
+    uploadEnabled = session.validate_space_available()
 
     message = 'Bundle: %s, Free: %s' % (session.files.bundle_size_str, session.free_size_str)
     if not uploadEnabled:
@@ -263,11 +251,7 @@ def spin_off_upload(request, session):
 
     session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
 
-    target_path = session.configuration["target"]
-    if target_path is None:
-        login_error(request, "Missing upload target path")
-
-    session.bundle_filepath = os.path.join(target_path, session.current_time + ".tar")
+    session.bundle_filepath = os.path.join(session.target_dir, session.current_time + ".tar")
 
     # spin this off as a background process and load the status page
     if True:
@@ -365,9 +349,11 @@ def login_error(request, error_string):
     """
     returns to the login page with an error message
     """
-    instrument = session.configuration['instrument']
+    if not session.initialized:
+        session.initialize_settings()
+
     return render_to_response(settings.LOGIN_VIEW, \
-                              {'instrument': instrument, 'message': error_string}, context_instance=RequestContext(request))
+                              {'instrument': session.instrument, 'message': error_string}, context_instance=RequestContext(request))
 
 
 def cookie_test(request):
@@ -386,41 +372,6 @@ def cookie_test(request):
         return render_to_response('home/cookie.html', {'message': 'Cookie Failure'}, \
             context_instance=RequestContext(request))
 
-def initialize_settings():
-    """
-    if the system hasn't been initialized, do so
-    """
-    try:
-        root_dir = session.files.current_directory()
-
-        if root_dir == '': # first time through, initialize
-            data_path = session.configuration['dataRoot']
-            if data_path is not None:
-                root_dir = os.path.normpath(data_path)
-            else:
-                return False
-
-
-            if root_dir.endswith("\\"):
-                root_dir = root_dir[:-1]
-            session.files.directory_history.append(root_dir)
-            root_dir = session.files.current_directory()
-
-            # create a list of metadata entries to pass to the list upload page
-            for meta in session.configuration['metadata']:
-                meta_entry = MetaData()
-                meta_entry.name = meta[0]
-                meta_entry.label = meta[1]
-                meta_entry.value = ''
-                session.meta_list.append(meta_entry)
-        else:
-            return True
-    except Exception, e:
-        print e
-        return False
-
-    return True
-
 def login(request):
     """
     Logs the user in
@@ -431,19 +382,15 @@ def login(request):
 
     global session
 
-    #config_file = 'UploaderConfig.json'
-    config_file = 'UploaderConfig.json'
-    if not os.path.isfile(config_file):
-        session.write_default_config(config_file)
-    session.read_config(config_file)
+    # initialize session settings from scratch
+    session.initialized = False
+    init = session.initialize_settings()
+    if not init:
+        return login_error(request, 'faulty configuration:  \n' + str(session.configuration))
+
 
     # timeout
-    try:
-        timeout = session.configuration["timeout"]
-        minutes = int(timeout)
-        SESSION_COOKIE_AGE = minutes * 60
-    except Filepath.DoesNotExist:
-        SESSION_COOKIE_AGE = 30 * 60
+    SESSION_COOKIE_AGE = session.timeout * 60
 
     # ignore GET
     if not request.POST:
@@ -466,12 +413,6 @@ def login(request):
     session.user = request.POST['username']
     session.password = request.POST['password']
 
-    server_path = session.configuration["server"]
-    if server_path is not None:
-        session.server_path = server_path
-    else:
-        return login_error(request, 'Server path does not exist')
-
     
     # test to see if the user authorizes against EUS
     err_str = test_authorization(protocol="https",
@@ -481,12 +422,6 @@ def login(request):
 
     if err_str:
         return login_error(request, err_str)
-
-    inst = session.configuration["instrument"]
-    if inst and inst is not '':
-        session.instrument = inst
-    else:
-        return login_error(request, 'This instrument is undefined')
 
     err_str = session.populate_user_info()
     if err_str is not '':
@@ -504,11 +439,8 @@ def login(request):
     # logged in
     session.current_user = request.user
 
-    if not initialize_settings():
-        return login_error(request, 'Unable to initialize settings')
-
     try:
-        tasks.clean_target_directory(session.configuration["target"], session.configuration["server"], session.current_user, session.password)
+        tasks.clean_target_directory(session.target_dir, session.server_path, session.current_user, session.password)
     except:
         return login_error(request, "failed to clear tar directory")
 

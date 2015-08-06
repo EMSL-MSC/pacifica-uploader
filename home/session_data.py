@@ -1,16 +1,32 @@
 import json
 import psutil
 
+import os
+
 from uploader import get_info
 
 from file_tools import file_manager
 
+class MetaData(object):
+    """
+    structure used to pass upload metadata back and forth to the upload page
+    """
+
+    label = ''
+    value = ''
+    name = ''
+
+    def __init__(self):
+        pass
 
 class session_state(object):
     """description of class"""
     """
     meta data about for a session
     """
+
+    initialized = False
+
     server_path = ''
 
     user = ''
@@ -24,6 +40,10 @@ class session_state(object):
     proposal_friendly = ''
     proposal_id = ''
     proposal_user = ''
+
+    server_path = ''
+    target_dir = ''
+    timeout = 30
 
     files = file_manager()
 
@@ -45,6 +65,64 @@ class session_state(object):
 
     # configuration dictionary
     configuration = {}
+
+    def initialize_settings(self):
+        """
+        if the system hasn't been initialized, do so
+        """
+        try:
+            if not self.initialized: # first time through, initialize
+
+                self.read_config_file()
+
+                self.instrument = self.configuration['instrument']
+                if self.instrument == '':
+                    return False
+
+                self.target_dir = self.configuration['target']
+                if self.target_dir == '':
+                    return False
+
+                self.server_path = self.configuration['server']
+                if self.server_path == '':
+                    return False
+
+                self.timeout = int(self.configuration['timeout'])
+
+                root_dir = os.path.normpath(self.configuration['dataRoot'])
+                if root_dir == '':
+                    return False
+
+                if root_dir.endswith("\\"):
+                    root_dir = root_dir[:-1]
+
+                if not os.path.isdir(root_dir):
+                    return False
+
+                self.files.directory_history.append(root_dir)
+                root_dir = self.files.current_directory()
+
+                # create a list of metadata entries to pass to the list upload page
+                self.meta_list = []
+                for meta in self.configuration['metadata']:
+                    meta_entry = MetaData()
+                    meta_entry.name = meta[0]
+                    meta_entry.label = meta[1]
+                    meta_entry.value = ''
+                    self.meta_list.append(meta_entry)
+            else:
+                return True
+        except Exception, e:
+            print e
+            return False
+
+        return True
+
+    def read_config_file(self):
+        config_file = 'UploaderConfig.json'
+        if not os.path.isfile(config_file):
+            self.write_default_config(config_file)
+        self.read_config(config_file)
 
     def load_proposal (self, proposal):
         self.proposal_friendly = proposal
@@ -231,7 +309,6 @@ class session_state(object):
         """
         resets a session to a clean state
         """
-        self.instrument = None
         self.proposal_id = None
         self.proposal_list = []
         self.proposal_users = []
@@ -248,17 +325,15 @@ class session_state(object):
         self.current_time = None
         self.files.cleanup_files()
 
-    def validate_space_available(self, target_path):
+    def validate_space_available(self):
         """
         check the bundle size agains space available
         """
-        if target_path is None:
-            return False
 
         self.files.calculate_bundle_size()
 
         # get the disk usage
-        space = psutil.disk_usage(target_path)
+        space = psutil.disk_usage(self.target_dir)
 
         #give ourselves a cushion for other processes
         self.free_space = int(.9 * space.free)
