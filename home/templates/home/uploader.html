@@ -110,6 +110,15 @@ li ul li
 }
 
 		</style>
+
+<script src="{{ MEDIA_URL }}jquery-1.11.2.js"></script>
+<link href="{{ MEDIA_URL }}Select2/dist/css/select2.min.css" rel="stylesheet" />
+<script src="{{ MEDIA_URL }}Select2/dist/js/select2.min.js"></script>
+
+<script type="text/javascript">
+  $('select').select2();
+</script>
+
 </head>
 <body>
 <table>
@@ -242,10 +251,11 @@ li ul li
 </tr>
 
 </table>
-    <script src="{{ MEDIA_URL }}jquery-1.11.2.js"></script>
-
     <script type="text/javascript">
-        $(function(){
+        $(function () {
+
+            $('select').select2();
+
 	        $.ajaxSetup({cache:false});
             $('#proposal').change(function() {
                 this.form.submit();
