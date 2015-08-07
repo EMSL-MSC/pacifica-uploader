@@ -2,6 +2,9 @@
 <html>
 <head>
 	<title>MyEMSL Instrument Data Uploader</title>
+    
+    <link rel="stylesheet" href="{{ MEDIA_URL }}/emsl_style.css">
+
     <script src="{{ MEDIA_URL }}jquery-1.11.2.js"></script>
 
     <script type="text/javascript">
@@ -31,114 +34,6 @@
 
         };
     </script>
-	<style type="text/css">
-body
-{
-	padding-top: 0;
-	margin: 0;
-	font: 16px helvetica, arial, san-serif;
-}
-.header
-{
-	background-color: #719500;
-	border-bottom: 3px solid #000;
-	height: 64px;
-	padding: 8px 16px;
-	margin: 0;
-}
-h1
-{
-	font: 24px georgia, Garamond, "Times New Roman", serif;
-}
-.header h1
-{
-	display: inline;
-	color: #fff;
-	padding-left: 16px;
-}
-.header a
-{
-	color: #fff;
-}
-a
-{
-	color: #5381AC;
-}
-.path
-{
-	padding-top: 1em;
-	padding-left: .5em;
-	font-weight: bold;
-	background-color: #eee;
-	border-bottom: 1px solid #333;
-	margin-bottom: .5em;
-}
-table {
-    table-layout:fixed;
-    width: 2000px;
-}
-.main {
-	vertical-align: top;
-}
-
-.main td {
-	width: 400px;
-	border: 1px solid #000;
-	margin-top: 8px;
-	padding: 8px;
-	height: 100%;
-	overflow: auto;
-	-ms-word-break: break-all;
-     word-break: break-all;
-}
-.dir
-{
-	background: url({{ MEDIA_URL }}/folder.png) top left no-repeat;
-	padding-left: 18px;
-}
-.file
-{
-	background: url({{ MEDIA_URL }}/file3.png) top left no-repeat;
-	padding-left: 18px;
-}
-
-ul
-{
-	margin-left: 0;
-	padding-left: 0;
-}
-
-li
-{
-	list-style: none;
-	padding-bottom: .3em;
-}
-
-li ul li 
-{
-	font-size: .8em;
-	color: #777;
-}
-.tight
-{
-	margin-bottom: 0;
-}
-.toupload a
-{
-	text-decoration: none;
-	color: black;
-}
-.toupload a:hover
-{	
-	text-decoration: underline;
-	color: red;
-}
-.toupload .dir:hover, .toupload .file:hover
-{
-	background: url({{ MEDIA_URL }}/x_14x14.png) top left no-repeat;
-}
-
-</style>
 </head>
 <body>
 <table>
