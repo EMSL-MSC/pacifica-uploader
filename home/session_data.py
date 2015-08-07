@@ -77,28 +77,34 @@ class session_state(object):
 
                 self.instrument = self.configuration['instrument']
                 if self.instrument == '':
-                    return False
+                    return 'Configuration: Missing instrument'
 
                 self.target_dir = self.configuration['target']
                 if self.target_dir == '':
-                    return False
+                    return 'Configuration: Missing target directory'
+
+                if not os.path.isdir(self.target_dir):
+                    return 'Configuration: target directory unmounted'
 
                 self.server_path = self.configuration['server']
                 if self.server_path == '':
-                    return False
+                    return 'Configuration: Missing server path'
 
                 self.timeout = int(self.configuration['timeout'])
+                if self.timeout == '':
+                    return 'Configuration: Missing timeout'
 
                 root_dir = os.path.normpath(self.configuration['dataRoot'])
                 if root_dir == '':
-                    return False
+                    return 'Configuration: Missing root directory'
 
                 if root_dir.endswith("\\"):
                     root_dir = root_dir[:-1]
 
                 if not os.path.isdir(root_dir):
-                    return False
+                    return 'Configuration: root directory unmounted'
 
+                self.files.directory_history = []
                 self.files.directory_history.append(root_dir)
                 root_dir = self.files.current_directory()
 
@@ -111,12 +117,12 @@ class session_state(object):
                     meta_entry.value = ''
                     self.meta_list.append(meta_entry)
             else:
-                return True
+                return ''
         except Exception, e:
             print e
-            return False
+            return 'Configuration Error'
 
-        return True
+        return ''
 
     def read_config_file(self):
         config_file = 'UploaderConfig.json'
