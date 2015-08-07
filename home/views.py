@@ -384,10 +384,9 @@ def login(request):
 
     # initialize session settings from scratch
     session.initialized = False
-    init = session.initialize_settings()
-    if not init:
-        return login_error(request, 'faulty configuration:  \n' + str(session.configuration))
-
+    err = session.initialize_settings()
+    if err != '':
+        return login_error(request, 'faulty configuration:  ' + err)
 
     # timeout
     SESSION_COOKIE_AGE = session.timeout * 60
