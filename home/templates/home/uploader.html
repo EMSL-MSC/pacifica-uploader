@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="{{ MEDIA_URL }}emsl_style.css">
     <link rel="stylesheet" href="{{ MEDIA_URL }}upload_style.css">
 
-<script src="{{ MEDIA_URL }}jquery-1.11.2.js"></script>
+<script src="{{ MEDIA_URL }}jquery/jquery-1.11.2.js" type="text/javascript"></script>
 <link href="{{ MEDIA_URL }}Select2/dist/css/select2.min.css" rel="stylesheet" />
 <script src="{{ MEDIA_URL }}Select2/dist/js/select2.min.js"></script>
 
@@ -34,6 +34,15 @@
 </tr>
 <tr class="main">
 	<td>
+	<strong>tree</strong>	
+			<form action="{% url "modify" %}" method="post" enctype="multipart/form-data">
+                
+
+		
+			</form>
+	</td>
+
+    <td>
 	<strong>Mark Files for Upload</strong>	
 			<form action="{% url "modify" %}" method="post" enctype="multipart/form-data">
                 

@@ -89,7 +89,6 @@
     <Content Include="home\templates\home\images\folder.png" />
     <Content Include="home\templates\home\images\services.html" />
     <Content Include="home\templates\home\images\x_14x14.png" />
-    <Content Include="home\templates\home\index.html" />
     <Content Include="home\templates\home\cookie.html" />
     <Content Include="home\templates\home\login.html" />
     <Content Include="home\templates\home\status.html" />
@@ -101,12 +100,14 @@
     <Content Include="media\checkbox-unchecked.png" />
     <Content Include="media\emsl.png" />
     <Content Include="media\emsl_logo-white.png" />
+    <Content Include="media\emsl_style.css" />
     <Content Include="media\file3.png" />
     <Content Include="media\folder.ico" />
     <Content Include="media\folder.png" />
     <Content Include="media\jquery-1.11.2.js" />
     <Content Include="media\jquery-2.1.3.js" />
     <Content Include="media\jquery-2.1.3.min.js" />
+    <Content Include="media\upload_style.css" />
     <Content Include="media\x_14x14.png" />
     <Content Include="ToDo.txt" />
     <Content Include="UploadServer\paths.txt" />
