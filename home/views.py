@@ -278,6 +278,9 @@ def spin_off_upload(request, session):
 
     return show_status(request, session, 'Starting Upload')
 
+def upload_files(request):
+    print "upload!"
+
 def modify(request):
     """
     modifies the data underlying the main upload page depending on the request
@@ -462,6 +465,32 @@ def logout(request):
 
     return HttpResponseRedirect(reverse('home.views.login'))
 
+def get_children(request):
+    try:
+        retval = ""
+        #retval = json.dumps([{"title": "Node 2.1", "key": "3", "lazy": True},{"title": "Node 2.2", "key": "4", "lazy": True}])
+        ##retval = json.dumps([{"title": "Node 2.2", "key": "4", "lazy": True}])
+        parent = request.GET.get("parent")
+
+        if not parent:
+            return ""
+
+        list = []
+        if os.path.isdir(parent):
+            for item in os.listdir(parent):
+                itempath = os.path.join(parent, item)
+                if os.path.isfile(itempath):
+                    list.append({"title": item, "key": itempath, "folder": False})
+                elif os.path.isdir(itempath):
+                    list.append({"title": item, "key": itempath, "folder": True, "lazy": True})
+        retval = json.dumps(list)
+
+    except Exception, e:
+        print e
+        return ""
+
+    return HttpResponse(retval)
+    
 def incremental_status(request):
     """
     updates the status page with the current status of the background upload process
