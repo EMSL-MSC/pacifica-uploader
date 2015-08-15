@@ -56,6 +56,41 @@
             }
         });
 
+        $.fn.serializeFormJSON = function () {
+            var o = {};
+            var a = this.serializeArray();
+            $.each(a, function () {
+                this.value = this.value.trim();
+                if (o[this.name] !== undefined) {
+                    if (!o[this.name].push) {
+                        o[this.name] = [o[this.name]];
+                    }
+                    o[this.name].push(this.value || '');
+                } else {
+                    o[this.name] = this.value || '';
+                }
+            }
+            );
+            return o;
+        };
+
+        jQuery["postJSON"] = function (url, data, callback) {
+            // shift arguments if data argument was omitted
+            if (jQuery.isFunction(data)) {
+                callback = data;
+                data = undefined;
+            }
+
+            return jQuery.ajax({
+                url: url,
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                data: JSON.stringify(data),
+                success: callback
+            });
+        };
+
         $("form").submit(function (event) {
             event.preventDefault();
 
@@ -69,7 +104,13 @@
                 fileList.push(node.key);
             });
 
-            $.post("/upload/", dummy);
+            var frm = $("form").serializeFormJSON();
+
+            var pkt = { form: frm, files: fileList };
+
+            $.post("/upload/", { packet: JSON.stringify(pkt) });
+            //$.post("/upload/", pkt);
+            //$.postJSON("/upload/", pkt, function (data) {alert('success')});
         });
 
     });
@@ -96,12 +137,11 @@
 </tr>
 <tr class="main">
 	<td>
-	<strong>tree</strong>	
+	<strong>Select Files for Upload</strong>	
 			<form action="{% url "modify" %}" method="post" enctype="multipart/form-data">
-             
                 <div id="tree">
                     <ul id="root" style="display:none;" class="ui-fancytree-source ui-helper-hidden">
-                            <li id="{{directoryHistory.0}}" class="lazy folder">
+                            <li id="{{data_root}}" class="lazy folder">
                                 <span> My Data</span>
                             </li>
                     </ul>
@@ -109,47 +149,8 @@
 			</form>
 	</td>
 
-    <td>
-	<strong>Mark Files for Upload</strong>	
-			<form action="{% url "modify" %}" method="post" enctype="multipart/form-data">
-                
-                {% for path in checkedDirs %}
-                    <li><a href="/modify?toggleDir={{path}}"><img src="{{ MEDIA_URL }}/checkbox-checked.png" alt="checked" height="16" width="16">                     
-                    </a><span class="dir">>{{ path }}</span><br /></li> 
-                {% endfor %}
-                
-                {% for path in checkedFiles %}
-                    <li><a href="/modify?toggleFile={{path}}"><img src="{{ MEDIA_URL }}/checkbox-checked.png" alt="checked" height="16" width="16">                        
-                    </a><span class="file">{{ path }}</span><br /></li> 
-                {% endfor %}
-                                
-                {% for path in uncheckedDirs %}
-                    <li><a href="/modify?toggleDir={{path}}"><img src="{{ MEDIA_URL }}/checkbox-unchecked.png" alt="unchecked" height="16" width="16"></a>
-                                           
-                    <a class="dir" href="/modify?enterDir={{path}}">{{ path }}</a><br /></li> 
-                {% endfor %}    
-                
-                {% for path in uncheckedFiles %}
-                    <li><a href="/modify?toggleFile={{path}}"><img src="{{ MEDIA_URL }}/checkbox-unchecked.png" alt="checked" height="16" width="16">                        
-                    </a><span class="file">{{ path }}</span><br /></li> 
-                {% endfor %}
-		
-			</form>
-	</td>
 	<td class="toupload">
 	<strong>Files to Upload</strong>
-			<ul>
-			        {% load app_filters %}
-                    {% for path in selectedDirs %}
-                            <li><a class = "dir" href="/modify?toggleDir={{path}}">{{ path }}</a></li> 
-                            <li><small>{{ dirSizes|get_at_index:forloop.counter0 }}</small></li>
-                    {% endfor %}
-                    
-                    {% for path in selectedFiles %}
-                            <li><a class = "file" href="/modify?toggleFile={{path}}">{{ path }}</a></li>
-                            <li><small>{{ fileSizes|get_at_index:forloop.counter0 }}</small></li>
-                    {% endfor %}
-			</ul>
 	</td>
 	<td>
 	<strong>Metadata</strong>

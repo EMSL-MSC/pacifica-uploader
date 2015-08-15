@@ -143,27 +143,19 @@ def populate_upload_page(request):
         b = request.user.is_authenticated()
         return login_error(request, '')
     
-    root_dir = session.files.current_directory()
+    root_dir = session.data_dir
 
     if not root_dir or root_dir == '':
         return login_error(request, 'Data share is not configured')
 
-
-    ## if we enter an empty directory, reverse back up the history
     try:
         contents = os.listdir(root_dir)
     except Exception:
-        if len(session.directory_history) > 1:
-            session.files.undo_directory()
-            return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
-        else:
-            return login_error(request, 'error accessing Data share')
-    
-    # get the display values for the current directory
-    checked_dirs, unchecked_dirs, checked_files, unchecked_files = session.files.get_display_values()
+        return login_error(request, 'error accessing Data share')
 
     # validate that the currently selected bundle will fit in the target space
-    uploadEnabled = session.validate_space_available()
+    files = []
+    uploadEnabled = session.validate_space_available(files)
 
     message = 'Bundle: %s, Free: %s' % (session.files.bundle_size_str, session.free_size_str)
     if not uploadEnabled:
@@ -178,16 +170,8 @@ def populate_upload_page(request):
          'user_list': session.proposal_users,
          'proposal':session.proposal_friendly,
          'proposal_user':session.proposal_user,
-         'directoryHistory': session.files.directory_history,
+         'data_root':session.data_dir,
          'metaList': session.meta_list,
-         'checkedDirs': checked_dirs,
-         'uncheckedDirs': unchecked_dirs,
-         'checkedFiles': checked_files,
-         'uncheckedFiles': unchecked_files,
-         'selectedDirs': session.files.selected_dirs,
-         'dirSizes': session.files.dir_sizes,
-         'selectedFiles': session.files.selected_files,
-         'fileSizes': session.files.file_sizes,
          'current_time': session.current_time,
          'message': message,
          'uploadEnabled': uploadEnabled,
@@ -223,20 +207,30 @@ def spin_off_upload(request, session):
     if not alive:
         return show_status(request, session, 'Celery background process is not started')
 
+    packet = request.POST.get('packet')
+    try:
 
-    root_dir = session.files.current_directory()
+        if (packet):
+            json_obj = json.loads(packet)
+            form = json_obj['form']
+            files = json_obj['files']
+        else:
+            return
+    except Exception, e:
+        print e
+        return
 
     # get the meta data values from the post
     for meta in session. meta_list:
-        value = request.POST.get(meta.name)
+        value = form[meta.name]
         if value:
             meta.value = value
 
     # get the selected proposal string from the post as it may not have been set in a previous post
-    session.load_request_proposal(request)
-    session.load_request_proposal_user(request)
+    session.load_request_proposal(form['proposal'])
+    session.load_request_proposal_user(form['proposal_user'])
 
-    tuples = session.files.get_bundle_files()
+    tuples = session.files.get_bundle_files(files, session.data_dir)
 
     # create the groups dictionary
     #{"groups":[{"name":"FOO1", "type":"Tag"}]}
@@ -246,7 +240,6 @@ def spin_off_upload(request, session):
 
     insty = 'Instrument.%s' % (session.instrument)
     groups[insty] = session.instrument_friendly
-
     groups["EMSL User"] = session.proposal_user
 
     session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
@@ -280,6 +273,7 @@ def spin_off_upload(request, session):
 
 def upload_files(request):
     print "upload!"
+    return spin_off_upload(request, session)
 
 def modify(request):
     """
@@ -300,47 +294,13 @@ def modify(request):
 
         print request.POST
 
-        if request.POST.get("Clear"):
-            session.clear_upload_lists()
-
-        if request.POST.get("Upload Files & Metadata"):
-            return spin_off_upload(request, session)
-
+        # todo make this jquery
         if request.POST.get("proposal"):
             session.load_request_proposal(request)
             session.populate_proposal_users()
 
         if request.POST.get("proposal_user"):
             session.load_request_proposal_user(request)
-
-    else:
-        value_pair = urlparse(request.get_full_path())
-        params = value_pair.query.split("=")
-        mod_type = params[0]
-        path = params[1]
-
-        # spaces
-        path = path.replace("%20", " ")
-        # backslash
-        path = path.replace("%5C", "\\")
-
-        full = os.path.join(root_dir, path)
-
-        if mod_type == 'enterDir':
-            root_dir = os.path.join(root_dir, path)
-            # check to see if we have read permissions to this directory
-            if (os.access(root_dir, os.R_OK & os.X_OK)):
-                session.files.directory_history.append(path)
-
-        elif mod_type == 'toggleFile':
-            session.files.toggle_file(full)
-
-        elif mod_type == 'toggleDir':
-            session.files.toggle_dir(full)
-
-        elif mod_type == "upDir":
-            index = int(path)
-            del session.files.directory_history[index:]
 
     return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 

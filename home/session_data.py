@@ -43,6 +43,7 @@ class session_state(object):
 
     server_path = ''
     target_dir = ''
+    data_dir = ''
     timeout = 30
 
     files = file_manager()
@@ -104,9 +105,7 @@ class session_state(object):
                 if not os.path.isdir(root_dir):
                     return 'Configuration: root directory unmounted'
 
-                self.files.directory_history = []
-                self.files.directory_history.append(root_dir)
-                root_dir = self.files.current_directory()
+                self.data_dir = root_dir
 
                 # create a list of metadata entries to pass to the list upload page
                 self.meta_list = []
@@ -137,14 +136,13 @@ class session_state(object):
         split = self.proposal_friendly.split()
         self.proposal_id = split[0]
 
-    def load_request_proposal (self, request):
+    def load_request_proposal (self, proposal):
         # get the selected proposal string from the post
-        proposal = request.POST.get('proposal')
         self.load_proposal(proposal)
 
-    def load_request_proposal_user (self, request):
+    def load_request_proposal_user (self, proposal_user):
         # get the selected proposal string from the post
-        self.proposal_user = request.POST.get('proposal_user')
+        self.proposal_user = proposal_user
 
     def concatenated_instrument(self):
         """
@@ -331,12 +329,12 @@ class session_state(object):
         self.current_time = None
         self.files.cleanup_files()
 
-    def validate_space_available(self):
+    def validate_space_available(self, files):
         """
         check the bundle size agains space available
         """
 
-        self.files.calculate_bundle_size()
+        self.files.calculate_bundle_size(files)
 
         # get the disk usage
         space = psutil.disk_usage(self.target_dir)
