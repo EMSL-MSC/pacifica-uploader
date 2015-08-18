@@ -53,8 +53,6 @@ class session_state(object):
 
     # proposals
     proposal_list = []
-    proposal_users = []
-
     # process that handles bundling and uploading
     bundle_process = None
 
@@ -136,11 +134,7 @@ class session_state(object):
         split = self.proposal_friendly.split()
         self.proposal_id = split[0]
 
-    def load_request_proposal (self, proposal):
-        # get the selected proposal string from the post
-        self.load_proposal(proposal)
-
-    def load_request_proposal_user (self, proposal_user):
+    def load_proposal_user (self, proposal_user):
         # get the selected proposal string from the post
         self.proposal_user = proposal_user
 
@@ -261,24 +255,22 @@ class session_state(object):
         # initialize the proposal to the first in the list
         self.load_proposal(self.proposal_list[0])
 
-        # initialize the user list
-        self.populate_proposal_users()
-
         # no errors found
         return ''
 
-
-    def populate_proposal_users(self):
+    def populate_proposal_users(self, proposal_id):
         """
         parses user for a proposal and instrument from a json struct
         """
+
+        proposal_users = []
 
         # get the user's info from EUS
         info = get_info(protocol='https',
                          server=self.server_path,
                          user=self.user,
                          password=self.password,
-                         info_type = 'proposalinfo/' + self.proposal_id)
+                         info_type = 'proposalinfo/' + proposal_id)
 
         try:
             info = json.loads(info)
@@ -287,27 +279,27 @@ class session_state(object):
 
         # print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
 
-        self.proposal_users = []
-
         members = info['members']
         # is this an error?  
         if not members:
-            self.proposal_users.append('No users for this proposal')
+            proposal_users.append('No users for this proposal')
             return
 
-        for member in members.iteritems():
-            id =  member[1]
-            first_name = id['first_name']
+        i = 0
+        for member in members.iteritems():            
+            member_id =  member[1]
+            first_name = member_id['first_name']
             if not first_name:
                 first_name = "?"
-            last_name = id['last_name']
+            last_name = member_id['last_name']
             if not last_name:
                 last_name = '?'
-            self.proposal_users.append(first_name + " " + last_name)
+            name = first_name + " " + last_name
 
-        #initialize the selected user
-        if self.proposal_users:
-            self.proposal_user = self.proposal_users[0]
+            # put in format to be used by select2
+            proposal_users.append({'id':name,'text':name})
+
+        return proposal_users
 
     def cleanup_session(self):
         """

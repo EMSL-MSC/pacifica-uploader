@@ -179,9 +179,12 @@ def populate_upload_page(request):
         },
                               context_instance=RequestContext(request))
 
-def show_status(request, session, message):
+def show_initial_status(request):
+    global session
 
-    session.files.calculate_bundle_size()
+    return show_status(request, session, "")
+
+def show_status(request, session, message):
     free_size_str = session.files.size_string(session.free_space)
 
     return render_to_response('home/status.html', \
@@ -227,8 +230,8 @@ def spin_off_upload(request, session):
             meta.value = value
 
     # get the selected proposal string from the post as it may not have been set in a previous post
-    session.load_request_proposal(form['proposal'])
-    session.load_request_proposal_user(form['proposal_user'])
+    session.load_proposal(form['proposal'])
+    session.load_proposal_user(form['proposal_user'])
 
     tuples = session.files.get_bundle_files(files, session.data_dir)
 
@@ -269,7 +272,9 @@ def spin_off_upload(request, session):
                                          user=session.user,
                                          password=session.password)
 
-    return show_status(request, session, 'Starting Upload')
+    #return show_status(request, session, 'Starting Upload')
+    #return HttpResponse(json.dumps("success"), mimetype="application/json")
+    return HttpResponse(json.dumps("success"), content_type="application/json")
 
 def upload_files(request):
     print "upload!"
@@ -284,23 +289,17 @@ def modify(request):
         upload request
     """
 
-    # print 'modify ' + request.get_full_path()
-
     global session
-
-    root_dir = session.files.current_directory()
 
     if request.POST:
 
         print request.POST
 
         # todo make this jquery
-        if request.POST.get("proposal"):
-            session.load_request_proposal(request)
+        proposal = request.POST.get("proposal")
+        if proposal:
+            session.load_proposal(proposal)
             session.populate_proposal_users()
-
-        if request.POST.get("proposal_user"):
-            session.load_request_proposal_user(request)
 
     return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
@@ -424,6 +423,17 @@ def logout(request):
     #logout(request)
 
     return HttpResponseRedirect(reverse('home.views.login'))
+
+def get_proposal_users(request):
+    global session
+
+    prop = request.POST.get("proposal")
+    session.load_proposal(prop)
+    users = session.populate_proposal_users(session.proposal_id)
+    retval = json.dumps(users)
+
+    return HttpResponse(retval, content_type="application/json")
+
 
 def get_children(request):
     try:
