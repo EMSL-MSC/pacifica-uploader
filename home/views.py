@@ -170,6 +170,7 @@ def populate_upload_page(request):
          'user_list': session.proposal_users,
          'proposal':session.proposal_friendly,
          'proposal_user':session.proposal_user,
+         'proposal_users':session.proposal_users,
          'data_root':session.data_dir,
          'metaList': session.meta_list,
          'current_time': session.current_time,
@@ -212,7 +213,7 @@ def spin_off_upload(request, session):
 
     packet = request.POST.get('packet')
     try:
-
+        print "got packet"
         if (packet):
             json_obj = json.loads(packet)
             form = json_obj['form']

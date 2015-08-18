@@ -35,11 +35,16 @@ class session_state(object):
 
     current_user = None
     current_time = ''
+
     instrument = ''
     instrument_friendly = ''
+
     proposal_friendly = ''
     proposal_id = ''
+    proposal_list = []
+
     proposal_user = ''
+    proposal_users = []
 
     server_path = ''
     target_dir = ''
@@ -51,8 +56,6 @@ class session_state(object):
     # meta data values
     meta_list = []
 
-    # proposals
-    proposal_list = []
     # process that handles bundling and uploading
     bundle_process = None
 
@@ -210,7 +213,7 @@ class session_state(object):
         if there is no valid proposal for the user for this instrument
         throw an error
         """
-        props = info["proposals"]
+        props = info['proposals']
         if not props:
             return 'user has no proposals'
 
@@ -255,6 +258,8 @@ class session_state(object):
         # initialize the proposal to the first in the list
         self.load_proposal(self.proposal_list[0])
 
+        self.populate_proposal_users(self.proposal_id)
+
         # no errors found
         return ''
 
@@ -263,7 +268,8 @@ class session_state(object):
         parses user for a proposal and instrument from a json struct
         """
 
-        proposal_users = []
+        self.proposal_users = []
+        json_list = []
 
         # get the user's info from EUS
         info = get_info(protocol='https',
@@ -282,7 +288,7 @@ class session_state(object):
         members = info['members']
         # is this an error?  
         if not members:
-            proposal_users.append('No users for this proposal')
+            self.proposal_users.append('No users for this proposal')
             return
 
         i = 0
@@ -296,10 +302,12 @@ class session_state(object):
                 last_name = '?'
             name = first_name + " " + last_name
 
-            # put in format to be used by select2
-            proposal_users.append({'id':name,'text':name})
+            self.proposal_users.append(name)
 
-        return proposal_users
+            # put in format to be used by select2
+            json_list.append({'id':name,'text':name})
+
+        return json_list
 
     def cleanup_session(self):
         """

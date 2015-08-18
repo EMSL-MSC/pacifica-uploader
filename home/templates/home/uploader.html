@@ -18,6 +18,13 @@
 <script type="text/javascript">
     $('select').select2();
 
+    var csrftoken = $.cookie('csrftoken');
+
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+
     $(function(){
         // Create the tree inside the <div id="tree"> element.
         $("#tree").fancytree({
@@ -38,21 +45,6 @@
             loadChildren: function (event, data) {
                 // Apply parent's state to new child nodes:
                 data.node.fixSelection3AfterClick();
-            }
-        });
-
-        var csrftoken = $.cookie('csrftoken');
-
-        function csrfSafeMethod(method) {
-            // these HTTP methods do not require CSRF protection
-            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-        }
-
-        $.ajaxSetup({
-            beforeSend: function (xhr, settings) {
-                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
-                }
             }
         });
 
@@ -108,9 +100,11 @@
 
             var pkt = { form: frm, files: fileList };
 
-            $.post("/upload/", { packet: JSON.stringify(pkt) });
-            //$.post("/upload/", pkt);
-            //$.postJSON("/upload/", pkt, function (data) {alert('success')});
+            $.post("/upload/", { packet: JSON.stringify(pkt) }, 
+                function (data) {
+                    //alert('success');
+                    window.location.replace("/showStatus");
+                });
         });
 
     });
@@ -185,16 +179,14 @@
             <p class="tight">
                 <strong>EMSL User:</strong>
             </p>
-            <select id ="proposal_user" name = "proposal_user" >
-            
-            {% for user in user_list %}
-                {% if proposal_user == user %}
-                    <option selected value="{{user}}">{{user}}</option>
-                {% else %}
-                    <option value="{{user}}">{{user}}</option>
-                {% endif %}
-            {% endfor %}
-            
+            <select id ="proposal_user" style="width:100%;" name = "proposal_user" >
+                {% for user in proposal_users %}
+                    {% if proposal_user == user %}
+                        <option selected value="{{user}}">{{user}}</option>
+                    {% else %}
+                        <option value="{{user}}">{{user}}</option>
+                    {% endif %}
+                {% endfor %}
             </select>
             
 			{% for meta in metaList %}
@@ -222,12 +214,34 @@
 
             $('select').select2();
 
-	        $.ajaxSetup({cache:false});
-            $('#proposal').change(function() {
-                this.form.submit();
+            $.ajaxSetup({
+                cache: false,
+                beforeSend: function (xhr, settings) {
+                    if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                    }
+                }
             });
-            $('#proposal_user').change(function () {
-                this.form.submit();
+
+	        $('#proposal').change(function () {
+	            // get selected proposal
+	            var p = $("#proposal").val();
+	            prop = { proposal: p };
+
+	            var posting = $.post("/propUser/", prop,
+                function (data) {
+                    $("#proposal_user").empty();
+                    $("#proposal_user").val('')
+                    $('#proposal_user').select2('data', null);
+                    $("#proposal_user").select2({
+                        allowClear: true,
+                        data: data
+                    });
+                })
+                .fail(function () {
+                    alert("error");
+                });
+                
             });
         });
     </script>
