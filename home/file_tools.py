@@ -187,7 +187,7 @@ class file_manager(object):
 
         #create a list of tuples (filepath, arcpath)
         tuples = []
-        self.file_tuples(files, tuples, root)
+        self.file_tuples(filtered, tuples, root)
 
         self.calculate_bundle_size(files)
 
