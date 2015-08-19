@@ -209,7 +209,7 @@ def spin_off_upload(request, session):
     alive = ping_celery()
     print 'Celery lives = %s' % (alive)
     if not alive:
-        return show_status(request, session, 'Celery background process is not started')
+        return HttpResponse(json.dumps("Celery background process is not started"), content_type="application/json", status=500)
 
     packet = request.POST.get('packet')
     try:
@@ -439,8 +439,6 @@ def get_proposal_users(request):
 def get_children(request):
     try:
         retval = ""
-        #retval = json.dumps([{"title": "Node 2.1", "key": "3", "lazy": True},{"title": "Node 2.2", "key": "4", "lazy": True}])
-        ##retval = json.dumps([{"title": "Node 2.2", "key": "4", "lazy": True}])
         parent = request.GET.get("parent")
 
         if not parent:
@@ -450,10 +448,15 @@ def get_children(request):
         if os.path.isdir(parent):
             for item in os.listdir(parent):
                 itempath = os.path.join(parent, item)
+                
                 if os.path.isfile(itempath):
-                    list.append({"title": item, "key": itempath, "folder": False})
+                    size = os.path.getsize(itempath)
+                    size_str = session.files.size_string(size)
+                    list.append({"title": item + " (" + size_str + ")", "key": itempath, "folder": False, "data":{"size":size}})
                 elif os.path.isdir(itempath):
-                    list.append({"title": item, "key": itempath, "folder": True, "lazy": True})
+                    size = session.files.get_size(itempath)
+                    size_str = session.files.size_string(size)
+                    list.append({"title": item + " (" + size_str + ")", "key": itempath, "folder": True, "lazy": True, "data":{"size":size}})
         retval = json.dumps(list)
 
     except Exception, e:

@@ -60,6 +60,14 @@ class file_manager(object):
 
         return total_size
 
+    def get_size(self, start_path = '.'):
+        total_size = 0
+        for dirpath, dirnames, filenames in os.walk(start_path):
+            for f in filenames:
+                fp = os.path.join(dirpath, f)
+                total_size += os.path.getsize(fp)
+        return total_size
+
     def folder_meta(self, folder, meta):
         """
         gets the meta data for a folder
@@ -168,6 +176,15 @@ class file_manager(object):
         """
 
         total_size = os.path.getsize(filename)
+
+        return self.size_string(total_size)
+
+    def folder_size_string(self, filename):
+        """
+        returns a string with the file size in appropriate units
+        """
+
+        total_size = self.get_size(filename)
 
         return self.size_string(total_size)
 
