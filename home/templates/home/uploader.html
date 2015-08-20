@@ -31,7 +31,6 @@
             //      extensions: ["select"],
             checkbox: true,
             selectMode: 3,
-
             lazyLoad: function (event, data) {
                 var node = data.node;
                 // Load child nodes via ajax GET /getTreeData?mode=children&parent=1234
@@ -42,10 +41,48 @@
                 };
             },
 
+            select: function (event, data) {
+                var node = data.node;
+                var tree = $("#tree").fancytree("getTree");
+                var selected = tree.getSelectedNodes(stopOnParents = true);
+
+                var upload = $("#uploadFiles").fancytree("getTree");
+                var root = $("#uploadFiles").fancytree("getRootNode");
+
+                
+
+                while (root.hasChildren()) {
+                    child = root.getFirstChild();
+                    child.remove();
+                }
+
+                var propNode = root.addChildren({
+                    title: "Proposal", id: "Proposal", expand: true,
+                        folder: true
+                    });
+                instNode = propNode.addChildren({
+                    title: "Instrument", id: "Instrument", expand: true,
+                    folder: true
+                });
+
+                instNode.addChildren(selected);
+
+                root.setExpanded(true);
+                propNode.setExpanded(true);
+                instNode.setExpanded(true);
+            },
+
+
             loadChildren: function (event, data) {
                 // Apply parent's state to new child nodes:
                 data.node.fixSelection3AfterClick();
             }
+        });
+
+        $("#uploadFiles").fancytree({
+            //      extensions: ["select"],
+            checkbox: true,
+            selectMode: 1
         });
 
         $.fn.serializeFormJSON = function () {
@@ -88,8 +125,6 @@
 
             var tree = $("#tree").fancytree("getTree");
             var selected = tree.getSelectedNodes();
-            var dummy = { test: "testes" };
-            var selCount = tree.countSelected();
             var fileList = [];
 
             selected.forEach(function (node) {
@@ -143,9 +178,19 @@
 			</form>
 	</td>
 
-	<td class="toupload">
-	<strong>Files to Upload</strong>
+	<td>
+        <strong>Files to Upload</strong>	
+			<form action="{% url "modify" %}" method="post" enctype="multipart/form-data">
+                <div id="uploadFiles">
+                    <ul id="load" style="display:none;" class="ui-fancytree-source ui-helper-hidden">
+                        <li id="upload" class="lazy folder">
+                            <span> Upload </span>
+                        </li>
+                    </ul>
+                </div>   
+			</form>
 	</td>
+
 	<td>
 	<strong>Metadata</strong>
 			<p>

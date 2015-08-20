@@ -450,13 +450,9 @@ def get_children(request):
                 itempath = os.path.join(parent, item)
                 
                 if os.path.isfile(itempath):
-                    size = os.path.getsize(itempath)
-                    size_str = session.files.size_string(size)
-                    list.append({"title": item + " (" + size_str + ")", "key": itempath, "folder": False, "data":{"size":size}})
+                    list.append({"title": item, "key": itempath, "folder": False})
                 elif os.path.isdir(itempath):
-                    size = session.files.get_size(itempath)
-                    size_str = session.files.size_string(size)
-                    list.append({"title": item + " (" + size_str + ")", "key": itempath, "folder": True, "lazy": True, "data":{"size":size}})
+                    list.append({"title": item, "key": itempath, "folder": True, "lazy": True})
         retval = json.dumps(list)
 
     except Exception, e:
