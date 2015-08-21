@@ -1,0 +1,19 @@
+<footer>
+<section id="contact_info">
+    <p>Environmental Molecular Sciences Laboratory</p>
+    <p>Phone: <span class="tel"><a href="tel:+15093716003">509.371.6003</a></span></p>
+    <p><a class="email" href="mailto:emsl@pnnl.gov">emsl@pnnl.gov</a></p>
+    <p><a href="https://www.emsl.pnl.gov/emslweb/security-privacy">Security & Privacy</a></p>
+</section>
+<section class="social-icons">
+    <div class="facebook social"><a href="http://www.facebook.com/emsl.pnl.gov">&nbsp;</a></div>
+    <div class="twitter social"><a href="https://twitter.com/#!/EMSLscience">&nbsp;</a></div>
+    <div class="googleplus social"><a href="https://plus.google.com/u/0/b/101061052038396007628/101061052038396007628/posts">&nbsp;</a></div>
+    <div class="linkedin social"><a href="http://www.linkedin.com/groups?gid=3063055">&nbsp;</a></div>
+    <div class="youtube social"><a href="http://www.youtube.com/user/EMSLatPNNL">&nbsp;</a></div>
+    <div class="flickr social"><a href="http://www.flickr.com/photos/emsl/">&nbsp;</a></div>
+</section>
+<section id="institutional_logos">
+    <div class="logo_container">&nbsp;</div>
+</section>
+</footer>

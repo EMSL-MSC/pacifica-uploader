@@ -1,0 +1,155 @@
+html
+{
+    position: relative;
+    height: 95%;
+}
+body
+{
+    padding-top: 0;
+    margin: 0;
+    font-family: "Helvetica Neue", Helvetica, Arial, san-serif;
+    letter-spacing:0px;
+    height: 100vh;
+    position: relative;
+}
+
+li
+{
+	list-style: none;
+	padding-bottom: .3em;
+}
+
+.header
+{
+    background-color: #719500;
+    border-bottom: 3px solid #000;
+    height: 4em;
+    padding: .5em 1em;
+    margin: 0;
+}
+h1
+{
+    font: 1.5em georgia, Garamond, "Times New Roman", serif;
+}
+
+.header h1
+{
+	display: inline;
+	color: #fff;
+	padding-left: 16px;
+}
+
+.header a
+{
+    color: #fff;
+}
+.floatright
+{
+    position: absolute;
+    right: 4%;
+    top: 2.5em;
+}
+.column .floatright
+{
+    right: 2%;
+    top: .5em;
+}
+a
+{
+    color: #5381AC;
+}
+.wrapper
+{
+    position: absolute;
+    top: 8em;
+    bottom: 0;
+    height: 80%;
+    width: 100%;
+    min-width: 960px;
+}
+#login 
+{
+    padding: 2em;
+}
+.control-group 
+{
+    padding-top:.5em;
+}
+
+.themed {
+ display:block;
+ width:100%;
+}
+
+.themed label, .themed .nonfield_label {
+  color: #606060;
+  font-weight:600;
+  font-size:0.9em;
+}
+
+.themed input[type="text"], .themed input[type="password"]{
+  border: 3px solid #999;
+  border-radius:3px;
+  font-size:0.9em;
+  padding:3px;
+}
+
+.themed fieldset {
+  border: 3px solid #b2b3b5;
+  -moz-border-radius: 5px;
+   -webkit-border-radius:5px;
+  border-radius: 5px;
+  padding:0 1.25em;
+  background-color:#efefef;
+}
+
+.themed fieldset legend {
+  padding:3px 5px 0px 5px;
+  color:#656565;
+  font-size:large;
+  font-weight:600;
+}
+.themed input, .themed textarea {
+  margin-bottom:10px;
+  font-size:1em;
+}
+
+
+
+
+.left_block {
+  position:absolute;
+  vertical-align:top;
+  left:0px;
+  bottom:5px;
+}
+
+.right_block {
+  display:inline-block;
+  position:absolute;
+  right:0px;
+  bottom:5px;
+  vertical-align:top;
+}
+
+.full_width_block {
+  position:relative;
+  width:98%;
+}
+
+.controls input {
+  width:100%;
+} 
+
+#info_container {
+  font-size:0.75em;
+  color:#333;
+  text-align:center;
+}
+
+.warning_messages {
+  color:red;
+  font-weight:bold;
+  text-align:center;
+  padding:1em;
+}

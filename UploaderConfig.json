@@ -1,7 +1,7 @@
 {
-    "dataRoot": "Y:\\7_Representative_Data",
+    "dataRoot": "M:\\7_Representative_Data",
     "instrument": "34075",
-    "target": "e:\\tar",
+    "target": "C:\\tar",
     "timeout": "10",
     "server": "dev2.my.emsl.pnl.gov",
     "metadata": [

@@ -1,0 +1,55 @@
+﻿/* Directory page styling */
+ul.fancytree-container {
+  font-family:inherit;
+  border:none;
+  margin:0 !important;
+  padding:0;
+}
+
+.fancytree-title {
+  font-size:0.9em;
+}
+
+.fancytree-container ul {
+  margin: 0 0 0 0 !important;
+}
+
+ul.fancytree-container li{
+  margin-bottom:0 !important;
+}
+
+span.fineprint {
+  font-size:0.8em;
+  font-style:italic;
+}
+
+span.download_status {
+  padding-top: 1em;
+  font-weight: bold;
+  color:#333;
+  margin-left:2em;
+  vertical-align: baseline;
+}
+
+.item_link:visited, .item_link:link {
+  color: #0077a4;
+  text-decoration: none;
+}
+
+.fancytree-selected .item_link:visited, .fancytree-selected .item_link:link {
+  color: white;
+  text-decoration: none;
+}
+
+.fancytree-container:focus {
+  outline-style: none;
+}
+
+
+.item_link:hover{
+  text-decoration:underline;
+}
+
+.cart_tree {
+  padding-top:1em !important;
+}

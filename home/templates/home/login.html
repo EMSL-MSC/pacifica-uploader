@@ -2,51 +2,62 @@
 <html>
 <head>
     <title>MyEMSL Instrument Data Uploader</title>
-    <link rel="stylesheet" href="{{ MEDIA_URL }}/emsl_style.css">
+    {% include "includes/global_styles.html" %}
 </head>
 
 <body>
-<div class="header">
-    <span class="logo"><img src="{{ MEDIA_URL }}/emsl_logo-white.png" alt="EMSL Logo" /></span> 
-    <h1>
-        MyEMSL Instrument Data Uploader
-    </h1>
-</div><!-- end .header -->
+    <div class="page_content">
+        {% include "includes/view_header.html" %}
 
-{% block main %}
-    <div id="login">
-        <form class="form-horizontal" name="LoginForm" action="/login/" method="post">
-        {% csrf_token %}
-        {% if next %}
-            <input type="hidden" name="next" value="{{ next }}" />
-        {% endif %}
 
-            
-        <label class="control-label" for="version">v0.98.14</label>
+        {% block main %}
+        <div id="login" class="page_content">
+            <form class="form-horizontal themed" name="LoginForm" action="/login/" method="post">
+                {% csrf_token %}
+                {% if next %}
+                <input type="hidden" name="next" value="{{ next }}" />
+                {% endif %}
 
-        <p class="tight">
-            <strong>Instrument: {{instrument}}</strong>
-        </p>
+                <fieldset style="margin-top:3em;position:relative;width:300px;margin-left:auto;margin-right:auto;">
+                    <legend>MyEMSL User Login</legend>
+                    <div id="login_container" class="full_width_block">
+                        <div class="control-group">
+                            <label class="control-label" for="username">Username</label>
+                            <div class="controls">
+                                <input type="text" id="username" name="username" placeholder="Username">
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label" for="password">Password</label>
+                            <div class="controls">
+                                <input type="password" name="password" id="password" placeholder="Password">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="buttons" style="height:30px;">
+                        <div class="control-group">
+                            <div id="submit_button" class="controls">
+                                <button type="submit" class="btn">Login</button>
+                            </div>
+                        </div>
+                    </div>
 
-        <div class="control-group">
-            <label class="control-label" for="username">Username</label>
-            <div class="controls">
-                <input type="text" id="username" name="username"  placeholder="Username">
-            </div>
+                    <div id="info_container" style="height:30px;" class="full_width_block">
+                        <div id="version_container" class="left_block">
+                            Site Version: v<span id="site_version">{{site_version}}</span>
+                        </div>
+                        <div id="instrument_id_container" class="right_block">
+                            Instrument: <span id="instrument_id">{{instrument}}</span>
+                        </div>
+                    </div>
+                </fieldset>
+            </form>
+            <section class="warning_messages">
+                <span id="warning_message">{{message}}</span>
+            </section>
         </div>
-        <div class="control-group">
-            <label class="control-label" for="password">Password</label>
-            <div class="controls">
-                <input type="password" name="password" id="password" placeholder="Password">
-            </div>
-        </div>
-        <div class="control-group">
-            <div class="controls">
-                <button type="submit" class="btn">Login</button>
-            </div>
-        </div>
-
-        {{message}}
-        </form>
+        {% endblock %}
+        {% include "includes/view_footer.html" %}
     </div>
-{% endblock %}
+</body>
+</html>
