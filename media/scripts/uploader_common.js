@@ -5,7 +5,20 @@ function csrfSafeMethod(method) {
     return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
 }
 
+function setup_upload_tree() {
+
+}
+
 $(function () {
+    $.ajaxSetup({
+        cache: false,
+        beforeSend: function (xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+
     $('select').select2();
 
     // Create the tree inside the <div id="tree"> element.
@@ -63,7 +76,7 @@ $(function () {
 
     $("#uploadFiles").fancytree({
         //      extensions: ["select"],
-        checkbox: true,
+        checkbox: false,
         selectMode: 1
     });
 
@@ -124,15 +137,9 @@ $(function () {
             });
     });
 
-    $.ajaxSetup({
-        cache: false,
-        beforeSend: function (xhr, settings) {
-            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-                xhr.setRequestHeader("X-CSRFToken", csrftoken);
-            }
-        }
-    });
 
+
+    // setup change notification on the proposal picker
     $('#proposal').change(function () {
         // get selected proposal
         var p = $("#proposal").val();
