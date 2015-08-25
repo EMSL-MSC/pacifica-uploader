@@ -273,8 +273,6 @@ def spin_off_upload(request, session):
                                          user=session.user,
                                          password=session.password)
 
-    #return show_status(request, session, 'Starting Upload')
-    #return HttpResponse(json.dumps("success"), mimetype="application/json")
     return HttpResponse(json.dumps("success"), content_type="application/json")
 
 def upload_files(request):
@@ -457,9 +455,110 @@ def get_children(request):
 
     except Exception, e:
         print e
-        return ""
+        return err_response("upload failed")
 
     return HttpResponse(retval)
+
+def error_response(err_str):
+    return HttpResponse(json.dumps("Error: " + err_str), content_type="application/json", status=500)
+
+
+def make_leaf(title, path):
+    ''' 
+    return a populated tree leaf
+    '''
+    if os.path.isfile(path):
+        size = os.path.getsize(path)
+        is_folder = False
+    elif os.path.isdir(path):
+        size = session.files.get_size(path)
+        is_folder = True
+
+    size_string = session.files.size_string(size) 
+    return {"title": title + " (" + size_string + ")", "key": path, "folder": is_folder, "data":{"size":size}}
+
+def add_branch(branches, subdirectories, title, path):
+    ''' 
+    recursively insert branch into a tree structure
+    '''
+    # if we are at a leaf, add the leaf to the children list
+    if len(subdirectories) < 2:
+        leaf = make_leaf (title, path)
+        branches.append(leaf)
+        return
+
+    branch_name = subdirectories[0]
+
+    for branch in branches:
+        if branch['title'] == branch_name:
+            children = branch['children']
+            add_branch(children, subdirectories[1:], title, path)
+            return
+
+    # not found, add the branch
+    branch = {"title": branch_name, "key": 1, "folder": True, "expanded": True, "children": []}
+    children = branch['children']
+    add_branch(children, subdirectories[1:], title, path)
+    branches.append (branch)
+
+def make_tree (tree, subdirectories, partial_path, title, path):
+    ''' 
+    recursively split filepaths 
+    '''
+
+    if not tree:
+        tree.append ({"title": "root", "key": 1, "folder": True,"expanded": True, "children": []})
+
+    if not partial_path:
+        children = tree[0]['children']
+        add_branch(children, subdirectories, title, path)
+        return
+
+    head, tail = os.path.split (partial_path)
+
+    # prepend the tail
+    subdirectories.insert(0, tail)
+    make_tree(tree, subdirectories, head, title, path)
+
+def get_bundle(request):
+    try:
+        retval = ""
+        pathstring = request.POST.get("packet")
+
+        if not pathstring:
+            return error_response("bad input to get_bundle")
+
+        paths = json.loads(pathstring)
+
+        if not paths:
+            return error_response("bad input to get_bundle")
+
+        # this actually should be done already by getting parent nodes
+        filtered = session.files.filter_selected_list(paths)
+
+        common_path = os.path.commonprefix(filtered)
+        #get rid of dangling prefixes
+        common_path, tail = os.path.split(common_path)
+        common_path = os.path.join (common_path, '')
+
+        tree = []
+        
+        for itempath in paths:
+            # title
+            item = os.path.basename(itempath)
+
+            # tree structure
+            clipped_path = itempath.replace(common_path, '')
+            subdirs = []
+            make_tree(tree, subdirs, clipped_path, item, itempath)
+                
+        retval = json.dumps(tree)
+
+    except Exception, e:
+        print e
+        return err_response("get_bundle failed")
+
+    return HttpResponse(retval, content_type="application/json")
     
 def incremental_status(request):
     """
