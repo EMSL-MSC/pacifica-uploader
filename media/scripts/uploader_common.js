@@ -22,6 +22,7 @@ $(function () {
     $('select').select2();
 
     // Create the tree inside the <div id="tree"> element.
+    // Create the tree inside the <div id="tree"> element.
     $("#tree").fancytree({
         //      extensions: ["select"],
         checkbox: true,
@@ -44,29 +45,31 @@ $(function () {
             var upload = $("#uploadFiles").fancytree("getTree");
             var root = $("#uploadFiles").fancytree("getRootNode");
 
-
-
             while (root.hasChildren()) {
                 child = root.getFirstChild();
                 child.remove();
             }
 
-            var propNode = root.addChildren({
-                title: "Proposal", id: "Proposal", expand: true,
-                folder: true
-            });
-            instNode = propNode.addChildren({
-                title: "Instrument", id: "Instrument", expand: true,
-                folder: true
+            //instNode.addChildren(selected);
+            var fileList = [];
+
+            selected.forEach(function (node) {
+                fileList.push(node.key);
             });
 
-            instNode.addChildren(selected);
+            var pkt = JSON.stringify(fileList);
+
+            if (fileList.length > 0) {
+                var posted = { packet: pkt };
+                $.post("/getBundle/", posted,
+                    function (data) {
+                        //alert('success');
+                        root.addChildren(data);
+                    });
+            }
 
             root.setExpanded(true);
-            propNode.setExpanded(true);
-            instNode.setExpanded(true);
         },
-
 
         loadChildren: function (event, data) {
             // Apply parent's state to new child nodes:
@@ -138,26 +141,5 @@ $(function () {
     });
 
 
-
-    // setup change notification on the proposal picker
-    $('#proposal').change(function () {
-        // get selected proposal
-        var p = $("#proposal").val();
-        prop = { proposal: p };
-
-        var posting = $.post("/propUser/", prop,
-        function (data) {
-            $("#proposal_user").empty();
-            $("#proposal_user").val('')
-            $('#proposal_user').select2('data', null);
-            $("#proposal_user").select2({
-                allowClear: true,
-                data: data
-            });
-        })
-        .fail(function () {
-            alert("error");
-        });
-    });
 });
 
