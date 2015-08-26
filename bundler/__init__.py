@@ -196,7 +196,7 @@ class FileBundler():
 
         file_hash = hashval.hexdigest()
 
-        print 'hash:  ' + file_hash
+        # print 'hash:  ' + file_hash
         file_in.close()
 
         #todo make sure errors bubble up without crashing 
