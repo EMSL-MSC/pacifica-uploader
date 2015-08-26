@@ -60,6 +60,7 @@ from home import session_data
 
 # Module level variables
 session = session_data.session_state()
+version = '0.98.14'
 
 def login_user_locally(request):
     """
@@ -162,6 +163,15 @@ def populate_upload_page(request):
     elif session.files.bundle_size==0:
         uploadEnabled = False
 
+    variable_lookup = {
+        'instrument' : "Selected Instrument",
+        'user_list' : "User List", 'proposal' : "Proposal Name",
+        'proposal_user' : "Proposal User",
+        'data_root' : "Root Directory for Upload",
+        'current_time' : "Upload Time", 'message' : "Message",
+        
+    }
+
     # Render list page with the documents and the form
     return render_to_response('home/uploader.html', \
         {'instrument': session.concatenated_instrument(),
@@ -175,7 +185,8 @@ def populate_upload_page(request):
          'current_time': session.current_time,
          'message': message,
          'uploadEnabled': uploadEnabled,
-         'user': session.user_full_name
+         'user': session.user_full_name,
+         'value_lookup' : variable_lookup
         },
                               context_instance=RequestContext(request))
 
@@ -313,7 +324,7 @@ def login_error(request, error_string):
         session.initialize_settings()
 
     return render_to_response(settings.LOGIN_VIEW, \
-                              {'instrument': session.instrument, 'message': error_string}, context_instance=RequestContext(request))
+                              {'site_version':version, 'instrument': session.instrument, 'message': error_string}, context_instance=RequestContext(request))
 
 
 def cookie_test(request):

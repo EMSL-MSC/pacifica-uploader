@@ -1,0 +1,74 @@
+﻿
+.path
+{
+	padding-top: 1em;
+	padding-left: .5em;
+	font-weight: bold;
+	background-color: #eee;
+	border-bottom: 1px solid #333;
+	margin-bottom: .5em;
+}
+table {
+    table-layout:fixed;
+    width: 960px;
+}
+.main {
+	vertical-align: top;
+}
+
+.main td {
+	width: 318px;
+	border: 1px solid #000;
+	margin-top: 8px;
+	padding: 8px;
+	height: 100%;
+	overflow: auto;
+	-ms-word-break: break-all;
+     word-break: break-all;
+}
+.dir
+{
+	background: url(/media/images/folder.png) top left no-repeat;
+	padding-left: 18px;
+}
+.file
+{
+	background: url(/media/images/file3.png) top left no-repeat;
+	padding-left: 18px;
+}
+
+ul
+{
+	margin-left: 0;
+	padding-left: 0;
+}
+
+/*li
+{
+	list-style: none;
+	padding-bottom: .3em;
+}
+
+li ul li 
+{
+	font-size: .8em;
+	color: #777;
+}*/
+.tight
+{
+	margin-bottom: 0;
+}
+.toupload a
+{
+	text-decoration: none;
+	color: black;
+}
+.toupload a:hover
+{	
+	text-decoration: underline;
+	color: red;
+}
+.toupload .dir:hover, .toupload .file:hover
+{
+	background: url(/media/images/x_14x14.png) top left no-repeat;
+}
