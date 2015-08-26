@@ -144,6 +144,27 @@ $(function () {
             });
     });
 
+    $('#proposal').change(function () {
+        // get selected proposal
+        var p = $("#proposal").val();
+        prop = { proposal: p };
+
+        var posting = $.post("/propUser/", prop,
+        function (data) {
+            $("#proposal_user").empty();
+            $("#proposal_user").val('')
+            $('#proposal_user').select2('data', null);
+            $("#proposal_user").select2({
+                allowClear: true,
+                data: data
+            });
+        })
+        .fail(function () {
+            alert("error");
+        });
+
+    });
+
 
 });
 
