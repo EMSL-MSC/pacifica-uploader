@@ -506,11 +506,8 @@ def make_tree (tree, subdirectories, partial_path, title, path):
     recursively split filepaths 
     '''
 
-    if not tree:
-        tree.append ({"title": "root", "key": 1, "folder": True,"expanded": True, "children": []})
-
     if not partial_path:
-        children = tree[0]['children']
+        children = tree['children']
         add_branch(children, subdirectories, title, path)
         return
 
@@ -542,7 +539,12 @@ def get_bundle(request):
         common_path = os.path.join (common_path, '')
 
         tree = []
-        
+
+        tree.append ({"title": session.proposal_friendly, "key": 1, "folder": True,"expanded": True, "children": []})
+        children = tree[0]['children']
+        inst_node = {"title": session.instrument_friendly, "key": 1, "folder": True,"expanded": True, "children": []}
+        children.append(inst_node)
+
         for itempath in paths:
             # title
             item = os.path.basename(itempath)
@@ -550,7 +552,7 @@ def get_bundle(request):
             # tree structure
             clipped_path = itempath.replace(common_path, '')
             subdirs = []
-            make_tree(tree, subdirs, clipped_path, item, itempath)
+            make_tree(inst_node, subdirs, clipped_path, item, itempath)
                 
         retval = json.dumps(tree)
 

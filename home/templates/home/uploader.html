@@ -49,29 +49,31 @@
                 var upload = $("#uploadFiles").fancytree("getTree");
                 var root = $("#uploadFiles").fancytree("getRootNode");
 
-                
-
                 while (root.hasChildren()) {
                     child = root.getFirstChild();
                     child.remove();
                 }
 
-                var propNode = root.addChildren({
-                    title: "Proposal", id: "Proposal", expand: true,
-                        folder: true
-                    });
-                instNode = propNode.addChildren({
-                    title: "Instrument", id: "Instrument", expand: true,
-                    folder: true
+                //instNode.addChildren(selected);
+                var fileList = [];
+
+                selected.forEach(function (node) {
+                    fileList.push(node.key);
                 });
 
-                instNode.addChildren(selected);
+                var pkt = JSON.stringify(fileList);
+
+                if (fileList.length>0) {
+                    var posted = { packet: pkt };
+                    $.post("/getBundle/", posted,
+                        function (data) {
+                            //alert('success');
+                            root.addChildren(data);
+                        });
+                }
 
                 root.setExpanded(true);
-                propNode.setExpanded(true);
-                instNode.setExpanded(true);
             },
-
 
             loadChildren: function (event, data) {
                 // Apply parent's state to new child nodes:
@@ -81,7 +83,7 @@
 
         $("#uploadFiles").fancytree({
             //      extensions: ["select"],
-            checkbox: true,
+            checkbox: false,
             selectMode: 1
         });
 
@@ -273,7 +275,7 @@
 	            var p = $("#proposal").val();
 	            prop = { proposal: p };
 
-	            var posting = $.post("/propUser/", prop,
+                var posting = $.post("/propUser/", prop,
                 function (data) {
                     $("#proposal_user").empty();
                     $("#proposal_user").val('')
