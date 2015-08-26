@@ -1,4 +1,4 @@
-﻿#pylint: disable=no-member
+#pylint: disable=no-member
 # justification:  dynamic methods
 
 #pylint: disable=invalid-name
@@ -16,7 +16,7 @@ from django.template import RequestContext
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 from django.core.urlresolvers import reverse
-from itertools import takewhile
+
 
 import json
 
@@ -447,16 +447,6 @@ def get_proposal_users(request):
     return HttpResponse(retval, content_type="application/json")
 
 
-def allnamesequal(name):
-    return all(name==name[0] for n in name[1:])
-
-def commonprefix(paths, sep='/'):
-    bydirectorylevels = zip(*[p.split(sep) for p in paths])
-    return sep.join(x[0] for x in takewhile(allnamesequal, bydirectorylevels))
-
-
-
-
 def get_children(request):
     try:
         retval = ""
@@ -465,21 +455,15 @@ def get_children(request):
         if not parent:
             return ""
 
-        list = load_children(parent)
-
-        #list = []
-        #if os.path.isdir(parent):
-        #    for item in os.listdir(parent):
-        #        itempath = os.path.join(parent, item)
-        #        #title = item
-        #        if os.path.isfile(itempath):
-        #            size_in_bytes = os.path.getsize(itempath)
-        #            title = "{0}<span class='file_size' style='display:none;'>{1}</span>".format(item,size_in_bytes)
-        #            list.append({"title": title, "key": itempath, "folder": False})
-        #        elif os.path.isdir(itempath):
-        #            #size_in_bytes = get_folder_size(itempath)
-        #            #title = "{0}<span class='file_size' style='display:none;'>{1}</span>".format(item,size_in_bytes)
-        #            list.append({"title": item, "key": itempath, "folder": True, "lazy": True})
+        list = []
+        if os.path.isdir(parent):
+            for item in os.listdir(parent):
+                itempath = os.path.join(parent, item)
+                
+                if os.path.isfile(itempath):
+                    list.append({"title": item, "key": itempath, "folder": False})
+                elif os.path.isdir(itempath):
+                    list.append({"title": item, "key": itempath, "folder": True, "lazy": True})
         retval = json.dumps(list)
 
     except Exception, e:
@@ -487,74 +471,6 @@ def get_children(request):
         return ""
 
     return HttpResponse(retval)
-
-def load_children(parent_path, load_all = False):
-    list = []
-    if os.path.isdir(parent_path):
-        for item in os.listdir(parent_path):
-            itempath = os.path.join(parent_path,item)
-            if os.path.isfile(itempath):
-                size_in_bytes = os.path.getsize(itempath)
-                title = "{0}<span class='file_size' style='display:none;'>{1}</span>".format(item,size_in_bytes)
-                list.append({"title": title, "key": itempath, "folder": False})
-            elif os.path.isdir(itempath):
-                dir_obj = {"title" : item, "key" : itempath, "folder" : True}
-                if load_all:
-                    children = load_children(itempath, load_all)
-                    dir_obj["children"] = children
-                else:
-                    dir_obj["lazy"] = True
-                list.append(dir_obj)
-    return list
-
-
-
-def get_folder_size(start_path):
-    total_size = 0
-    for dirpath, dirnames, filenames in os.walk(start_path):
-        for f in filenames:
-            fp = os.path.join(dirpath,f)
-            total_size += os.path.getsize(fp)
-    return total_size
-
-def components(path_list):
-    '''
-    Returns the individual components of the given file path
-    string (for the local operating system).
-
-    The returned components, when joined with os.path.join(), point to
-    the same location as the original path.
-    '''
-    components = []
-    # The loop guarantees that the returned components can be
-    # os.path.joined with the path separator and point to the same
-    # location:    
-    while True:
-        (new_path, tail) = os.path.split(path)  # Works on any platform
-        components.append(tail)        
-        if new_path == path:  # Root (including drive, on Windows) reached
-            break
-        path = new_path
-    components.append(new_path)
-
-    components.reverse()  # First component first 
-    return components
-
-def longest_prefix(iter0, iter1):
-    '''
-    Returns the longest common prefix of the given two iterables.
-    '''
-    longest_prefix = []
-    for (elmt0, elmt1) in itertools.izip(iter0, iter1):
-        if elmt0 != elmt1:
-            break
-        longest_prefix.append(elmt0)
-    return longest_prefix
-
-def common_prefix_path(path0, path1):
-    return os.path.join(*longest_prefix(components(path0), components(path1)))
-
-
     
 def incremental_status(request):
     """
