@@ -17,7 +17,6 @@ from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 from django.core.urlresolvers import reverse
 
-
 import json
 
 import datetime
