@@ -91,16 +91,17 @@
 			
 			                <div style="text-align: center; position: relative; margin-top: 2em;">	
                                 <input type="submit" name = "Upload Files & Metadata" value="Upload" />
-                                <p class = "tight">
-                                    <strong>{{message}}</strong><br />
-                                </p>
+                                <div id="message">
+                                    <p class = "tight">
+                                        <strong></strong><br />
+                                    </p>
+                                </div>
 			                </div>
 			
 			            </form>
 	                </td>
                 </tr>
             </table>
-            {% include "includes/view_footer.html" %}
         </div>
     </body>
 </html>

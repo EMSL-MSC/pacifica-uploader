@@ -484,6 +484,8 @@ def make_leaf(title, path):
         size = session.files.get_size(path)
         is_folder = True
 
+    session.files.bundle_size += size
+
     size_string = session.files.size_string(size) 
     return {"title": title + " (" + size_string + ")", "key": path, "folder": is_folder, "data":{"size":size}}
 
@@ -550,10 +552,13 @@ def get_bundle(request):
 
         tree = []
 
-        tree.append ({"title": session.proposal_friendly, "key": 1, "folder": True,"expanded": True, "children": []})
+        tree.append ({"title": session.proposal_friendly, "key": 1, "folder": True,"expanded": True, "children": [], "data":""})
         children = tree[0]['children']
         inst_node = {"title": session.instrument_friendly, "key": 1, "folder": True,"expanded": True, "children": []}
         children.append(inst_node)
+
+        session.files.bundle_size = 0;
+
 
         for itempath in paths:
             # title
@@ -563,7 +568,9 @@ def get_bundle(request):
             clipped_path = itempath.replace(common_path, '')
             subdirs = []
             make_tree(inst_node, subdirs, clipped_path, item, itempath)
-                
+
+        size_string = session.files.size_string(session.files.bundle_size) 
+        tree[0]['data'] = 'Bundle: %s, Free: %s' % (size_string, session.free_size_str)
         retval = json.dumps(tree)
 
     except Exception, e:

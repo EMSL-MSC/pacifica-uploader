@@ -65,6 +65,10 @@ $(function () {
                     function (data) {
                         //alert('success');
                         root.addChildren(data);
+
+                        // update bundle size
+                        var message = data[0]["data"];
+                        $("#message").text(message);
                     });
             }
 
