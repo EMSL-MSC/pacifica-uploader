@@ -60,7 +60,7 @@ from home import session_data
 
 # Module level variables
 session = session_data.session_state()
-version = '0.98.17'
+version = '0.98.18'
 
 def login_user_locally(request):
     """
@@ -244,7 +244,7 @@ def spin_off_upload(request, session):
     session.load_proposal(form['proposal'])
     session.load_proposal_user(form['proposal_user'])
 
-    tuples = session.files.get_bundle_files(files, session.data_dir)
+    tuples = session.files.get_bundle_files(files, session.files.common_path)
 
     # create the groups dictionary
     #{"groups":[{"name":"FOO1", "type":"Tag"}]}
@@ -550,6 +550,9 @@ def get_bundle(request):
         common_path, tail = os.path.split(common_path)
         common_path = os.path.join (common_path, '')
 
+        # used later to modify arc names
+        session.files.common_path = common_path
+
         tree = []
 
         tree.append ({"title": session.proposal_friendly, "key": 1, "folder": True,"expanded": True, "children": [], "data":""})
@@ -569,7 +572,7 @@ def get_bundle(request):
             subdirs = []
             make_tree(inst_node, subdirs, clipped_path, item, itempath)
 
-        size_string = session.files.size_string(session.files.bundle_size) 
+        size_string = session.files.size_string(session.files.bundle_size)
         tree[0]['data'] = 'Bundle: %s, Free: %s' % (size_string, session.free_size_str)
         retval = json.dumps(tree)
 

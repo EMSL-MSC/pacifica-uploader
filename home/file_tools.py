@@ -19,6 +19,8 @@ class file_manager(object):
     bundle_size = 0
     bundle_size_str = ''
 
+    common_path = ''
+
     def cleanup_files(self):
         """
         resets a class to a clean state
@@ -27,6 +29,7 @@ class file_manager(object):
         self.bundle_filepath = ''
         self.bundle_size = 0
         self.bundle_size_str = ''
+        self.common_path = ''
 
     def calculate_bundle_size(self, selected_paths):
         """
