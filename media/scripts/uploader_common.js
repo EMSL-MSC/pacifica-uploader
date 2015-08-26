@@ -149,6 +149,12 @@ $(function () {
         var p = $("#proposal").val();
         prop = { proposal: p };
 
+        var upload = $("#uploadFiles").fancytree("getTree");
+        var root = $("#uploadFiles").fancytree("getRootNode");
+        var child = root.getFirstChild();
+        if (child)
+            child.setTitle(p);
+
         var posting = $.post("/propUser/", prop,
         function (data) {
             $("#proposal_user").empty();
