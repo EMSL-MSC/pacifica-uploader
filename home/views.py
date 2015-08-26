@@ -60,7 +60,7 @@ from home import session_data
 
 # Module level variables
 session = session_data.session_state()
-version = '0.98.16'
+version = '0.98.17'
 
 def login_user_locally(request):
     """
