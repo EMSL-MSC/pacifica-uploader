@@ -155,6 +155,10 @@ a
   vertical-align:top;
 }
 
+.right_block_metadata {
+  float:left;
+}
+
 .full_width_block {
   position:relative;
   width:100%;
@@ -175,4 +179,8 @@ a
   font-weight:bold;
   text-align:center;
   padding:1em;
+}
+
+.main_page_selector {
+  width:900px;
 }

@@ -19,7 +19,7 @@ $(function () {
         }
     });
 
-    $('select').select2({width:'resolve'});
+    $('select').select2();
 
     // Create the tree inside the <div id="tree"> element.
     // Create the tree inside the <div id="tree"> element.
@@ -105,22 +105,22 @@ $(function () {
         return o;
     };
 
-    jQuery["postJSON"] = function (url, data, callback) {
-        // shift arguments if data argument was omitted
-        if (jQuery.isFunction(data)) {
-            callback = data;
-            data = undefined;
-        }
+    //jQuery["postJSON"] = function (url, data, callback) {
+    //    // shift arguments if data argument was omitted
+    //    if (jQuery.isFunction(data)) {
+    //        callback = data;
+    //        data = undefined;
+    //    }
 
-        return jQuery.ajax({
-            url: url,
-            type: "POST",
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            data: JSON.stringify(data),
-            success: callback
-        });
-    };
+    //    return jQuery.ajax({
+    //        url: url,
+    //        type: "POST",
+    //        contentType: "application/json; charset=utf-8",
+    //        dataType: "json",
+    //        data: JSON.stringify(data),
+    //        success: callback
+    //    });
+    //};
 
     $("form").submit(function (event) {
         event.preventDefault();

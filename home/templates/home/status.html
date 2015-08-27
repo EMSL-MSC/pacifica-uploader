@@ -14,8 +14,8 @@
             var jqobject = $.ajax(url)
                 .done(function(data){
                     var dataObj = $.parseJSON(data);
-                    $('#status_text').html(JSON.stringify(dataObj.result));
-                    $('#currState').html(dataObj.state);
+                    $('#currState').html(dataObj.result.Status);
+                    //$('#currState').html(dataObj.state);
                     if (dataObj.state == 'DONE') {
                         var statusPage = dataObj.result;
                         //var win = window.open(statusPage, '_blank');
@@ -25,7 +25,7 @@
                     }
                 })
                 .fail(function(obj, textStatus, error){
-                    $('#currState').html('javascript error');
+                    $('#currState').html('Unknown');
                 })
                 .always(function(){
                     setTimeout(worker, 1000);
@@ -48,7 +48,7 @@
                             <dt>Date of Upload:</dt>
                                 <dd>{{current_time}}</dd>
                             <dt>Current Status:</dt>
-                                <dd><span id="currState">Unknownd</span></dd>
+                                <dd><span id="currState">Unknown</span></dd>
                             <dt>User:</dt>
                                 <dd>{{user}}</dd>
                             <dt>Instrument:</dt>
@@ -81,7 +81,7 @@
                     </div>
                 </form>
 
-            {% include "includes/view_footer.html" %}
+            {% include "includes/view_footer_short.html" %}
         </div>
     </body>
 </html>

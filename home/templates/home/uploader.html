@@ -19,68 +19,84 @@
             </div>
 
             <div class="themed">
-                <fieldset style="min-height:200px;margin-bottom:1em;">
-                    <legend>Metadata</legend>
-                    <div class="full_width_block">
-                        <label for="proposal">Proposal</label>
-                        <select name="proposal" id="proposal">
-                        {% for prop in proposalList %}
-                            {% if proposal == prop %}
-                            <option selected="selected" value="{{prop}}">{{prop}}</option>
-                            {% else %}
-                            <option value="{{prop}}">{{prop}}</option>
-                            {% endif %}
-                        {% endfor %}
-                        </select>
-                    </div>
-                    <div class="full_width_block" style="margin-top:1em;">
-                        <label for="proposal_user">EMSL User</label>
-                        <select id="proposal_user" name="proposal_user" style="width:100%;">
-                        {% for user in proposal_users %}
-                            {% if proposal_user == user %}
-                            <option selected value="{{user}}">{{user}}</option>
-                            {% else %}
-                            <option value="{{user}}">{{user}}</option>
-                            {% endif %}
-                        {% endfor %}
-                        </select>
-                    </div>
-                </fieldset>
-                <div class="outer_container">
-                    <div class="inner_container">
-                        <div class="left_block_float">
-                            <fieldset style="min-height:200px;">
-                                <legend>Choose Files to Upload</legend>
-                                <div class="full_width_block">
-                                    <div id="tree">
-                                    <ul id="root" style="display:none;" class="ui-fancytree-source ui-helper-hidden">
-                                        <li id="{{data_root}}" class="lazy folder">
-                                            <span>My Data</span>
-                                        </li>
-                                    </ul>
-                                </div>
-                                </div>
-                            </fieldset>
-                        </div>
-                        <div class="right_block_float">
-                            <fieldset style="min-height:200px;">
-                                <legend>Files to Upload</legend>
-                                <div class="full_width_block">
-                                    <form action="{% url "modify" %}" method="post" enctype="multipart/form-data">
-                                        <div id="uploadFiles">
-                                            <ul id="load" style="display:none;" class="ui-fancytree-source ui-helper-hidden">
-                                                <li id="upload" class="lazy folder">
-                                                    <span> Upload </span>
-                                                </li>
-                                            </ul>
-                                        </div>   
-			                        </form>
-                                </div>
+                <form  action="{% url "modify" %}" method="post" enctype="multipart/form-data">
+	                {% csrf_token %}
 
-                            </fieldset>
+                    <fieldset style="min-height:170px;">
+                        <legend>Metadata</legend>
+                        <div class="full_width_block">
+                            <label for="proposal">Proposal</label>
+                            <select name="proposal" id="proposal" class="main_page_selector">
+                            {% for prop in proposalList %}
+                                {% if proposal == prop %}
+                                <option selected="selected" value="{{prop}}">{{prop}}</option>
+                                {% else %}
+                                <option value="{{prop}}">{{prop}}</option>
+                                {% endif %}
+                            {% endfor %}
+                            </select>
                         </div>
-                    </div>
-                </div>
+
+                        <div class="full_width_block" style="margin-top:1em;">
+                            <label for="proposal_user">EMSL User</label>
+                            <select id="proposal_user" name="proposal_user" class="main_page_selector">
+                            {% for user in proposal_users %}
+                                {% if proposal_user == user %}
+                                <option selected value="{{user}}">{{user}}</option>
+                                {% else %}
+                                <option value="{{user}}">{{user}}</option>
+                                {% endif %}
+                            {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="full_width_block" style="margin-top:1em;">
+                            <ul>
+                            {% for meta in metaList %}
+                                <li>
+                                   <label for="{{meta.name}}" style="display:block;">Metadata Tag: {{meta.label}}</label>
+                                   <input type="text" id="{{meta.name}}" style="width:80%;border-width:1px;" name="{{meta.name}}" value = "{{meta.value}}">
+                                </li>
+                            {% endfor %}
+                            </ul>
+                        </div>
+
+                    </fieldset>
+
+                    <fieldset style="margin-top:1em;padding: 1em;">
+                        <legend>Choose Files to Upload</legend>
+                        <div class="full_width_block">
+                            <div id="tree">
+                            <ul id="root" style="display:none;" class="ui-fancytree-source ui-helper-hidden">
+                                <li id="{{data_root}}" class="lazy folder">
+                                    <span>My Data</span>
+                                </li>
+                            </ul>
+                        </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset style="margin-top:1em;padding: 1em;">
+                        <legend>Files to Upload</legend>
+                        <div class="full_width_block">
+                            <div id="uploadFiles">
+                                <ul id="load" style="display:none;" class="ui-fancytree-source ui-helper-hidden">
+                                    <li id="upload" class="lazy folder">
+                                        <span> Upload </span>
+                                    </li>
+                                </ul>
+                            </div>   
+                        </div>
+                    </fieldset>
+			        <div style="text-align: center; position: relative; margin-top: 2em;">	
+                        <input type="submit" name = "Upload Files & Metadata" value="Upload" />
+                        <div id="message">
+                            <p class = "tight">
+                                <strong></strong><br />
+                            </p>
+                        </div>
+			        </div>
+                </form>
             </div>
         </div>
     </body>

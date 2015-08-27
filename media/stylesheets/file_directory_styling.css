@@ -1,9 +1,11 @@
 ﻿/* Directory page styling */
 ul.fancytree-container {
   font-family:inherit;
+  background-color: #fbfbfb;
   border:none;
   margin:0 !important;
   padding:0;
+
 }
 
 .fancytree-title {
