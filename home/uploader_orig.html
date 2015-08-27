@@ -1,0 +1,114 @@
+﻿<!DOCTYPE html>
+<html>
+    <head>
+	    <title>MyEMSL Instrument Data Uploader</title>
+
+        {% include "includes/global_styles.html" %}
+        <link rel="stylesheet" href="{{ MEDIA_URL }}stylesheets/upload_style.css">
+        <link rel="stylesheet" href="{{ MEDIA_URL }}stylesheets/file_directory_styling.css">
+        <script src="{{ MEDIA_URL }}scripts/uploader_common.js" type="text/javascript"></script>
+    </head>
+    <body>
+        <div class="page_content">
+            {% include "includes/view_header.html" %}
+            <div id="header_container">
+                <h1 class="underline">MyEMSL File Upload</h1>
+                <div id="login_id_container">
+                    <em>{{user}}</em>
+                </div>
+            </div>
+            <table>
+                <tr class="main">
+	                <td>
+	                <strong>Select Files for Upload</strong>	
+			                <form action="{% url "modify" %}" method="post" enctype="multipart/form-data">
+                                <div id="tree">
+                                    <ul id="root" style="display:none;" class="ui-fancytree-source ui-helper-hidden">
+                                            <li id="{{data_root}}" class="lazy folder">
+                                                <span> My Data</span>
+                                            </li>
+                                    </ul>
+                                </div>   
+			                </form>
+	                </td>
+
+	                <td>
+                        <strong>Files to Upload</strong>	
+			                <form action="{% url "modify" %}" method="post" enctype="multipart/form-data">
+                                <div id="uploadFiles">
+                                    <ul id="load" style="display:none;" class="ui-fancytree-source ui-helper-hidden">
+                                        <li id="upload" class="lazy folder">
+                                            <span> Upload </span>
+                                        </li>
+                                    </ul>
+                                </div>   
+			                </form>
+	                </td>
+
+	                <td>
+	                <strong>Metadata</strong>
+			                <p>
+				                <strong>User:</strong> {{user}}
+				                &nbsp;<span><a href="logout">Logout</a></span> 
+			                </p>
+			
+			                <p class="tight">
+                                <strong>Instrument:  {{instrument}}</strong>
+                            </p>	
+			
+			                <form  action="{% url "modify" %}" method="post" enctype="multipart/form-data">
+			                {% csrf_token %}
+			
+			                <p class="tight">
+                                <strong>Proposal:</strong>
+                            </p>
+            
+                            <select id ="proposal" name = "proposal" >
+            
+                            {% for prop in proposalList %}
+                                {% if proposal == prop %}
+                                    <option selected value="{{prop}}">{{prop}}</option>
+                                {% else %}
+                                    <option value="{{prop}}">{{prop}}</option>
+                                {% endif %}
+                            {% endfor %}
+            
+                            </select>
+
+                            <p class="tight">
+                                <strong>EMSL User:</strong>
+                            </p>
+                            <select id ="proposal_user" style="width:100%;" name = "proposal_user" >
+                                {% for user in proposal_users %}
+                                    {% if proposal_user == user %}
+                                        <option selected value="{{user}}">{{user}}</option>
+                                    {% else %}
+                                        <option value="{{user}}">{{user}}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+            
+			                {% for meta in metaList %}
+                                <p class = "tight">
+                                    <strong>{{meta.label}}</strong><br />
+                                    <input type="text" size="35" name = "{{meta.name}}" value = "{{meta.value}}">                                           
+                                </p>
+                            {% endfor %}
+			
+			                <div style="text-align: center; position: relative; margin-top: 2em;">	
+                                <input type="submit" name = "Upload Files & Metadata" value="Upload" />
+                                <div id="message">
+                                    <p class = "tight">
+                                        <strong></strong><br />
+                                    </p>
+                                </div>
+			                </div>
+			    
+			            </form>
+	                </td>
+                </tr>
+            </table>
+            {% include "includes/view_footer_short.html" %} 
+        </div>
+    </body>
+</html>

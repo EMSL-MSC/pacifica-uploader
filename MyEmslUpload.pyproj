@@ -109,6 +109,7 @@
     <Content Include="db.sqlite3" />
     <Content Include="home\templates\includes\global_styles.html" />
     <Content Include="home\templates\includes\view_footer.html" />
+    <Content Include="home\templates\includes\view_footer_short.html" />
     <Content Include="home\templates\includes\view_header.html" />
     <Content Include="media\bunny.jpg" />
     <Content Include="media\images\ajax-loader.gif" />
@@ -236,6 +237,7 @@
     <Content Include="media\stylesheets\file_directory_styling.css" />
     <Content Include="media\stylesheets\select2\select2.css" />
     <Content Include="media\stylesheets\select2\select2.min.css" />
+    <Content Include="media\stylesheets\status.css" />
     <Content Include="media\stylesheets\status_style.css" />
     <Content Include="media\stylesheets\upload_style.css" />
     <Content Include="ToDo.txt" />

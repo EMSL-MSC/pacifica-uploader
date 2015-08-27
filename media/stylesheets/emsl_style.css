@@ -7,7 +7,7 @@ body
 {
     padding-top: 0;
     margin: 0;
-    font-family: "Helvetica Neue", Helvetica, Arial, san-serif;
+    font-family: "Open Sans","Helvetica Neue", HelveticaNeue, "TeX Gyre Heros", TeXGyreHeros, FreeSans, "Nimbus Sans L", "Liberation Sans", Arimo, Helvetica, Arial, sans-serif;
     letter-spacing:0px;
     height: 100vh;
     position: relative;
@@ -29,7 +29,7 @@ li
 }
 h1
 {
-    font: 1.5em georgia, Garamond, "Times New Roman", serif;
+    font: 1.5em;
 }
 
 .header h1
@@ -67,10 +67,6 @@ a
     width: 100%;
     min-width: 960px;
 }
-#login 
-{
-    padding: 2em;
-}
 .control-group 
 {
     padding-top:.5em;
@@ -100,7 +96,7 @@ a
    -webkit-border-radius:5px;
   border-radius: 5px;
   padding:0 1.25em;
-  background-color:#efefef;
+  background-color:#fbfbfb;
 }
 
 .themed fieldset legend {
@@ -114,8 +110,35 @@ a
   font-size:1em;
 }
 
+.outer_container {
+  clear:left;
+  float:left;
+  width:100%;
+  overflow:hidden;
+}
 
+.inner_container {
+  float:left;
+  width:100%;
+  position:relative;
+  right:50%;
+}
 
+.left_block_float {
+  float:left;
+  width:49%;
+  position:relative;
+  left:50%;
+  overflow:hidden;
+}
+
+.right_block_float {
+  float:left;
+  width:49%;
+  position:relative;
+  left:52%;
+  overflow:hidden;
+}
 
 .left_block {
   position:absolute;
@@ -134,7 +157,7 @@ a
 
 .full_width_block {
   position:relative;
-  width:98%;
+  width:100%;
 }
 
 .controls input {

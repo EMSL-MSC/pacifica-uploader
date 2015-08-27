@@ -12,6 +12,9 @@
 
         {% block main %}
         <div id="login" class="page_content">
+          <div id="header_container">
+            <h1 class="underline">MyEMSL Login</h1>
+          </div>
             <form class="form-horizontal themed" name="LoginForm" action="/login/" method="post">
                 {% csrf_token %}
                 {% if next %}
@@ -57,7 +60,7 @@
             </section>
         </div>
         {% endblock %}
-        {% include "includes/view_footer.html" %}
+        {% include "includes/view_footer_short.html" %}
     </div>
 </body>
 </html>

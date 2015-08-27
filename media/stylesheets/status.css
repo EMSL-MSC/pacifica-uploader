@@ -1,0 +1,33 @@
+﻿.selection_container {
+  border-radius: 5px;
+  border: 2px solid #666;
+  position:relative;
+  top:0;
+  left:0;
+  width:100%;
+  padding:5px 0px 0px 10px;
+}
+
+/*#main {
+  margin:14px 0 15px 0 !important;
+}*/
+h1.underline {
+  color:#fefefe;
+  padding:0.25em;
+  background-color: #53682B;
+  margin-top:0;
+  font-weight:normal;
+  border-radius:0px 0px 8px 8px;
+  font-size:1.5em;
+}
+#login_id_container {
+  position:absolute;
+  bottom:5px;
+  right:15px;
+  text-align: right;
+  color: #fefefe;
+}
+#header_container {
+  position:relative;
+}
+
