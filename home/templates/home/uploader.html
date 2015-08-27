@@ -22,13 +22,25 @@
                 <fieldset style="min-height:200px;margin-bottom:1em;">
                     <legend>Metadata</legend>
                     <div class="full_width_block">
-                        <label for="proposal_selector">Proposal</label>
-                        <select name="proposal_selector" id="proposal_selector" style="width:80%;">
+                        <label for="proposal">Proposal</label>
+                        <select name="proposal" id="proposal">
                         {% for prop in proposalList %}
                             {% if proposal == prop %}
                             <option selected="selected" value="{{prop}}">{{prop}}</option>
                             {% else %}
                             <option value="{{prop}}">{{prop}}</option>
+                            {% endif %}
+                        {% endfor %}
+                        </select>
+                    </div>
+                    <div class="full_width_block" style="margin-top:1em;">
+                        <label for="proposal_user">EMSL User</label>
+                        <select id="proposal_user" name="proposal_user" style="width:100%;">
+                        {% for user in proposal_users %}
+                            {% if proposal_user == user %}
+                            <option selected value="{{user}}">{{user}}</option>
+                            {% else %}
+                            <option value="{{user}}">{{user}}</option>
                             {% endif %}
                         {% endfor %}
                         </select>
@@ -40,7 +52,13 @@
                             <fieldset style="min-height:200px;">
                                 <legend>Choose Files to Upload</legend>
                                 <div class="full_width_block">
-
+                                    <div id="tree">
+                                    <ul id="root" style="display:none;" class="ui-fancytree-source ui-helper-hidden">
+                                        <li id="{{data_root}}" class="lazy folder">
+                                            <span>My Data</span>
+                                        </li>
+                                    </ul>
+                                </div>
                                 </div>
                             </fieldset>
                         </div>
@@ -48,7 +66,15 @@
                             <fieldset style="min-height:200px;">
                                 <legend>Files to Upload</legend>
                                 <div class="full_width_block">
-
+                                    <form action="{% url "modify" %}" method="post" enctype="multipart/form-data">
+                                        <div id="uploadFiles">
+                                            <ul id="load" style="display:none;" class="ui-fancytree-source ui-helper-hidden">
+                                                <li id="upload" class="lazy folder">
+                                                    <span> Upload </span>
+                                                </li>
+                                            </ul>
+                                        </div>   
+			                        </form>
                                 </div>
 
                             </fieldset>

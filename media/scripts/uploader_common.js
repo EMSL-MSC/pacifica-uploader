@@ -19,7 +19,7 @@ $(function () {
         }
     });
 
-    $('select').select2();
+    $('select').select2({width:'resolve'});
 
     // Create the tree inside the <div id="tree"> element.
     // Create the tree inside the <div id="tree"> element.
