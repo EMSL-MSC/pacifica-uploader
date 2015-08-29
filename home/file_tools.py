@@ -30,7 +30,7 @@ class file_manager(object):
         self.archive_structure = nodes
 
         self.archive_path = nodes[0]
-        for i in range(1,len(nodes)):
+        for i in range(1, len(nodes)):
             self.archive_path = os.path.join (self.archive_path, nodes[i])
 
     def cleanup_files(self):
@@ -78,9 +78,9 @@ class file_manager(object):
     def get_size(self, start_path = '.'):
         total_size = 0
         for dirpath, dirnames, filenames in os.walk(start_path):
-            for f in filenames:
-                fp = os.path.join(dirpath, f)
-                total_size += os.path.getsize(fp)
+            for filename in filenames:
+                filepath = os.path.join(dirpath, filename)
+                total_size += os.path.getsize(filepath)
         return total_size
 
     def folder_meta(self, folder, meta):
@@ -116,6 +116,13 @@ class file_manager(object):
 
         return meta_str
 
+    def get_archive_path (self, path):
+        #remove the common root
+        arc_path = os.path.relpath(path, self.common_path)
+        # prepend the archive nodes
+        arc_path = os.path.join(self.archive_path, arc_path)
+        return arc_path
+
     def file_tuples_recursively(self, folder, tuple_list):
         """
         recursively gets file tuples for a folder
@@ -129,12 +136,7 @@ class file_manager(object):
             path = os.path.join(folder, item)
             if os.path.isfile(path):
                 if os.access(path, os.R_OK):
-                    #remove the common root
-                    arc_path = os.path.relpath(path, self.common_path)
-                    # prepend the archive nodes
-                    arc_path = os.path.join(self.archive_path, arc_path)
-
-                    tuple_list.append((path, arc_path))
+                    tuple_list.append((path, self.get_archive_path(path)))
 
             elif os.path.isdir(path):
                 self.file_tuples_recursively(path, tuple_list)
@@ -148,9 +150,7 @@ class file_manager(object):
         for path in selected_list:
             if os.path.isfile(path):
                 if os.access(path, os.R_OK):
-                    # the relative path is the path without the root directory
-                    relative_path = os.path.relpath(path)
-                    tuple_list.append((path, relative_path))
+                    tuple_list.append((path, self.get_archive_path(path)))
             elif os.path.isdir(path):
                 self.file_tuples_recursively(path, tuple_list)
 
