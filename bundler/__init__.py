@@ -199,7 +199,7 @@ class FileBundler():
         # print 'hash:  ' + file_hash
         file_in.close()
 
-        #todo make sure errors bubble up without crashing 
+        #todo make sure errors bubble up without crashing
         if file_arcname in self.hash_dict:
             if hash != self.hash_dict[file_arcname]:
                 print file_arcname

@@ -131,14 +131,14 @@ class session_state(object):
             self.write_default_config(config_file)
         self.read_config(config_file)
 
-    def load_proposal (self, proposal):
+    def load_proposal(self, proposal):
         self.proposal_friendly = proposal
 
         # split the proposal string into ID and description
         split = self.proposal_friendly.split()
         self.proposal_id = split[0]
 
-    def load_proposal_user (self, proposal_user):
+    def load_proposal_user(self, proposal_user):
         # get the selected proposal string from the post
         self.proposal_user = proposal_user
 
@@ -161,10 +161,10 @@ class session_state(object):
         """
         # get the user's info from EUS
         info = get_info(protocol='https',
-            server=self.server_path,
-            user=self.user,
-            password=self.password,
-            info_type = 'userinfo')
+                        server=self.server_path,
+                        user=self.user,
+                        password=self.password,
+                        info_type='userinfo')
 
         #with open ('aslipton.json', 'r') as myfile:
         #    info=myfile.read()
@@ -236,7 +236,7 @@ class session_state(object):
             # if the title is missing we've established that it isn't in the db
             # so skip it
             if not title:
-                continue;
+                continue
 
             prop_str = prop_id + "  " + title
 
@@ -248,7 +248,7 @@ class session_state(object):
             try:
                 for inst_id in instruments:
                     if not inst_id:
-                        continue;
+                        continue
                     if self.instrument == str(inst_id):
                         if prop_str not in self.proposal_list:
                             self.proposal_list.append(prop_str)
@@ -279,10 +279,10 @@ class session_state(object):
 
         # get the user's info from EUS
         info = get_info(protocol='https',
-                         server=self.server_path,
-                         user=self.user,
-                         password=self.password,
-                         info_type = 'proposalinfo/' + proposal_id)
+                        server=self.server_path,
+                        user=self.user,
+                        password=self.password,
+                        info_type='proposalinfo/' + proposal_id)
 
         try:
             info = json.loads(info)
@@ -292,14 +292,14 @@ class session_state(object):
         # print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
 
         members = info['members']
-        # is this an error?  
+        # is this an error?
         if not members:
             self.proposal_users.append('No users for this proposal')
             return
 
         i = 0
-        for member in members.iteritems():            
-            member_id =  member[1]
+        for member in members.iteritems():
+            member_id = member[1]
             first_name = member_id['first_name']
             if not first_name:
                 first_name = "?"
@@ -311,7 +311,7 @@ class session_state(object):
             self.proposal_users.append(name)
 
             # put in format to be used by select2
-            json_list.append({'id':name,'text':name})
+            json_list.append({'id':name, 'text':name})
 
         return json_list
 
@@ -356,9 +356,9 @@ class session_state(object):
 
         if (self.files.bundle_size == 0):
             return True
-        return (self.files.bundle_size <  self.free_space)
+        return (self.files.bundle_size < self.free_space)
 
-    def write_default_config (self, filename):
+    def write_default_config(self, filename):
         d = {}
         d['target'] = '/srv/localdata'
         d['dataRoot '] = '/srv/home'
@@ -368,10 +368,10 @@ class session_state(object):
 
         d['metadata'] = (('Tag', 'Tag'), ('Tag1', 'Taggy'), ('Tag2', 'Taggier'))
 
-        with open (filename, 'w') as fp:
+        with open(filename, 'w') as fp:
             json.dump(d, fp)
 
-    def read_config (self, filename):
+    def read_config(self, filename):
 
-        with open (filename, 'r') as fp:
+        with open(filename, 'r') as fp:
             self.configuration = json.load(fp)

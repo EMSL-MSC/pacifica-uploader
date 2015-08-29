@@ -24,9 +24,9 @@ class tar_management(object):
 
     def remove_tar_file(self, dir, job_id):
 
-        fname = job_id + '_uploaded.tar';
+        fname = job_id + '_uploaded.tar'
 
-        full_path = os.path.join (dir, fname)
+        full_path = os.path.join(dir, fname)
 
         # remove from directory
         if (os.path.isfile(full_path)):
@@ -44,13 +44,13 @@ class tar_management(object):
             os.rename(old_name, new_name)
 
     def remove_orphans(self, dir):
-        
+
         dir_files = os.listdir(dir)
 
         # compare the files to the contents of the directory
         for file in dir_files:
             # if a file is in the directory but not uploaded, remove it if it is out of date
-            full_path = os.path.join (dir, file)
+            full_path = os.path.join(dir, file)
             if not '_uploaded.tar' in file:
                 # remove from directory
                 if (os.path.isfile(full_path)):
@@ -60,19 +60,19 @@ class tar_management(object):
                         os.remove(full_path)
 
     def job_list(self, dir):
-        
+
         dir_files = os.listdir(dir)
         jobs = []
 
         for file in dir_files:
             if '_uploaded.tar' in file:
                 job = file.replace('_uploaded.tar', '')
-                jobs.append (job.encode('utf-8'))
+                jobs.append(job.encode('utf-8'))
 
         return jobs
 
     def clean_tar_directory(self, dir, jobs_state):
-        
+
         try:
 
             jobs = self.job_list(dir)

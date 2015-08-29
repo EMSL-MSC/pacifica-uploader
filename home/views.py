@@ -94,7 +94,7 @@ def ping_celery():
     """
     check to see if the celery process to bundle and upload is alive, alive!
     """
-    ping_process = tasks.ping.delay();
+    ping_process = tasks.ping.delay()
 
     tries = 0
     while tries < 5:
@@ -103,7 +103,7 @@ def ping_celery():
             print state
             if state == "PING" or state == "SUCCESS":
                 return True
-        sleep (1)
+        sleep(1)
         tries += 1
 
     return False
@@ -117,7 +117,7 @@ def start_celery():
     if not alive:
         try:
             print 'attempting to start Celery'
-            subprocess.Popen('celery -A UploadServer worker --loglevel=info', shell=True )
+            subprocess.Popen('celery -A UploadServer worker --loglevel=info', shell=True)
         except Exception, e:
             print e
 
@@ -125,7 +125,7 @@ def start_celery():
     alive = False
     while not alive and count < 10:
         sleep(1)
-        alive = celery_lives()
+        alive = ping_celery()
         count = count + 1
 
     return alive
@@ -142,7 +142,7 @@ def populate_upload_page(request):
         # call login error with no error message
         b = request.user.is_authenticated()
         return login_error(request, '')
-    
+
     root_dir = session.data_dir
 
     if not root_dir or root_dir == '':
@@ -157,28 +157,18 @@ def populate_upload_page(request):
     # this will update after an upload is done
     session.update_free_space()
 
-    variable_lookup = {
-        'instrument' : "Selected Instrument",
-        'user_list' : "User List", 'proposal' : "Proposal Name",
-        'proposal_user' : "Proposal User",
-        'data_root' : "Root Directory for Upload",
-        'current_time' : "Upload Time", 'message' : "Message",
-        
-    }
 
     # Render list page with the documents and the form
-    return render_to_response('home/uploader.html', \
-        {'instrument': session.concatenated_instrument(),
-         'proposalList': session.proposal_list,
-         'user_list': session.proposal_users,
-         'proposal':session.proposal_friendly,
-         'proposal_user':session.proposal_user,
-         'proposal_users':session.proposal_users,
-         'data_root':session.data_dir,
-         'metaList': session.meta_list,
-         'user': session.user_full_name,
-         'value_lookup' : variable_lookup
-        },
+    return render_to_response('home/uploader.html',
+                             {'instrument': session.concatenated_instrument(),
+                              'proposalList': session.proposal_list,
+                              'user_list': session.proposal_users,
+                              'proposal':session.proposal_friendly,
+                              'proposal_user':session.proposal_user,
+                              'proposal_users':session.proposal_users,
+                              'data_root':session.data_dir,
+                              'metaList':session.meta_list,
+                              'user':session.user_full_name},
                               context_instance=RequestContext(request))
 
 def show_initial_status(request):
@@ -188,16 +178,16 @@ def show_initial_status(request):
 
 def show_status(request, session, message):
 
-    return render_to_response('home/status.html', \
-                                 {'instrument':session.concatenated_instrument(),
-                                  'status': message,
-                                  'proposal':session.proposal_friendly,
-                                  'metaList':session. meta_list,
-                                  'current_time': session.current_time,
-                                  'bundle_size': session.files.bundle_size_str,
-                                  'free_size': session.free_size_str,
-                                  'user': session.user_full_name},
-                                  context_instance=RequestContext(request))
+    return render_to_response('home/status.html',
+                              {'instrument':session.concatenated_instrument(),
+                               'status': message,
+                               'proposal':session.proposal_friendly,
+                               'metaList':session. meta_list,
+                               'current_time': session.current_time,
+                               'bundle_size': session.files.bundle_size_str,
+                               'free_size': session.free_size_str,
+                               'user': session.user_full_name},
+                              context_instance=RequestContext(request))
 
 def spin_off_upload(request, session):
     """
@@ -264,14 +254,14 @@ def spin_off_upload(request, session):
                                          password=session.password)
     else: # for debug purposes
         tasks.upload_files(bundle_name=session.bundle_filepath,
-                                         instrument_name=session.instrument,
-                                         proposal=session.proposal_id,
-                                         file_list=tuples,
-                                         bundle_size=session.files.bundle_size,
-                                         groups=groups,
-                                         server=session.server_path,
-                                         user=session.user,
-                                         password=session.password)
+                           instrument_name=session.instrument,
+                           proposal=session.proposal_id,
+                           file_list=tuples,
+                           bundle_size=session.files.bundle_size,
+                           groups=groups,
+                           server=session.server_path,
+                           user=session.user,
+                           password=session.password)
 
     return HttpResponse(json.dumps("success"), content_type="application/json")
 
@@ -373,12 +363,11 @@ def login(request):
     session.user = request.POST['username']
     session.password = request.POST['password']
 
-    
     # test to see if the user authorizes against EUS
     err_str = test_authorization(protocol="https",
-                                    server=session.server_path,
-                                    user=session.user,
-                                    password=session.password)
+                                 server=session.server_path,
+                                 user=session.user,
+                                 password=session.password)
 
     if err_str:
         return login_error(request, err_str)
@@ -446,7 +435,7 @@ def get_children(request):
         if os.path.isdir(parent):
             for item in os.listdir(parent):
                 itempath = os.path.join(parent, item)
-                
+
                 if os.path.isfile(itempath):
                     list.append({"title": item, "key": itempath, "folder": False})
                 elif os.path.isdir(itempath):
@@ -464,7 +453,7 @@ def error_response(err_str):
 
 
 def make_leaf(title, path):
-    ''' 
+    '''
     return a populated tree leaf
     '''
     if os.path.isfile(path):
@@ -480,12 +469,12 @@ def make_leaf(title, path):
     return {"title": title + " (" + size_string + ")", "key": path, "folder": is_folder, "data":{"size":size}}
 
 def add_branch(branches, subdirectories, title, path):
-    ''' 
+    '''
     recursively insert branch into a tree structure
     '''
     # if we are at a leaf, add the leaf to the children list
     if len(subdirectories) < 2:
-        leaf = make_leaf (title, path)
+        leaf = make_leaf(title, path)
         branches.append(leaf)
         return
 
@@ -501,11 +490,11 @@ def add_branch(branches, subdirectories, title, path):
     branch = {"title": branch_name, "key": 1, "folder": True, "expanded": True, "children": []}
     children = branch['children']
     add_branch(children, subdirectories[1:], title, path)
-    branches.append (branch)
+    branches.append(branch)
 
-def make_tree (tree, subdirectories, partial_path, title, path):
-    ''' 
-    recursively split filepaths 
+def make_tree(tree, subdirectories, partial_path, title, path):
+    '''
+    recursively split filepaths
     '''
 
     if not partial_path:
@@ -513,7 +502,7 @@ def make_tree (tree, subdirectories, partial_path, title, path):
         add_branch(children, subdirectories, title, path)
         return
 
-    head, tail = os.path.split (partial_path)
+    head, tail = os.path.split(partial_path)
 
     # prepend the tail
     subdirectories.insert(0, tail)
@@ -541,19 +530,19 @@ def get_bundle(request):
         common_path = os.path.commonprefix(filtered)
         #get rid of dangling prefixes
         common_path, tail = os.path.split(common_path)
-        common_path = os.path.join (common_path, '')
+        common_path = os.path.join(common_path, '')
 
         # used later to modify arc names
         session.files.common_path = common_path
 
         initialize_archive_structure()
-        
+
         tree = []
         children = tree
         lastnode = {}
 
         for node_name in session.files.archive_structure:
-            node = {"title": node_name, "key": 1, "folder": True,"expanded": True, "children": [], "data":""}
+            node = {"title": node_name, "key": 1, "folder": True, "expanded": True, "children": [], "data":""}
             children.append(node)
             children = node['children']
             lastnode = node
@@ -568,7 +557,7 @@ def get_bundle(request):
         #date_node = {"title": current_time, "key": 1, "folder": True,"expanded": True, "children": []}
         #inst_node['children'].append(date_node)
 
-        session.files.bundle_size = 0;
+        session.files.bundle_size = 0
 
         for itempath in paths:
             # title
@@ -591,7 +580,7 @@ def get_bundle(request):
         return err_response("get_bundle failed")
 
     return HttpResponse(retval, content_type="application/json")
-    
+
 def incremental_status(request):
     """
     updates the status page with the current status of the background upload process
@@ -622,7 +611,7 @@ def incremental_status(request):
         if "http" in result:
             state = 'DONE'
             result = result.strip('"')
-            job_id =  result
+            job_id = result
             tm = tar_man.tar_management()
             job_id = tm.parse_job(result)
 

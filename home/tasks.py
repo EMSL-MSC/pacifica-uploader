@@ -16,15 +16,15 @@ from home import tar_man
 import os
 import json
 
-def clean_target_directory(target_dir = '', server='', user='', password=''):
+def clean_target_directory(target_dir ='', server='', user='', password=''):
     """
     deletes local files that have made it to the archive
     """
     tm = tar_man.tar_management()
 
-    # remove old files that were not uploaded    
+    # remove old files that were not uploaded
     tm.remove_orphans(target_dir)
-    
+
     # get job list from file
     jobs = tm.job_list(target_dir)
 
@@ -36,10 +36,10 @@ def clean_target_directory(target_dir = '', server='', user='', password=''):
 
     # get jobs state from database
     jobs_state = job_status(protocol="https",
-                                    server=server,
-                                    user=user,
-                                    password=password,
-                                    job_list=jobs)
+                            server=server,
+                            user=user,
+                            password=password,
+                            job_list=jobs)
 
     # fake job state
     #jobs_state = '[{?20001066? : {?state_name?:?Received?, ?state?:?1"}},{?20001067? : {?state_name?:?Available?, ?state?:?5"}},{?20001068? : {?state_name?:?Available?, ?state?:?5"}}]'
@@ -53,7 +53,7 @@ def clean_target_directory(target_dir = '', server='', user='', password=''):
 @shared_task
 def ping():
     print "Pinged!"
-    current_task.update_state(state = 'PING', meta={'Status': "Background process is alive"})
+    current_task.update_state(state='PING', meta={'Status': "Background process is alive"})
 
 #tag to show this def as a celery task
 @shared_task
@@ -77,7 +77,7 @@ def upload_files(bundle_name='',
     target_dir = os.path.dirname(bundle_name)
     err_str = clean_target_directory(target_dir, server, user, password)
     if err_str:
-        current_task.update_state(state = 'PROGRESS', meta={'Status': err_str})
+        current_task.update_state(state='PROGRESS', meta={'Status': err_str})
 
     # initial state pushed through celery
     current_task.update_state("PROGRESS", meta={'Status': "Starting Bundle/Upload Process"})
@@ -106,7 +106,6 @@ def upload_files(bundle_name='',
     current_task.update_state("PROGRESS", meta={'Status': "Completing Upload Process"})
 
     if "http" in res:
-        
         print "rename"
         tm = tar_man.tar_management()
         job_id = tm.parse_job(res)

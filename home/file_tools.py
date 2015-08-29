@@ -25,13 +25,13 @@ class file_manager(object):
 
     def initialize_archive_structure(self, nodes):
         if not nodes:
-            return 
+            return
 
         self.archive_structure = nodes
 
         self.archive_path = nodes[0]
         for i in range(1, len(nodes)):
-            self.archive_path = os.path.join (self.archive_path, nodes[i])
+            self.archive_path = os.path.join(self.archive_path, nodes[i])
 
     def cleanup_files(self):
         """
@@ -75,7 +75,7 @@ class file_manager(object):
 
         return total_size
 
-    def get_size(self, start_path = '.'):
+    def get_size(self, start_path):
         total_size = 0
         for dirpath, dirnames, filenames in os.walk(start_path):
             for filename in filenames:
@@ -116,7 +116,7 @@ class file_manager(object):
 
         return meta_str
 
-    def get_archive_path (self, path):
+    def get_archive_path(self, path):
         #remove the common root
         arc_path = os.path.relpath(path, self.common_path)
         # prepend the archive nodes
