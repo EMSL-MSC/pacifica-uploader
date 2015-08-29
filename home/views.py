@@ -60,7 +60,7 @@ from home import session_data
 
 # Module level variables
 session = session_data.session_state()
-version = '0.98.18'
+version = '0.98.19'
 
 def login_user_locally(request):
     """
@@ -520,7 +520,7 @@ def make_tree (tree, subdirectories, partial_path, title, path):
     make_tree(tree, subdirectories, head, title, path)
 
 def initialize_archive_structure():
-    session.files.initialize_archive_structure([session.proposal_friendly, session.instrument, datetime.datetime.now().strftime("%Y.%m.%d")])
+    session.files.initialize_archive_structure([session.proposal_friendly, session.instrument_short_name, datetime.datetime.now().strftime("%Y.%m.%d")])
 
 def get_bundle(request):
     try:

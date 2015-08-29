@@ -38,6 +38,7 @@ class session_state(object):
 
     instrument = ''
     instrument_friendly = ''
+    instrument_short_name = ''
 
     proposal_friendly = ''
     proposal_id = ''
@@ -197,6 +198,11 @@ class session_state(object):
                 inst_name = inst_block.get('instrument_name')
                 if not inst_name:
                     inst_name = 'unnamed'
+
+                self.instrument_short_name = inst_block.get('name_short')
+                if not self.instrument_short_name:
+                    self.instrument_short_name = 'no short name'
+
                 inst_str = inst_id + ' ' + inst_name
                 if self.instrument == inst_id:
                     self.instrument_friendly = inst_name
