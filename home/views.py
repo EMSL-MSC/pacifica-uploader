@@ -153,15 +153,9 @@ def populate_upload_page(request):
     except Exception:
         return login_error(request, 'error accessing Data share')
 
-    # validate that the currently selected bundle will fit in the target space
-    files = []
-    uploadEnabled = session.validate_space_available(files)
-
-    message = 'Bundle: %s, Free: %s' % (session.files.bundle_size_str, session.free_size_str)
-    if not uploadEnabled:
-        message += ": Bundle exceeds free space"
-    elif session.files.bundle_size==0:
-        uploadEnabled = False
+    # update the free space when the page is loaded
+    # this will update after an upload is done
+    session.update_free_space()
 
     variable_lookup = {
         'instrument' : "Selected Instrument",
@@ -182,9 +176,6 @@ def populate_upload_page(request):
          'proposal_users':session.proposal_users,
          'data_root':session.data_dir,
          'metaList': session.meta_list,
-         'current_time': session.current_time,
-         'message': message,
-         'uploadEnabled': uploadEnabled,
          'user': session.user_full_name,
          'value_lookup' : variable_lookup
         },
@@ -196,7 +187,6 @@ def show_initial_status(request):
     return show_status(request, session, "")
 
 def show_status(request, session, message):
-    free_size_str = session.files.size_string(session.free_space)
 
     return render_to_response('home/status.html', \
                                  {'instrument':session.concatenated_instrument(),
@@ -205,7 +195,7 @@ def show_status(request, session, message):
                                   'metaList':session. meta_list,
                                   'current_time': session.current_time,
                                   'bundle_size': session.files.bundle_size_str,
-                                  'free_size': free_size_str,
+                                  'free_size': session.free_size_str,
                                   'user': session.user_full_name},
                                   context_instance=RequestContext(request))
 
@@ -244,7 +234,7 @@ def spin_off_upload(request, session):
     session.load_proposal(form['proposal'])
     session.load_proposal_user(form['proposal_user'])
 
-    tuples = session.files.get_bundle_files(files, session.files.common_path)
+    tuples = session.files.get_bundle_files(files)
 
     # create the groups dictionary
     #{"groups":[{"name":"FOO1", "type":"Tag"}]}
@@ -529,6 +519,9 @@ def make_tree (tree, subdirectories, partial_path, title, path):
     subdirectories.insert(0, tail)
     make_tree(tree, subdirectories, head, title, path)
 
+def initialize_archive_structure():
+    session.files.initialize_archive_structure([session.proposal_friendly, session.instrument, datetime.datetime.now().strftime("%Y.%m.%d")])
+
 def get_bundle(request):
     try:
         retval = ""
@@ -553,15 +546,29 @@ def get_bundle(request):
         # used later to modify arc names
         session.files.common_path = common_path
 
+        initialize_archive_structure()
+        
         tree = []
+        children = tree
+        lastnode = {}
 
-        tree.append ({"title": session.proposal_friendly, "key": 1, "folder": True,"expanded": True, "children": [], "data":""})
-        children = tree[0]['children']
-        inst_node = {"title": session.instrument_friendly, "key": 1, "folder": True,"expanded": True, "children": []}
-        children.append(inst_node)
+        for node_name in session.files.archive_structure:
+            node = {"title": node_name, "key": 1, "folder": True,"expanded": True, "children": [], "data":""}
+            children.append(node)
+            children = node['children']
+            lastnode = node
+
+
+        #tree.append ({"title": session.proposal_friendly, "key": 1, "folder": True,"expanded": True, "children": [], "data":""})
+        #children = tree[0]['children']
+        #inst_node = {"title": session.instrument, "key": 1, "folder": True,"expanded": True, "children": []}
+        #children.append(inst_node)
+
+        #current_time = datetime.datetime.now().strftime("%Y.%m.%d")
+        #date_node = {"title": current_time, "key": 1, "folder": True,"expanded": True, "children": []}
+        #inst_node['children'].append(date_node)
 
         session.files.bundle_size = 0;
-
 
         for itempath in paths:
             # title
@@ -570,7 +577,10 @@ def get_bundle(request):
             # tree structure
             clipped_path = itempath.replace(common_path, '')
             subdirs = []
-            make_tree(inst_node, subdirs, clipped_path, item, itempath)
+            make_tree(lastnode, subdirs, clipped_path, item, itempath)
+
+        # validate that the currently selected bundle will fit in the target space
+        uploadEnabled = session.validate_space_available()
 
         size_string = session.files.size_string(session.files.bundle_size)
         tree[0]['data'] = 'Bundle: %s, Free: %s' % (size_string, session.free_size_str)

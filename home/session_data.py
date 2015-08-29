@@ -329,13 +329,10 @@ class session_state(object):
         self.current_time = None
         self.files.cleanup_files()
 
-    def validate_space_available(self, files):
+    def update_free_space(self):
         """
-        check the bundle size agains space available
+        update the amount of free space currently available
         """
-
-        self.files.calculate_bundle_size(files)
-
         # get the disk usage
         space = psutil.disk_usage(self.target_dir)
 
@@ -343,6 +340,13 @@ class session_state(object):
         self.free_space = int(.9 * space.free)
 
         self.free_size_str = self.files.size_string(self.free_space)
+
+    def validate_space_available(self):
+        """
+        check the bundle size agains space available
+        """
+
+        self.update_free_space()
 
         if (self.files.bundle_size == 0):
             return True

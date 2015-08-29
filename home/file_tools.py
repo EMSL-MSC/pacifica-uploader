@@ -20,6 +20,18 @@ class file_manager(object):
     bundle_size_str = ''
 
     common_path = ''
+    archive_path = ''
+    archive_structure = []
+
+    def initialize_archive_structure(self, nodes):
+        if not nodes:
+            return 
+
+        self.archive_structure = nodes
+
+        self.archive_path = nodes[0]
+        for i in range(1,len(nodes)):
+            self.archive_path = os.path.join (self.archive_path, nodes[i])
 
     def cleanup_files(self):
         """
@@ -104,7 +116,7 @@ class file_manager(object):
 
         return meta_str
 
-    def file_tuples_recursively(self, folder, tuple_list, root_dir):
+    def file_tuples_recursively(self, folder, tuple_list):
         """
         recursively gets file tuples for a folder
         """
@@ -117,12 +129,17 @@ class file_manager(object):
             path = os.path.join(folder, item)
             if os.path.isfile(path):
                 if os.access(path, os.R_OK):
-                    relative_path = os.path.relpath(path, root_dir)
-                    tuple_list.append((path, relative_path))
-            elif os.path.isdir(path):
-                self.file_tuples_recursively(path, tuple_list, root_dir)
+                    #remove the common root
+                    arc_path = os.path.relpath(path, self.common_path)
+                    # prepend the archive nodes
+                    arc_path = os.path.join(self.archive_path, arc_path)
 
-    def file_tuples(self, selected_list, tuple_list, root_dir):
+                    tuple_list.append((path, arc_path))
+
+            elif os.path.isdir(path):
+                self.file_tuples_recursively(path, tuple_list)
+
+    def file_tuples(self, selected_list, tuple_list):
         """
         gets all the file tuples for a list of either folders or files
         tuples consist of the absolute path where the local file can be found
@@ -132,10 +149,10 @@ class file_manager(object):
             if os.path.isfile(path):
                 if os.access(path, os.R_OK):
                     # the relative path is the path without the root directory
-                    relative_path = os.path.relpath(path, root_dir)
+                    relative_path = os.path.relpath(path)
                     tuple_list.append((path, relative_path))
             elif os.path.isdir(path):
-                self.file_tuples_recursively(path, tuple_list, root_dir)
+                self.file_tuples_recursively(path, tuple_list)
 
     def size_string(self, total_size):
         """
@@ -202,12 +219,16 @@ class file_manager(object):
                         filtered.remove(file)
         return filtered
 
-    def get_bundle_files(self, files, root):
+    def get_bundle_files(self, files):
+        '''
+        the common path will be clipped from the file archive structure,
+        the archive structure will be added
+        '''
         filtered = self.filter_selected_list(files)
 
         #create a list of tuples (filepath, arcpath)
         tuples = []
-        self.file_tuples(filtered, tuples, root)
+        self.file_tuples(filtered, tuples)
 
         self.calculate_bundle_size(files)
 
