@@ -15,7 +15,7 @@
                 <h1 class="underline">MyEMSL File Upload</h1>
                 <div id="login_id_container">
                     <p><em>{{user}}</em></p>
-                    <p class="smallprint"><a href="/login">Not You? Click here to Logout</a></p>
+                    <p class="smallprint"><a href="/logout">Not You? Click here to Logout</a></p>
                 </div>
             </div>
 
@@ -26,15 +26,15 @@
                     <fieldset style="min-height:170px;">
                         <legend>Metadata</legend>
                         <div class="full_width_block">
-                            <label for="instrument">Instrument</label>
+                            <label for="instrument">Instrument</label><br>
                             <select name="instrument" id="instrument" class="main_page_selector">
                                 <option selected="selected" value="">
                                     {{instrument}}
                                 </option>
                             </select>
                         </div>
-                        <div class="full_width_block">
-                            <label for="proposal">Proposal</label>
+                        <div class="full_width_block" style="margin-top:1em;">
+                            <label for="proposal">Proposal</label><br>
                             <select name="proposal" id="proposal" class="main_page_selector">
                             {% for prop in proposalList %}
                                 {% if proposal == prop %}
@@ -47,7 +47,7 @@
                         </div>
 
                         <div class="full_width_block" style="margin-top:1em;">
-                            <label for="proposal_user">EMSL User</label>
+                            <label for="proposal_user">EMSL User</label><br>
                             <select id="proposal_user" name="proposal_user" class="main_page_selector">
                             {% for user in proposal_users %}
                                 {% if proposal_user == user %}

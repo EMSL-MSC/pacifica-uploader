@@ -47,9 +47,16 @@ header.secondary .page_header{
   color: #ddd;
 }
 
+.select2-container {
+  width:900px;
+}
+
 @media (max-width: 960px){
   .page_content{
     width:700px;
+  }
+  .select2-container {
+    width:650px;
   }
   #page_menu {
     padding:0;
