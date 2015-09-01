@@ -161,7 +161,7 @@ $(function () {
         $.post("/upload/", { packet: JSON.stringify(pkt) },
             function (data) {
                 //alert('success');
-                window.location.replace("/showStatus");
+                window.location.href = "/showStatus";
             });
     });
 
