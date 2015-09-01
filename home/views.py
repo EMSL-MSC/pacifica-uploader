@@ -509,7 +509,7 @@ def make_tree(tree, subdirectories, partial_path, title, path):
     make_tree(tree, subdirectories, head, title, path)
 
 def initialize_archive_structure():
-    session.files.initialize_archive_structure([session.proposal_friendly, session.instrument_short_name, datetime.datetime.now().strftime("%Y.%m.%d")])
+    session.files.initialize_archive_structure(['Proposal ' + session.proposal_id, session.instrument_short_name, datetime.datetime.now().strftime("%Y.%m.%d")])
 
 def get_bundle(request):
     try:
@@ -546,16 +546,6 @@ def get_bundle(request):
             children.append(node)
             children = node['children']
             lastnode = node
-
-
-        #tree.append ({"title": session.proposal_friendly, "key": 1, "folder": True,"expanded": True, "children": [], "data":""})
-        #children = tree[0]['children']
-        #inst_node = {"title": session.instrument, "key": 1, "folder": True,"expanded": True, "children": []}
-        #children.append(inst_node)
-
-        #current_time = datetime.datetime.now().strftime("%Y.%m.%d")
-        #date_node = {"title": current_time, "key": 1, "folder": True,"expanded": True, "children": []}
-        #inst_node['children'].append(date_node)
 
         session.files.bundle_size = 0
 
