@@ -182,5 +182,7 @@ a
 }
 
 .main_page_selector {
-  width:900px;
+  width:100%;
+  font-size:0.8em;
 }
+

@@ -40,6 +40,13 @@
     <body>
         <div class="page_content">
             {% include "includes/view_header.html" %}
+            <div id="header_container">
+                <h1 class="underline">MyEMSL File Upload</h1>
+                <div id="login_id_container">
+                    <p><em>{{user}}</em></p>
+                    <p class="smallprint"><a href="/login">Not You? Click here to Logout</a></p>
+                </div>
+            </div>
             <section id="main_content" class="themed">
                 <fieldset>
                     <legend>Current Upload Status</legend>
