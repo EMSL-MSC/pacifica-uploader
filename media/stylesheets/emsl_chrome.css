@@ -1,9 +1,13 @@
-﻿#page_header {
+﻿.page_header {
   width:100%;
   height:96px;
   background-color: #719500;
   padding-top:20px;
   position:relative;
+}
+
+header.secondary .page_header{
+  height:36px;
 }
 
 .page_content {
@@ -56,21 +60,37 @@
   }
 }
 
-#logo_container {
+.logo_container {
   height:73px;
   max-width:174px;
   margin-left:15px;
   margin-right:10px;
 }
 
-#logo_image {
+header.secondary .logo_container {
+    height: 36px;
+    width: 87px;
+    margin-left: 15px;
+    margin-right: 10px;
+    position: absolute;
+    top: 8px;
+    left:0;
+}
+
+.logo_image {
   width:100%;
   height:100%;
   background: url(../images/emsl_logo_white.png);
   background-size: 174px 73px;
 }
 
-#site_slogan {
+header.secondary .logo_image {
+  background-size: 87px 36px;
+}
+
+
+
+.site_slogan {
   position:absolute;
   left:210px;
   top:48px;
@@ -78,6 +98,11 @@
   text-transform:uppercase;
   font-size:0.72em;
   font-weight:bold;
+}
+
+header.secondary .site_slogan {
+    left: 100px;
+    top: 32px;
 }
 
 #menu_block_container {
@@ -125,6 +150,12 @@ footer a {
 footer a:visited {
   color:#fff;
   text-decoration:none;
+}
+
+.smallprint {
+    font-size: 0.6em;
+    margin: 0;
+    margin-right: 5px;
 }
 
 .social-icons{

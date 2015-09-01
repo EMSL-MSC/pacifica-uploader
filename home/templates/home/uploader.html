@@ -14,7 +14,8 @@
             <div id="header_container">
                 <h1 class="underline">MyEMSL File Upload</h1>
                 <div id="login_id_container">
-                    <em>{{user}}</em>
+                    <p><em>{{user}}</em></p>
+                    <p class="smallprint"><a href="/login">Not You? Click here to Logout</a></p>
                 </div>
             </div>
 
@@ -24,6 +25,14 @@
 
                     <fieldset style="min-height:170px;">
                         <legend>Metadata</legend>
+                        <div class="full_width_block">
+                            <label for="instrument">Instrument</label>
+                            <select name="instrument" id="instrument" class="main_page_selector">
+                                <option selected="selected" value="">
+                                    {{instrument}}
+                                </option>
+                            </select>
+                        </div>
                         <div class="full_width_block">
                             <label for="proposal">Proposal</label>
                             <select name="proposal" id="proposal" class="main_page_selector">

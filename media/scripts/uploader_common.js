@@ -20,6 +20,7 @@ $(function () {
     });
 
     $('select').select2();
+    $('#instrument').prop('disabled', true);
 
     // Create the tree inside the <div id="tree"> element.
     // Create the tree inside the <div id="tree"> element.
