@@ -86,6 +86,10 @@ $(function () {
                         // update bundle size
                         var message = data[0]["data"];
                         $("#message").text(message);
+                    })
+                    .fail(function () {
+                        errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
+                        window.open(errtext, '_self');
                     });
             }
 
@@ -183,7 +187,8 @@ $(function () {
             });
         })
         .fail(function () {
-            alert("error");
+            errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
+            window.open(errtext, '_self');
         });
 
     });
