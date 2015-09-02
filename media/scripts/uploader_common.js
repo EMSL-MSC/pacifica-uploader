@@ -9,9 +9,35 @@ function setup_upload_tree() {
 
 }
 
-function loadUploadTree() {
-    var tree = $("#tree").fancytree("getTree");
-    var selected = tree.getSelectedNodes(stopOnParents = true);
+function FilterSingleBranch(clickedNode, parentNodes) {
+    // handles the edge of a single tree branch selected where each subfolder 
+    // contains one folder only
+    // we handle intent by checking to see if the user actually selected a folder or
+    // whether fancytree filled in the blanks.
+    if (!clickedNode.selected) return parentNodes;
+
+    // edge case is that there is only one parent node and it only has one child,
+    // that that one child node is selected and that the fancy tree has "filled in the blanks"
+    // and selected up the stream
+
+    if (parentNodes.length != 1) return parentNodes;
+
+    parent = parentNodes[0];
+
+    // user selected it, go with it.
+    if (parent.key == clickedNode.key) return parentNodes;
+
+    var children = parent.getChildren();
+
+    if (children.length != 1) return parentNodes;
+
+    parent.selected = false;
+    parent.setTitle(parent.title);
+
+    return FilterSingleBranch(clickedNode, children);
+}
+
+function loadUploadTree(selected) {
 
     var upload = $("#uploadFiles").fancytree("getTree");
     var root = $("#uploadFiles").fancytree("getRootNode");
@@ -97,7 +123,22 @@ $(function () {
         },
 
         select: function (event, data) {
-            loadUploadTree();
+            node = data.node;
+            var tree = $("#tree").fancytree("getTree");
+            var selected = tree.getSelectedNodes(stopOnParents = true);
+
+            // fix selections upstream
+            for (var i = 0; i < selected.length; i++) {
+                selected[i].fixSelection3AfterClick();
+            }
+
+            // refresh selections
+            selected = tree.getSelectedNodes(stopOnParents = true);
+
+            // filter single branch scenario
+            var filtered = FilterSingleBranch(node, selected);
+
+            loadUploadTree(filtered);
         },
 
         loadChildren: function (event, data) {
@@ -172,15 +213,10 @@ $(function () {
             window.open(errtext, '_self');
         });
 
-        loadUploadTree();
+        var tree = $("#tree").fancytree("getTree");
+        var selected = tree.getSelectedNodes(stopOnParents = true);
 
-        //$("#tree").trigger("select");
-
-        //var tree = $("#tree").fancytree("getTree");
-        //var root = $("#tree").fancytree("getRootNode");
-        //var child = root.getFirstChild();
-        //if (child)
-        //    child.setSelected(false);
+        loadUploadTree(selected);
 
     });
 
