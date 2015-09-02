@@ -9,6 +9,48 @@ function setup_upload_tree() {
 
 }
 
+function loadUploadTree() {
+    var tree = $("#tree").fancytree("getTree");
+    var selected = tree.getSelectedNodes(stopOnParents = true);
+
+    var upload = $("#uploadFiles").fancytree("getTree");
+    var root = $("#uploadFiles").fancytree("getRootNode");
+
+    while (root.hasChildren()) {
+        child = root.getFirstChild();
+        child.remove();
+    }
+
+    //instNode.addChildren(selected);
+    var fileList = [];
+
+    selected.forEach(function (node) {
+        fileList.push(node.key);
+    });
+
+    var pkt = JSON.stringify(fileList);
+
+    //if (fileList.length > 0) {
+    if (true) {
+        var posted = { packet: pkt };
+        $.post("/getBundle/", posted,
+            function (data) {
+                //alert('success');
+                root.addChildren(data);
+
+                // update bundle size
+                var message = data[0]["data"];
+                $("#message").text(message);
+            })
+            .fail(function (xhr, textStatus, errorThrown ) {
+                errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
+                window.open(errtext, '_self');
+            });
+    }
+
+    root.setExpanded(true);
+}
+
 $(function () {
     $.ajaxSetup({
         cache: false,
@@ -55,45 +97,7 @@ $(function () {
         },
 
         select: function (event, data) {
-            var node = data.node;
-            var tree = $("#tree").fancytree("getTree");
-            var selected = tree.getSelectedNodes(stopOnParents = true);
-
-            var upload = $("#uploadFiles").fancytree("getTree");
-            var root = $("#uploadFiles").fancytree("getRootNode");
-
-            while (root.hasChildren()) {
-                child = root.getFirstChild();
-                child.remove();
-            }
-
-            //instNode.addChildren(selected);
-            var fileList = [];
-
-            selected.forEach(function (node) {
-                fileList.push(node.key);
-            });
-
-            var pkt = JSON.stringify(fileList);
-
-            if (fileList.length > 0) {
-                var posted = { packet: pkt };
-                $.post("/getBundle/", posted,
-                    function (data) {
-                        //alert('success');
-                        root.addChildren(data);
-
-                        // update bundle size
-                        var message = data[0]["data"];
-                        $("#message").text(message);
-                    })
-                    .fail(function () {
-                        errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
-                        window.open(errtext, '_self');
-                    });
-            }
-
-            root.setExpanded(true);
+            loadUploadTree();
         },
 
         loadChildren: function (event, data) {
@@ -126,23 +130,6 @@ $(function () {
         return o;
     };
 
-    //jQuery["postJSON"] = function (url, data, callback) {
-    //    // shift arguments if data argument was omitted
-    //    if (jQuery.isFunction(data)) {
-    //        callback = data;
-    //        data = undefined;
-    //    }
-
-    //    return jQuery.ajax({
-    //        url: url,
-    //        type: "POST",
-    //        contentType: "application/json; charset=utf-8",
-    //        dataType: "json",
-    //        data: JSON.stringify(data),
-    //        success: callback
-    //    });
-    //};
-
     $("form").submit(function (event) {
         event.preventDefault();
 
@@ -170,12 +157,6 @@ $(function () {
         var p = $("#proposal").val();
         prop = { proposal: p };
 
-        var upload = $("#uploadFiles").fancytree("getTree");
-        var root = $("#uploadFiles").fancytree("getRootNode");
-        var child = root.getFirstChild();
-        if (child)
-            child.setTitle(p);
-
         var posting = $.post("/propUser/", prop,
         function (data) {
             $("#proposal_user").empty();
@@ -186,10 +167,20 @@ $(function () {
                 data: data
             });
         })
-        .fail(function () {
+        .fail(function (xhr, textStatus, errorThrown) {
             errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
             window.open(errtext, '_self');
         });
+
+        loadUploadTree();
+
+        //$("#tree").trigger("select");
+
+        //var tree = $("#tree").fancytree("getTree");
+        //var root = $("#tree").fancytree("getRootNode");
+        //var child = root.getFirstChild();
+        //if (child)
+        //    child.setSelected(false);
 
     });
 

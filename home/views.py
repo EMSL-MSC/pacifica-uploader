@@ -60,7 +60,7 @@ from home import session_data
 
 # Module level variables
 session = session_data.session_state()
-version = '0.98.19'
+version = '0.98.20'
 
 def login_user_locally(request):
     """
@@ -160,15 +160,15 @@ def populate_upload_page(request):
 
     # Render list page with the documents and the form
     return render_to_response('home/uploader.html',
-                             {'instrument': session.concatenated_instrument(),
-                              'proposalList': session.proposal_list,
-                              'user_list': session.proposal_users,
-                              'proposal':session.proposal_friendly,
-                              'proposal_user':session.proposal_user,
-                              'proposal_users':session.proposal_users,
-                              'data_root':session.data_dir,
-                              'metaList':session.meta_list,
-                              'user':session.user_full_name},
+                              {'instrument': session.concatenated_instrument(),
+                               'proposalList': session.proposal_list,
+                               'user_list': session.proposal_users,
+                               'proposal':session.proposal_friendly,
+                               'proposal_user':session.proposal_user,
+                               'proposal_users':session.proposal_users,
+                               'data_root':session.data_dir,
+                               'metaList':session.meta_list,
+                               'user':session.user_full_name},
                               context_instance=RequestContext(request))
 
 def show_initial_status(request):
@@ -519,22 +519,6 @@ def get_bundle(request):
         if not pathstring:
             return error_response("bad input to get_bundle")
 
-        paths = json.loads(pathstring)
-
-        if not paths:
-            return error_response("bad input to get_bundle")
-
-        # this actually should be done already by getting parent nodes
-        filtered = session.files.filter_selected_list(paths)
-
-        common_path = os.path.commonprefix(filtered)
-        #get rid of dangling prefixes
-        common_path, tail = os.path.split(common_path)
-        common_path = os.path.join(common_path, '')
-
-        # used later to modify arc names
-        session.files.common_path = common_path
-
         initialize_archive_structure()
 
         tree = []
@@ -546,6 +530,24 @@ def get_bundle(request):
             children.append(node)
             children = node['children']
             lastnode = node
+
+        paths = json.loads(pathstring)
+
+        # if no paths, return the empty archive structure
+        if not paths:
+            retval = json.dumps(tree)
+            return HttpResponse(retval, content_type="application/json")
+
+        # this actually should be done already by getting parent nodes
+        filtered = session.files.filter_selected_list(paths)
+
+        common_path = os.path.commonprefix(filtered)
+        #get rid of dangling prefixes
+        common_path, tail = os.path.split(common_path)
+        common_path = os.path.join(common_path, '')
+
+        # used later to modify arc names
+        session.files.common_path = common_path
 
         session.files.bundle_size = 0
 

@@ -148,13 +148,6 @@ class session_state(object):
         """
         return self.instrument + " " + self.instrument_friendly
 
-    def clear_upload_lists(self):
-        """
-        clears the directory and file lists
-        """
-        self.selected_files = []
-        self.selected_dirs = []
-
     def populate_user_info(self):
         """
         parses user information from a json struct
