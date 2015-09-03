@@ -266,31 +266,12 @@ def spin_off_upload(request, session):
     return HttpResponse(json.dumps("success"), content_type="application/json")
 
 def upload_files(request):
+    """
+    view for upload process spawn
+    """
     print "upload!"
     return spin_off_upload(request, session)
 
-def modify(request):
-    """
-    modifies the data underlying the main upload page depending on the request
-    the main request catagories are:
-        file sytem navigation
-        selected list management
-        upload request
-    """
-
-    global session
-
-    if request.POST:
-
-        print request.POST
-
-        # todo make this jquery
-        proposal = request.POST.get("proposal")
-        if proposal:
-            session.load_proposal(proposal)
-            session.populate_proposal_users()
-
-    return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
 """
 login and login related accesories
