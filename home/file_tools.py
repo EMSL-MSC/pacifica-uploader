@@ -56,7 +56,7 @@ class file_manager(object):
                 total_size += self.folder_size(path)
 
         self.bundle_size = total_size
-        self.bundle_size_str = self.size_string(total_size)
+        self.bundle_size_str = size_string(total_size)
 
         return total_size
 
@@ -73,14 +73,6 @@ class file_manager(object):
             elif os.path.isdir(itempath):
                 total_size += self.folder_size(itempath)
 
-        return total_size
-
-    def get_size(self, start_path):
-        total_size = 0
-        for dirpath, dirnames, filenames in os.walk(start_path):
-            for filename in filenames:
-                filepath = os.path.join(dirpath, filename)
-                total_size += os.path.getsize(filepath)
         return total_size
 
     def folder_meta(self, folder, meta):
@@ -112,7 +104,7 @@ class file_manager(object):
 
         meta.dir_count -= 1
         meta_str = 'folders {0} | files {1} | {2}'.\
-            format(str(meta.dir_count), str(meta.fileCount), self.size_string(meta.totalBytes))
+            format(str(meta.dir_count), str(meta.fileCount), size_string(meta.totalBytes))
 
         return meta_str
 
@@ -154,27 +146,6 @@ class file_manager(object):
             elif os.path.isdir(path):
                 self.file_tuples_recursively(path, tuple_list)
 
-    def size_string(self, total_size):
-        """
-        returns the upload size as a string with the appropriate units
-        """
-
-        # less than a Kb show b
-        if total_size < 1024:
-            return str(total_size) + " b"
-        # less than an Mb show Kb
-        if total_size < 1048576:
-            kilobytes = float(total_size) / 1024.0
-            return str(round(kilobytes, 2)) + " Kb"
-        # less than a Gb show Mb
-        elif total_size < 1073741824:
-            megabytes = float(total_size) / 1048576.0
-            return str(round(megabytes, 2)) + " Mb"
-        # else show in Gb
-        else:
-            gigabytes = float(total_size) / 1073741824.0
-            return str(round(gigabytes, 2)) + " Gb"
-
     def upload_meta_string(self, folder):
         """
         returns the meta data for a folder as a string to be displayed to the user
@@ -186,45 +157,16 @@ class file_manager(object):
 
         meta.dir_count -= 1
         meta_str = 'folders {0} | files {1} | {2}'.\
-            format(str(meta.dir_count), str(meta.fileCount), self.size_string(meta.totalBytes))
+            format(str(meta.dir_count), str(meta.fileCount), size_string(meta.totalBytes))
 
         return meta_str
-
-    def file_size_string(self, filename):
-        """
-        returns a string with the file size in appropriate units
-        """
-
-        total_size = os.path.getsize(filename)
-
-        return self.size_string(total_size)
-
-    def folder_size_string(self, filename):
-        """
-        returns a string with the file size in appropriate units
-        """
-
-        total_size = self.get_size(filename)
-
-        return self.size_string(total_size)
-
-    def filter_selected_list(self, files):
-        filtered = list(files)
-
-        for test_path in files:
-            if os.path.isdir(test_path):
-                for i in xrange(len(filtered) - 1, -1, -1):
-                    file = filtered[i]
-                    if test_path in file and test_path != file:
-                        filtered.remove(file)
-        return filtered
 
     def get_bundle_files(self, files):
         '''
         the common path will be clipped from the file archive structure,
         the archive structure will be added
         '''
-        filtered = self.filter_selected_list(files)
+        filtered = filter_selected_list(files)
 
         #create a list of tuples (filepath, arcpath)
         tuples = []
@@ -233,3 +175,43 @@ class file_manager(object):
         self.calculate_bundle_size(files)
 
         return tuples
+
+def get_size(start_path):
+    total_size = 0
+    for dirpath, dirnames, filenames in os.walk(start_path):
+        for filename in filenames:
+            filepath = os.path.join(dirpath, filename)
+            total_size += os.path.getsize(filepath)
+    return total_size
+
+def size_string(total_size):
+    """
+    returns the upload size as a string with the appropriate units
+    """
+
+    # less than a Kb show b
+    if total_size < 1024:
+        return str(total_size) + " b"
+    # less than an Mb show Kb
+    if total_size < 1048576:
+        kilobytes = float(total_size) / 1024.0
+        return str(round(kilobytes, 2)) + " Kb"
+    # less than a Gb show Mb
+    elif total_size < 1073741824:
+        megabytes = float(total_size) / 1048576.0
+        return str(round(megabytes, 2)) + " Mb"
+    # else show in Gb
+    else:
+        gigabytes = float(total_size) / 1073741824.0
+        return str(round(gigabytes, 2)) + " Gb"
+
+def filter_selected_list(files):
+    filtered = list(files)
+
+    for test_path in files:
+        if os.path.isdir(test_path):
+            for i in xrange(len(filtered) - 1, -1, -1):
+                file = filtered[i]
+                if test_path in file and test_path != file:
+                    filtered.remove(file)
+    return filtered
