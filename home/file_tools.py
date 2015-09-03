@@ -211,7 +211,7 @@ def filter_selected_list(files):
     for test_path in files:
         if os.path.isdir(test_path):
             for i in xrange(len(filtered) - 1, -1, -1):
-                file = filtered[i]
-                if test_path in file and test_path != file:
+                fpath = filtered[i]
+                if test_path in fpath and test_path != file:
                     filtered.remove(file)
     return filtered
