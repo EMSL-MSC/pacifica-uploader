@@ -10,6 +10,17 @@ header.secondary .page_header{
   height:36px;
 }
 
+h1.underline {
+  color:#fefefe;
+  padding:0.25em;
+  background-color: #53682B;
+  margin-top:0;
+  font-weight:normal;
+  border-radius:0px 0px 8px 8px;
+  font-size:1.25em;
+}
+
+
 .page_content {
   margin-left:auto;
   margin-right:auto;

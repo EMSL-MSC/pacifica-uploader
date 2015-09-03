@@ -11,15 +11,6 @@
 /*#main {
   margin:14px 0 15px 0 !important;
 }*/
-h1.underline {
-  color:#fefefe;
-  padding:0.25em;
-  background-color: #53682B;
-  margin-top:0;
-  font-weight:normal;
-  border-radius:0px 0px 8px 8px;
-  font-size:1.5em;
-}
 #login_id_container {
   position:absolute;
   bottom:8px;
