@@ -13,10 +13,11 @@
 }*/
 #login_id_container {
   position:absolute;
-  bottom:8px;
+  bottom:4px;
   right:15px;
   text-align: right;
   color: #fefefe;
+  font-size:0.75em;
 }
 
 #login_id_container p {
@@ -38,4 +39,8 @@
 #header_container {
   position:relative;
 }
-
+#message {
+  color:#333;
+  font-weight:bold;
+  font-size:0.75em;
+}
