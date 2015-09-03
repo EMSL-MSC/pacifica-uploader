@@ -135,7 +135,6 @@ def populate_upload_page(request):
     """
     formats the main uploader page
     """
-    global session
 
     # if not logged in
     if session.password == '':
@@ -172,8 +171,9 @@ def populate_upload_page(request):
                               context_instance=RequestContext(request))
 
 def show_initial_status(request):
-    global session
-
+    """
+    shows the status page with no message
+    """
     return show_status(request, session, "")
 
 def show_status(request, session, message):
@@ -331,8 +331,6 @@ def login(request):
     Otherwise, gets the user data to populate the main page
     """
 
-    global session
-
     # initialize session settings from scratch
     session.initialized = False
     err = session.initialize_settings()
@@ -404,8 +402,6 @@ def logout(request):
     # pass pylint
     request = request
 
-    global session
-
     #logs out local user session
     # if the LOGOUT_URL is set to this view, we create a recursive call to here
     #logout(request)
@@ -413,7 +409,9 @@ def logout(request):
     return HttpResponseRedirect(reverse('home.views.login'))
 
 def get_proposal_users(request):
-    global session
+    """
+    get the proposal users associated with a proposal
+    """
 
     prop = request.POST.get("proposal")
     session.load_proposal(prop)
@@ -579,8 +577,6 @@ def incremental_status(request):
     """
     # pass pylint
     request = request
-
-    global session
 
     if request.POST:
         if request.POST.get("Cancel Upload"):
