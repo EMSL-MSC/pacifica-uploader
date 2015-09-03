@@ -30,14 +30,12 @@ import stat
 
 #celery heartbeat
 import psutil
-from subprocess import call
 
 #uploader
 from uploader import test_authorization
 from uploader import job_status
 
 #database imports
-from home.models import Filepath
 from home.models import Metadata
 
 #session imports
@@ -139,7 +137,6 @@ def populate_upload_page(request):
     # if not logged in
     if session.password == '':
         # call login error with no error message
-        b = request.user.is_authenticated()
         return login_error(request, '')
 
     root_dir = session.data_dir
@@ -204,7 +201,7 @@ def spin_off_upload(request, session):
     packet = request.POST.get('packet')
     try:
         print "got packet"
-        if (packet):
+        if packet:
             json_obj = json.loads(packet)
             form = json_obj['form']
             files = json_obj['files']
@@ -423,7 +420,7 @@ def get_children(request):
 
     except Exception, e:
         print e
-        return err_response("upload failed")
+        return error_response("upload failed")
 
     return HttpResponse(retval)
 
@@ -444,7 +441,7 @@ def make_leaf(title, path):
 
     session.files.bundle_size += size
 
-    size_string = session.files.size_string(size) 
+    size_string = session.files.size_string(size)
     return {"title": title + " (" + size_string + ")", "key": path, "folder": is_folder, "data":{"size":size}}
 
 def add_branch(branches, subdirectories, title, path):
@@ -548,7 +545,7 @@ def get_bundle(request):
 
     except Exception, e:
         print e
-        return err_response("get_bundle failed")
+        return error_response("get_bundle failed")
 
     return HttpResponse(retval, content_type="application/json")
 

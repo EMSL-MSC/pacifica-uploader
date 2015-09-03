@@ -1,10 +1,7 @@
-import json
-import datetime
-
 #operating system and platform
 import os
 import platform
-
+import json
 import time
 
 class tar_management(object):
@@ -17,7 +14,7 @@ class tar_management(object):
         """
         list = url.split('/')
         job_id = list[-1]
-        if (job_id):
+        if job_id:
             return job_id
         else:
             return ''
@@ -29,7 +26,7 @@ class tar_management(object):
         full_path = os.path.join(dir, fname)
 
         # remove from directory
-        if (os.path.isfile(full_path)):
+        if os.path.isfile(full_path):
             os.remove(full_path)
 
     def rename_tar_file(self, dir, old_name, job_id):
@@ -40,7 +37,7 @@ class tar_management(object):
         print old_name
         print new_name
 
-        if (os.path.isfile(old_name)):
+        if os.path.isfile(old_name):
             os.rename(old_name, new_name)
 
     def remove_orphans(self, dir):
@@ -53,7 +50,7 @@ class tar_management(object):
             full_path = os.path.join(dir, file)
             if not '_uploaded.tar' in file:
                 # remove from directory
-                if (os.path.isfile(full_path)):
+                if os.path.isfile(full_path):
                     timestamp = os.path.getmtime(full_path)
                     current = time.time()
                     if current - timestamp > 86400: # a day in seconds

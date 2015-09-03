@@ -14,9 +14,8 @@ from uploader import job_status
 from home import tar_man
 
 import os
-import json
 
-def clean_target_directory(target_dir ='', server='', user='', password=''):
+def clean_target_directory(target_dir='', server='', user='', password=''):
     """
     deletes local files that have made it to the archive
     """

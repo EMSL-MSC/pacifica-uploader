@@ -18,7 +18,7 @@ from StringIO import StringIO
 
 import json
 
-from PycurlSession import PycurlSession
+from uploader.PycurlSession import PycurlSession
 
 from time import sleep
 
@@ -51,7 +51,7 @@ class UploaderError(Exception):
         return "Uploader failed: %s" % self.msg
 
 # Module level variables
-last_percent = 0;
+last_percent = 0
 
 def raise_upload_status(status, info):
     current_task.update_state(state=status, meta={'info': info})
@@ -258,8 +258,8 @@ def progress(download_t, download_d, upload_t, upload_d):
     """
     global last_percent
 
-    if (upload_t > 0):
-        percent = 100.0 * float(upload_d) / float (upload_t)
+    if upload_t > 0:
+        percent = 100.0 * float(upload_d) / float(upload_t)
 
         if percent - last_percent > 5:
             current_task.update_state(state=str(percent), \
@@ -320,7 +320,7 @@ def upload(bundle_name='',
 
     #**************************************************
     # Pre-allocate with cURL
-    raise_upload_status ('UPLOAD', 'Performing cURL preallocation *status*')
+    raise_upload_status('UPLOAD', 'Performing cURL preallocation *status*')
 
     try:
         # Set the URL for the curl query.
@@ -366,7 +366,7 @@ def upload(bundle_name='',
     print >> sys.stderr, 'New Server URL: %s' % url
 
     # Upload bundle with cURL
-    raise_upload_status ('UPLOAD', 'Peforming cURL upload of bundle of %s' % bundle_path)
+    raise_upload_status('UPLOAD', 'Peforming cURL upload of bundle of %s' % bundle_path)
 
     try:
         # Set the URL for the curl query.
@@ -402,7 +402,7 @@ def upload(bundle_name='',
 
     #************************************************************************
     # Finalize the upload
-    raise_upload_status ('UPLOAD', 'Peforming cURL finalization of upload')
+    raise_upload_status('UPLOAD', 'Peforming cURL finalization of upload')
 
     try:
         #turn off upload
@@ -443,7 +443,7 @@ def upload(bundle_name='',
 
     try:
         # Set the URL for the curl query.
-        raise_upload_status ('UPLOAD', 'Logging out')
+        raise_upload_status('UPLOAD', 'Logging out')
         pyurl = url + "/myemsl/logout"
         curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
 
