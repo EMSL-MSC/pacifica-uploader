@@ -75,14 +75,15 @@
                     <fieldset style="margin-top:1em;padding: 1em;">
                         <legend>Choose Files to Upload</legend>
                         <div class="full_width_block">
-                            <div id="tree">
+                          <div id="tree">
                             <ul id="root" style="display:none;" class="ui-fancytree-source ui-helper-hidden">
                                 <li id="{{data_root}}" class="lazy folder">
                                     <span>My Data</span>
                                 </li>
                             </ul>
+                          </div>
                         </div>
-                        </div>
+                        
                     </fieldset>
 
                     <fieldset style="margin-top:1em;padding: 1em;">
@@ -94,17 +95,17 @@
                                         <span> Upload </span>
                                     </li>
                                 </ul>
-                            </div>   
+                            </div>
+                            <div style="text-align: center; position: absolute; top:0; right:0;">  
+                              <input type="submit" name="upload_btn" id="upload_btn" value="Upload Files &amp; Metadata" />
+                              <div id="message">
+                                  <p class = "tight">
+                                      <strong></strong><br />
+                                  </p>
+                              </div>
+                          </div>
                         </div>
                     </fieldset>
-                    <div style="text-align: center; position: relative; margin-top: 2em;">	
-                        <input type="submit" name = "Upload Files & Metadata" value="Upload" />
-                        <div id="message">
-                            <p class = "tight">
-                                <strong></strong><br />
-                            </p>
-                        </div>
-                    </div>
                 </form>
             </div>
         </div>
