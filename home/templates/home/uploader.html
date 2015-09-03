@@ -20,7 +20,7 @@
             </div>
 
             <div class="themed">
-                <form  action="{% url "modify" %}" method="post" enctype="multipart/form-data">
+                <form method="post" enctype="multipart/form-data">
 	                {% csrf_token %}
 
                     <fieldset style="min-height:170px;">
@@ -86,7 +86,7 @@
                     </fieldset>
 
                     <fieldset style="margin-top:1em;padding: 1em;">
-                        <legend>Files to Upload</legend>
+                        <legend>Files to be Uploaded</legend>
                         <div class="full_width_block">
                             <div id="uploadFiles">
                                 <ul id="load" style="display:none;" class="ui-fancytree-source ui-helper-hidden">

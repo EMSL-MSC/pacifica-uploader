@@ -5,7 +5,7 @@ import os
 
 from uploader import get_info
 
-from file_tools import file_manager
+from home.file_tools import file_manager
 
 class MetaData(object):
     """
@@ -147,13 +147,6 @@ class session_state(object):
         concatenate the instrument id with the description
         """
         return self.instrument + " " + self.instrument_friendly
-
-    def clear_upload_lists(self):
-        """
-        clears the directory and file lists
-        """
-        self.selected_files = []
-        self.selected_dirs = []
 
     def populate_user_info(self):
         """
@@ -354,9 +347,9 @@ class session_state(object):
 
         self.update_free_space()
 
-        if (self.files.bundle_size == 0):
+        if self.files.bundle_size == 0:
             return True
-        return (self.files.bundle_size < self.free_space)
+        return self.files.bundle_size < self.free_space
 
     def write_default_config(self, filename):
         d = {}

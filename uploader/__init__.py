@@ -18,7 +18,7 @@ from StringIO import StringIO
 
 import json
 
-from PycurlSession import PycurlSession
+from uploader.PycurlSession import PycurlSession
 
 from time import sleep
 
@@ -51,7 +51,7 @@ class UploaderError(Exception):
         return "Uploader failed: %s" % self.msg
 
 # Module level variables
-last_percent = 0;
+last_percent = 0
 
 def raise_upload_status(status, info):
     current_task.update_state(state=status, meta={'info': info})
@@ -139,10 +139,10 @@ def pycurl_session(protocol='https',
     return retval
 
 def get_info(protocol='https',
-              server='dev2.my.emsl.pnl.gov',
-              user='',
-              password=':',
-              info_type = 'userinfo'):
+             server='dev2.my.emsl.pnl.gov',
+             user='',
+             password=':',
+             info_type = 'userinfo'):
 
     """
     gets the user info from the EUS database mirror on the backend server
@@ -206,10 +206,10 @@ def test_authorization(protocol='https',
         return "Unknown error during authorization"
 
 def job_status(protocol='https',
-                       server='',
-                       user='',
-                       password=':',
-                       job_list = []):
+               server='',
+               user='',
+               password=':',
+               job_list = []):
 
     """
     Validates the user as a MyEMSL user
@@ -231,7 +231,7 @@ def job_status(protocol='https',
     pyurl = session.url + '/myemsl/status/index.php/status/job_status'
     curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
     odata = StringIO()
-    
+
     curl.setopt(pycurl.WRITEFUNCTION, odata.write)
     curl.setopt(pycurl.POST, 1)
 
@@ -258,10 +258,10 @@ def progress(download_t, download_d, upload_t, upload_d):
     """
     global last_percent
 
-    if (upload_t > 0):
-        percent = 100.0 * float(upload_d) / float (upload_t)
-        
-        if percent - last_percent > 5: 
+    if upload_t > 0:
+        percent = 100.0 * float(upload_d) / float(upload_t)
+
+        if percent - last_percent > 5:
             current_task.update_state(state=str(percent), \
                                      meta={'Status': "upload percent complete: " + str(int(percent))})
             last_percent = percent
@@ -320,7 +320,7 @@ def upload(bundle_name='',
 
     #**************************************************
     # Pre-allocate with cURL
-    raise_upload_status ('UPLOAD', 'Performing cURL preallocation *status*')
+    raise_upload_status('UPLOAD', 'Performing cURL preallocation *status*')
 
     try:
         # Set the URL for the curl query.
@@ -352,7 +352,6 @@ def upload(bundle_name='',
     except:
         raise UploaderError("Unknown error during preallocation")
 
-    
 
     #*********************************************************************
 
@@ -367,7 +366,7 @@ def upload(bundle_name='',
     print >> sys.stderr, 'New Server URL: %s' % url
 
     # Upload bundle with cURL
-    raise_upload_status ('UPLOAD', 'Peforming cURL upload of bundle of %s' % bundle_path)
+    raise_upload_status('UPLOAD', 'Peforming cURL upload of bundle of %s' % bundle_path)
 
     try:
         # Set the URL for the curl query.
@@ -403,7 +402,7 @@ def upload(bundle_name='',
 
     #************************************************************************
     # Finalize the upload
-    raise_upload_status ('UPLOAD', 'Peforming cURL finalization of upload')
+    raise_upload_status('UPLOAD', 'Peforming cURL finalization of upload')
 
     try:
         #turn off upload
@@ -413,7 +412,7 @@ def upload(bundle_name='',
         # Set the URL for the curl query.
         pyurl = url + "/myemsl/cgi-bin/finish" + location
         curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
-        
+
         curl.perform()
 
         print curl_http_code
@@ -424,7 +423,7 @@ def upload(bundle_name='',
             raise UploaderError(odata.read(), outage=True)
 
         print "curl_http_code " + str(curl_http_code)
-        
+
         print  odata.getvalue()
 
         if re.search(r'Error', odata.getvalue()) is not None:
@@ -444,7 +443,7 @@ def upload(bundle_name='',
 
     try:
         # Set the URL for the curl query.
-        raise_upload_status ('UPLOAD', 'Logging out')
+        raise_upload_status('UPLOAD', 'Logging out')
         pyurl = url + "/myemsl/logout"
         curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
 

@@ -9,6 +9,74 @@ function setup_upload_tree() {
 
 }
 
+function FilterSingleBranch(clickedNode, parentNodes) {
+    // handles the edge of a single tree branch selected where each subfolder 
+    // contains one folder only
+    // we handle intent by checking to see if the user actually selected a folder or
+    // whether fancytree filled in the blanks.
+    if (!clickedNode.selected) return parentNodes;
+
+    // edge case is that there is only one parent node and it only has one child,
+    // that that one child node is selected and that the fancy tree has "filled in the blanks"
+    // and selected up the stream
+
+    if (parentNodes.length != 1) return parentNodes;
+
+    parent = parentNodes[0];
+
+    // user selected it, go with it.
+    if (parent.key == clickedNode.key) return parentNodes;
+
+    var children = parent.getChildren();
+
+    if (children.length != 1) return parentNodes;
+
+    parent.selected = false;
+    parent.setTitle(parent.title);
+
+    return FilterSingleBranch(clickedNode, children);
+}
+
+function loadUploadTree(selected) {
+
+    var upload = $("#uploadFiles").fancytree("getTree");
+    var root = $("#uploadFiles").fancytree("getRootNode");
+
+    while (root.hasChildren()) {
+        child = root.getFirstChild();
+        child.remove();
+    }
+
+    //instNode.addChildren(selected);
+    var fileList = [];
+
+    selected.forEach(function (node) {
+        fileList.push(node.key);
+    });
+
+    var pkt = JSON.stringify(fileList);
+
+    //if (fileList.length > 0) {
+    if (true) {
+        var posted = { packet: pkt };
+        $.post("/getBundle/", posted,
+            function (data) {
+                //alert('success');
+                root.addChildren(data);
+
+                // update bundle size
+                var message = data[0]["data"];
+                $("#message").text(message);
+            })
+            .fail(function (xhr, textStatus, errorThrown ) {
+                errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
+                window.open(errtext, '_self');
+            });
+    }
+
+    root.setExpanded(true);
+}
+
 $(function () {
     $.ajaxSetup({
         cache: false,
@@ -55,45 +123,22 @@ $(function () {
         },
 
         select: function (event, data) {
-            var node = data.node;
+            node = data.node;
             var tree = $("#tree").fancytree("getTree");
             var selected = tree.getSelectedNodes(stopOnParents = true);
 
-            var upload = $("#uploadFiles").fancytree("getTree");
-            var root = $("#uploadFiles").fancytree("getRootNode");
-
-            while (root.hasChildren()) {
-                child = root.getFirstChild();
-                child.remove();
+            // fix selections upstream
+            for (var i = 0; i < selected.length; i++) {
+                selected[i].fixSelection3AfterClick();
             }
 
-            //instNode.addChildren(selected);
-            var fileList = [];
+            // refresh selections
+            selected = tree.getSelectedNodes(stopOnParents = true);
 
-            selected.forEach(function (node) {
-                fileList.push(node.key);
-            });
+            // filter single branch scenario
+            var filtered = FilterSingleBranch(node, selected);
 
-            var pkt = JSON.stringify(fileList);
-
-            if (fileList.length > 0) {
-                var posted = { packet: pkt };
-                $.post("/getBundle/", posted,
-                    function (data) {
-                        //alert('success');
-                        root.addChildren(data);
-
-                        // update bundle size
-                        var message = data[0]["data"];
-                        $("#message").text(message);
-                    })
-                    .fail(function () {
-                        errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
-                        window.open(errtext, '_self');
-                    });
-            }
-
-            root.setExpanded(true);
+            loadUploadTree(filtered);
         },
 
         loadChildren: function (event, data) {
@@ -126,23 +171,6 @@ $(function () {
         return o;
     };
 
-    //jQuery["postJSON"] = function (url, data, callback) {
-    //    // shift arguments if data argument was omitted
-    //    if (jQuery.isFunction(data)) {
-    //        callback = data;
-    //        data = undefined;
-    //    }
-
-    //    return jQuery.ajax({
-    //        url: url,
-    //        type: "POST",
-    //        contentType: "application/json; charset=utf-8",
-    //        dataType: "json",
-    //        data: JSON.stringify(data),
-    //        success: callback
-    //    });
-    //};
-
     $("form").submit(function (event) {
         event.preventDefault();
 
@@ -170,12 +198,6 @@ $(function () {
         var p = $("#proposal").val();
         prop = { proposal: p };
 
-        var upload = $("#uploadFiles").fancytree("getTree");
-        var root = $("#uploadFiles").fancytree("getRootNode");
-        var child = root.getFirstChild();
-        if (child)
-            child.setTitle(p);
-
         var posting = $.post("/propUser/", prop,
         function (data) {
             $("#proposal_user").empty();
@@ -186,10 +208,15 @@ $(function () {
                 data: data
             });
         })
-        .fail(function () {
+        .fail(function (xhr, textStatus, errorThrown) {
             errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
             window.open(errtext, '_self');
         });
+
+        var tree = $("#tree").fancytree("getTree");
+        var selected = tree.getSelectedNodes(stopOnParents = true);
+
+        loadUploadTree(selected);
 
     });
 

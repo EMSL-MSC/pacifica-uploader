@@ -30,14 +30,12 @@ import stat
 
 #celery heartbeat
 import psutil
-from subprocess import call
 
 #uploader
 from uploader import test_authorization
 from uploader import job_status
 
 #database imports
-from home.models import Filepath
 from home.models import Metadata
 
 #session imports
@@ -60,7 +58,7 @@ from home import session_data
 
 # Module level variables
 session = session_data.session_state()
-version = '0.98.19'
+version = '0.98.20'
 
 def login_user_locally(request):
     """
@@ -135,12 +133,10 @@ def populate_upload_page(request):
     """
     formats the main uploader page
     """
-    global session
 
     # if not logged in
     if session.password == '':
         # call login error with no error message
-        b = request.user.is_authenticated()
         return login_error(request, '')
 
     root_dir = session.data_dir
@@ -160,20 +156,21 @@ def populate_upload_page(request):
 
     # Render list page with the documents and the form
     return render_to_response('home/uploader.html',
-                             {'instrument': session.concatenated_instrument(),
-                              'proposalList': session.proposal_list,
-                              'user_list': session.proposal_users,
-                              'proposal':session.proposal_friendly,
-                              'proposal_user':session.proposal_user,
-                              'proposal_users':session.proposal_users,
-                              'data_root':session.data_dir,
-                              'metaList':session.meta_list,
-                              'user':session.user_full_name},
+                              {'instrument': session.concatenated_instrument(),
+                               'proposalList': session.proposal_list,
+                               'user_list': session.proposal_users,
+                               'proposal':session.proposal_friendly,
+                               'proposal_user':session.proposal_user,
+                               'proposal_users':session.proposal_users,
+                               'data_root':session.data_dir,
+                               'metaList':session.meta_list,
+                               'user':session.user_full_name},
                               context_instance=RequestContext(request))
 
 def show_initial_status(request):
-    global session
-
+    """
+    shows the status page with no message
+    """
     return show_status(request, session, "")
 
 def show_status(request, session, message):
@@ -204,7 +201,7 @@ def spin_off_upload(request, session):
     packet = request.POST.get('packet')
     try:
         print "got packet"
-        if (packet):
+        if packet:
             json_obj = json.loads(packet)
             form = json_obj['form']
             files = json_obj['files']
@@ -266,31 +263,12 @@ def spin_off_upload(request, session):
     return HttpResponse(json.dumps("success"), content_type="application/json")
 
 def upload_files(request):
+    """
+    view for upload process spawn
+    """
     print "upload!"
     return spin_off_upload(request, session)
 
-def modify(request):
-    """
-    modifies the data underlying the main upload page depending on the request
-    the main request catagories are:
-        file sytem navigation
-        selected list management
-        upload request
-    """
-
-    global session
-
-    if request.POST:
-
-        print request.POST
-
-        # todo make this jquery
-        proposal = request.POST.get("proposal")
-        if proposal:
-            session.load_proposal(proposal)
-            session.populate_proposal_users()
-
-    return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
 """
 login and login related accesories
@@ -330,8 +308,6 @@ def login(request):
     returns to login page with error.
     Otherwise, gets the user data to populate the main page
     """
-
-    global session
 
     # initialize session settings from scratch
     session.initialized = False
@@ -404,8 +380,6 @@ def logout(request):
     # pass pylint
     request = request
 
-    global session
-
     #logs out local user session
     # if the LOGOUT_URL is set to this view, we create a recursive call to here
     #logout(request)
@@ -413,7 +387,9 @@ def logout(request):
     return HttpResponseRedirect(reverse('home.views.login'))
 
 def get_proposal_users(request):
-    global session
+    """
+    get the proposal users associated with a proposal
+    """
 
     prop = request.POST.get("proposal")
     session.load_proposal(prop)
@@ -444,7 +420,7 @@ def get_children(request):
 
     except Exception, e:
         print e
-        return err_response("upload failed")
+        return error_response("upload failed")
 
     return HttpResponse(retval)
 
@@ -465,7 +441,7 @@ def make_leaf(title, path):
 
     session.files.bundle_size += size
 
-    size_string = session.files.size_string(size) 
+    size_string = session.files.size_string(size)
     return {"title": title + " (" + size_string + ")", "key": path, "folder": is_folder, "data":{"size":size}}
 
 def add_branch(branches, subdirectories, title, path):
@@ -519,22 +495,6 @@ def get_bundle(request):
         if not pathstring:
             return error_response("bad input to get_bundle")
 
-        paths = json.loads(pathstring)
-
-        if not paths:
-            return error_response("bad input to get_bundle")
-
-        # this actually should be done already by getting parent nodes
-        filtered = session.files.filter_selected_list(paths)
-
-        common_path = os.path.commonprefix(filtered)
-        #get rid of dangling prefixes
-        common_path, tail = os.path.split(common_path)
-        common_path = os.path.join(common_path, '')
-
-        # used later to modify arc names
-        session.files.common_path = common_path
-
         initialize_archive_structure()
 
         tree = []
@@ -546,6 +506,24 @@ def get_bundle(request):
             children.append(node)
             children = node['children']
             lastnode = node
+
+        paths = json.loads(pathstring)
+
+        # if no paths, return the empty archive structure
+        if not paths:
+            retval = json.dumps(tree)
+            return HttpResponse(retval, content_type="application/json")
+
+        # this actually should be done already by getting parent nodes
+        filtered = session.files.filter_selected_list(paths)
+
+        common_path = os.path.commonprefix(filtered)
+        #get rid of dangling prefixes
+        common_path, tail = os.path.split(common_path)
+        common_path = os.path.join(common_path, '')
+
+        # used later to modify arc names
+        session.files.common_path = common_path
 
         session.files.bundle_size = 0
 
@@ -567,7 +545,7 @@ def get_bundle(request):
 
     except Exception, e:
         print e
-        return err_response("get_bundle failed")
+        return error_response("get_bundle failed")
 
     return HttpResponse(retval, content_type="application/json")
 
@@ -577,8 +555,6 @@ def incremental_status(request):
     """
     # pass pylint
     request = request
-
-    global session
 
     if request.POST:
         if request.POST.get("Cancel Upload"):

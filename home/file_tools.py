@@ -50,9 +50,9 @@ class file_manager(object):
         total_size = 0
 
         for path in selected_paths:
-            if (os.path.isfile(path)):
+            if os.path.isfile(path):
                 total_size += os.path.getsize(path)
-            if (os.path.isdir(path)):
+            if os.path.isdir(path):
                 total_size += self.folder_size(path)
 
         self.bundle_size = total_size
@@ -186,7 +186,7 @@ class file_manager(object):
 
         meta.dir_count -= 1
         meta_str = 'folders {0} | files {1} | {2}'.\
-            format(str(meta.dir_count), str(meta.fileCount), size_string(meta.totalBytes))
+            format(str(meta.dir_count), str(meta.fileCount), self.size_string(meta.totalBytes))
 
         return meta_str
 
