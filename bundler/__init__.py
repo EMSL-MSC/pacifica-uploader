@@ -300,9 +300,6 @@ class TarBundler(FileBundler):
             self.report_percent_complete()
 
             for (file_path, file_arcname) in file_paths:
-
-                file_size = os.path.getsize(file_path)
-
                 # hash the file and store in hash_dict
                 # percent complete is reported only as read and hashed
                 # hopefully that being the slowest part and all we have

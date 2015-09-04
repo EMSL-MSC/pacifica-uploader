@@ -303,10 +303,6 @@ def upload(bundle_name='',
     # @todo: get cURL to use protocol as a guide for authentication type
     url = '%s://%s' % (protocol, server)
 
-    # If user isn't supplied, use the currently logged in user
-    #if user == '':
-    #    user = os.getlogin()
-
     print >> sys.stderr, 'Server URL: %s' % url
     print >> sys.stderr, 'File: %s' % bundle_path
     print >> sys.stderr, 'User: %s' % user
