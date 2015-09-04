@@ -1,3 +1,6 @@
+#pylint: disable=too-many-return-statements
+# justification: argument with style
+
 """
 maintains the state of a user session
 """
@@ -124,8 +127,8 @@ class session_state(object):
                     self.meta_list.append(meta_entry)
             else:
                 return ''
-        except Exception, e:
-            print e
+        except Exception, err:
+            print err
             return 'Configuration Error'
 
         return ''
@@ -201,7 +204,6 @@ class session_state(object):
                 if not self.instrument_short_name:
                     self.instrument_short_name = 'no short name'
 
-                inst_str = inst_id + ' ' + inst_name
                 if self.instrument == inst_id:
                     self.instrument_friendly = inst_name
                     valid_instrument = True
@@ -368,21 +370,21 @@ class session_state(object):
         """
         read the configuration file
         """
-        with open(filename, 'r') as fp:
-            self.configuration = json.load(fp)
+        with open(filename, 'r') as config:
+            self.configuration = json.load(config)
 
 def write_default_config(filename):
     """
     write a default configuration file as a template
     """
-    d = {}
-    d['target'] = '/srv/localdata'
-    d['dataRoot '] = '/srv/home'
-    d['timeout'] = '10'
-    d['server'] = 'dev2.my.emsl.pnl.gov'
-    d['instrument'] = '0a'
+    dict = {}
+    dict['target'] = '/srv/localdata'
+    dict['dataRoot '] = '/srv/home'
+    dict['timeout'] = '10'
+    dict['server'] = 'dev2.my.emsl.pnl.gov'
+    dict['instrument'] = '0a'
 
-    d['metadata'] = (('Tag', 'Tag'), ('Tag1', 'Taggy'), ('Tag2', 'Taggier'))
+    dict['metadata'] = (('Tag', 'Tag'), ('Tag1', 'Taggy'), ('Tag2', 'Taggier'))
 
-    with open(filename, 'w') as fp:
-        json.dump(d, fp)
+    with open(filename, 'w') as config:
+        json.dump(dict, config)

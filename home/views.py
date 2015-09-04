@@ -4,6 +4,9 @@
 #pylint: disable=invalid-name
 # justification: module level variables
 
+#pylint: disable=too-many-return-statements
+# justification: argument with style
+
 """
 Django views, handle requests from the client side pages
 """

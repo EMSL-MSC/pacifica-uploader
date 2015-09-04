@@ -436,8 +436,8 @@ def upload(bundle_name='',
 
     except pycurl.error:
         raise UploaderError("cURL operations failed for finalization:\n    %s" % curl.errstr())
-    except Exception, e:
-        raise UploaderError(e.message)
+    except Exception, err:
+        raise UploaderError(err.message)
         #raise UploaderError("Unknown error during finalization:\n")
 
     try:
