@@ -19,13 +19,12 @@ def clean_target_directory(target_dir='', server='', user='', password=''):
     """
     deletes local files that have made it to the archive
     """
-    tm = tar_man.tar_management()
 
     # remove old files that were not uploaded
-    tm.remove_orphans(target_dir)
+    tar_man.remove_orphans(target_dir)
 
     # get job list from file
-    jobs = tm.job_list(target_dir)
+    jobs = tar_man.job_list(target_dir)
 
     if not jobs:
         return
@@ -41,9 +40,11 @@ def clean_target_directory(target_dir='', server='', user='', password=''):
                             job_list=jobs)
 
     # fake job state
-    #jobs_state = '[{?20001066? : {?state_name?:?Received?, ?state?:?1"}},{?20001067? : {?state_name?:?Available?, ?state?:?5"}},{?20001068? : {?state_name?:?Available?, ?state?:?5"}}]'
+    #jobs_state = '[{?20001066? : {?state_name?:?Received?, ?state?:?1"}},
+    #            {?20001067? : {?state_name?:?Available?, ?state?:?5"}},
+    #            {?20001068? : {?state_name?:?Available?, ?state?:?5"}}]'
     if jobs_state:
-        err_str = tm.clean_tar_directory(target_dir, jobs_state)
+        err_str = tar_man.clean_tar_directory(target_dir, jobs_state)
         return err_str
     else:
         return 'unable to fetch job status'
@@ -51,6 +52,9 @@ def clean_target_directory(target_dir='', server='', user='', password=''):
 
 @shared_task
 def ping():
+    """
+    check to see if the celery task process is started.
+    """
     print "Pinged!"
     current_task.update_state(state='PING', meta={'Status': "Background process is alive"})
 
@@ -106,10 +110,9 @@ def upload_files(bundle_name='',
 
     if "http" in res:
         print "rename"
-        tm = tar_man.tar_management()
-        job_id = tm.parse_job(res)
+        job_id = tar_man.parse_job(res)
         print job_id
-        tm.rename_tar_file(target_dir, bundle_name, job_id)
+        tar_man.rename_tar_file(target_dir, bundle_name, job_id)
 
         print >> sys.stderr, "Status Page: {0}".format(res)
         current_task.update_state(state='SUCCESS', meta={'url': res})

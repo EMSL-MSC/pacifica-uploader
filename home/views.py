@@ -55,6 +55,7 @@ from time import sleep
 import subprocess
 
 from home import session_data
+from home import file_tools
 
 # Module level variables
 session = session_data.session_state()
@@ -174,7 +175,9 @@ def show_initial_status(request):
     return show_status(request, session, "")
 
 def show_status(request, session, message):
-
+    """
+    show the status of the existing upload task
+    """
     return render_to_response('home/status.html',
                               {'instrument':session.concatenated_instrument(),
                                'status': message,
@@ -196,7 +199,8 @@ def spin_off_upload(request, session):
     alive = ping_celery()
     print 'Celery lives = %s' % (alive)
     if not alive:
-        return HttpResponse(json.dumps("Celery background process is not started"), content_type="application/json", status=500)
+        return HttpResponse(json.dumps("Celery background process is not started"),
+                            content_type="application/json", status=500)
 
     packet = request.POST.get('packet')
     try:
@@ -281,8 +285,11 @@ def login_error(request, error_string):
     if not session.initialized:
         session.initialize_settings()
 
-    return render_to_response(settings.LOGIN_VIEW, \
-                              {'site_version':version, 'instrument': session.instrument, 'message': error_string}, context_instance=RequestContext(request))
+    return render_to_response(settings.LOGIN_VIEW,
+                              {'site_version':version,
+                               'instrument': session.instrument,
+                               'message': error_string},
+                              context_instance=RequestContext(request))
 
 
 def cookie_test(request):
@@ -400,6 +407,9 @@ def get_proposal_users(request):
 
 
 def get_children(request):
+    """
+    get the children of a parent directory, used for lazy loading
+    """
     try:
         retval = ""
         parent = request.GET.get("parent")
@@ -425,6 +435,9 @@ def get_children(request):
     return HttpResponse(retval)
 
 def error_response(err_str):
+    """
+    send an http error response with an appropriate error message
+    """
     return HttpResponse(json.dumps("Error: " + err_str), content_type="application/json", status=500)
 
 
@@ -436,12 +449,12 @@ def make_leaf(title, path):
         size = os.path.getsize(path)
         is_folder = False
     elif os.path.isdir(path):
-        size = session.files.get_size(path)
+        size = file_tools.get_size(path)
         is_folder = True
 
     session.files.bundle_size += size
 
-    size_string = session.files.size_string(size)
+    size_string = file_tools.size_string(size)
     return {"title": title + " (" + size_string + ")", "key": path, "folder": is_folder, "data":{"size":size}}
 
 def add_branch(branches, subdirectories, title, path):
@@ -485,9 +498,17 @@ def make_tree(tree, subdirectories, partial_path, title, path):
     make_tree(tree, subdirectories, head, title, path)
 
 def initialize_archive_structure():
-    session.files.initialize_archive_structure(['Proposal ' + session.proposal_id, session.instrument_short_name, datetime.datetime.now().strftime("%Y.%m.%d")])
+    """
+    initialize the structure used to store bundles in the archive
+    """
+    session.files.initialize_archive_structure(['Proposal ' + session.proposal_id,
+                                                session.instrument_short_name,
+                                                datetime.datetime.now().strftime("%Y.%m.%d")])
 
 def get_bundle(request):
+    """
+    return a tree structure containing directories and files to be uploaded
+    """
     try:
         retval = ""
         pathstring = request.POST.get("packet")
@@ -515,7 +536,7 @@ def get_bundle(request):
             return HttpResponse(retval, content_type="application/json")
 
         # this actually should be done already by getting parent nodes
-        filtered = session.files.filter_selected_list(paths)
+        filtered = file_tools.filter_selected_list(paths)
 
         common_path = os.path.commonprefix(filtered)
         #get rid of dangling prefixes
@@ -539,7 +560,7 @@ def get_bundle(request):
         # validate that the currently selected bundle will fit in the target space
         uploadEnabled = session.validate_space_available()
 
-        size_string = session.files.size_string(session.files.bundle_size)
+        size_string = file_tools.size_string(session.files.bundle_size)
         tree[0]['data'] = 'Bundle: %s, Free: %s' % (size_string, session.free_size_str)
         retval = json.dumps(tree)
 
@@ -578,8 +599,7 @@ def incremental_status(request):
             state = 'DONE'
             result = result.strip('"')
             job_id = result
-            tm = tar_man.tar_management()
-            job_id = tm.parse_job(result)
+            job_id = tar_man.parse_job(result)
 
             #if we have successfully uploaded, cleanup the lists
             session.cleanup_upload()

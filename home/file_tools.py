@@ -1,3 +1,8 @@
+"""
+tools to bundle, parse file structures, etc.
+"""
+
+
 import os
 
 class FolderMeta(object):
@@ -24,6 +29,9 @@ class file_manager(object):
     archive_structure = []
 
     def initialize_archive_structure(self, nodes):
+        """
+        build the archive structure and archive path
+        """
         if not nodes:
             return
 
@@ -109,6 +117,9 @@ class file_manager(object):
         return meta_str
 
     def get_archive_path(self, path):
+        """
+        build the archive path from the real path modified to conform to the archive structure
+        """
         #remove the common root
         arc_path = os.path.relpath(path, self.common_path)
         # prepend the archive nodes
@@ -177,6 +188,9 @@ class file_manager(object):
         return tuples
 
 def get_size(start_path):
+    """
+    recursively add up the sizes of all files under a root dir
+    """
     total_size = 0
     for dirpath, dirnames, filenames in os.walk(start_path):
         for filename in filenames:
@@ -206,12 +220,15 @@ def size_string(total_size):
         return str(round(gigabytes, 2)) + " Gb"
 
 def filter_selected_list(files):
+    """
+    remove filepaths that are contained in other filepaths to preclude redundant files when bundling
+    """
     filtered = list(files)
 
     for test_path in files:
         if os.path.isdir(test_path):
             for i in xrange(len(filtered) - 1, -1, -1):
                 fpath = filtered[i]
-                if test_path in fpath and test_path != file:
-                    filtered.remove(file)
+                if test_path in fpath and test_path != fpath:
+                    filtered.remove(fpath)
     return filtered

@@ -319,6 +319,9 @@ class TarBundler(FileBundler):
         tarball.close()
 
     def report_percent_complete(self):
+        """
+        send a celery message to the server process indicating the completion state of the bundle
+        """
         current_task.update_state(state=str(self.percent_complete), \
                         meta={'Status': "Bundling percent complete: " + str(int(self.percent_complete))})
 

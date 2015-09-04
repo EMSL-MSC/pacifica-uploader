@@ -54,6 +54,9 @@ class UploaderError(Exception):
 last_percent = 0
 
 def raise_upload_status(status, info):
+    """
+    send a celery message to the server process indicating the status of the upload
+    """
     current_task.update_state(state=status, meta={'info': info})
     print >> sys.stderr, info
 
@@ -142,7 +145,7 @@ def get_info(protocol='https',
              server='dev2.my.emsl.pnl.gov',
              user='',
              password=':',
-             info_type = 'userinfo'):
+             info_type='userinfo'):
 
     """
     gets the user info from the EUS database mirror on the backend server
@@ -209,7 +212,7 @@ def job_status(protocol='https',
                server='',
                user='',
                password=':',
-               job_list = []):
+               job_list=[]):
 
     """
     Validates the user as a MyEMSL user
@@ -226,7 +229,6 @@ def job_status(protocol='https',
     curl.setopt(pycurl.WRITEFUNCTION, odata.write)
 
     curl.perform()
-
 
     pyurl = session.url + '/myemsl/status/index.php/status/job_status'
     curl.setopt(pycurl.URL, pyurl.encode('utf-8'))

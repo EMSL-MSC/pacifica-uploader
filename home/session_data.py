@@ -1,3 +1,7 @@
+"""
+maintains the state of a user session
+"""
+
 import json
 import psutil
 
@@ -5,6 +9,7 @@ import os
 
 from uploader import get_info
 
+from home import file_tools
 from home.file_tools import file_manager
 
 class MetaData(object):
@@ -125,13 +130,10 @@ class session_state(object):
 
         return ''
 
-    def read_config_file(self):
-        config_file = 'UploaderConfig.json'
-        if not os.path.isfile(config_file):
-            self.write_default_config(config_file)
-        self.read_config(config_file)
-
     def load_proposal(self, proposal):
+        """
+        split the proposal id from the friendly concatenated string to get the currently selected proposal id
+        """
         self.proposal_friendly = proposal
 
         # split the proposal string into ID and description
@@ -139,7 +141,9 @@ class session_state(object):
         self.proposal_id = split[0]
 
     def load_proposal_user(self, proposal_user):
-        # get the selected proposal string from the post
+        """
+        get the selected proposal string from the post
+        """
         self.proposal_user = proposal_user
 
     def concatenated_instrument(self):
@@ -338,7 +342,7 @@ class session_state(object):
         #give ourselves a cushion for other processes
         self.free_space = int(.9 * space.free)
 
-        self.free_size_str = self.files.size_string(self.free_space)
+        self.free_size_str = file_tools.size_string(self.free_space)
 
     def validate_space_available(self):
         """
@@ -351,20 +355,34 @@ class session_state(object):
             return True
         return self.files.bundle_size < self.free_space
 
-    def write_default_config(self, filename):
-        d = {}
-        d['target'] = '/srv/localdata'
-        d['dataRoot '] = '/srv/home'
-        d['timeout'] = '10'
-        d['server'] = 'dev2.my.emsl.pnl.gov'
-        d['instrument'] = '0a'
-
-        d['metadata'] = (('Tag', 'Tag'), ('Tag1', 'Taggy'), ('Tag2', 'Taggier'))
-
-        with open(filename, 'w') as fp:
-            json.dump(d, fp)
+    def read_config_file(self):
+        """
+        read the configuration file
+        """
+        config_file = 'UploaderConfig.json'
+        if not os.path.isfile(config_file):
+            write_default_config(config_file)
+        self.read_config(config_file)
 
     def read_config(self, filename):
-
+        """
+        read the configuration file
+        """
         with open(filename, 'r') as fp:
             self.configuration = json.load(fp)
+
+def write_default_config(filename):
+    """
+    write a default configuration file as a template
+    """
+    d = {}
+    d['target'] = '/srv/localdata'
+    d['dataRoot '] = '/srv/home'
+    d['timeout'] = '10'
+    d['server'] = 'dev2.my.emsl.pnl.gov'
+    d['instrument'] = '0a'
+
+    d['metadata'] = (('Tag', 'Tag'), ('Tag1', 'Taggy'), ('Tag2', 'Taggier'))
+
+    with open(filename, 'w') as fp:
+        json.dump(d, fp)
