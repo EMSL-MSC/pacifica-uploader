@@ -132,7 +132,8 @@ class session_state(object):
 
     def load_proposal(self, proposal):
         """
-        split the proposal id from the friendly concatenated string to get the currently selected proposal id
+        split the proposal id from the friendly concatenated string
+        to get the currently selected proposal id
         """
         self.proposal_friendly = proposal
 
@@ -249,11 +250,11 @@ class session_state(object):
                     if self.instrument == str(inst_id):
                         if prop_str not in self.proposal_list:
                             self.proposal_list.append(prop_str)
-            except Exception, err:
-                return 'No valid proposals for this user on this instrument 166'
+            except Exception:
+                return 'No valid proposals for this user on this instrument'
 
         if not self.proposal_list:
-            return 'No valid proposals for this user on this instrument 169'
+            return 'No valid proposals for this user on this instrument'
 
         #self.proposal_list.sort(key=lambda x: int(x.split(' ')[0]), reverse=True)
         self.proposal_list.sort(reverse=True)
@@ -294,7 +295,6 @@ class session_state(object):
             self.proposal_users.append('No users for this proposal')
             return
 
-        i = 0
         for member in members.iteritems():
             member_id = member[1]
             first_name = member_id['first_name']

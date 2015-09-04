@@ -21,22 +21,11 @@ import json
 
 import datetime
 
-from urlparse import urlparse
-
-#operating system and platform
+#operating system
 import os
-import platform
-import stat
-
-#celery heartbeat
-import psutil
 
 #uploader
 from uploader import test_authorization
-from uploader import job_status
-
-#database imports
-from home.models import Metadata
 
 #session imports
 from django.contrib.auth.models import User
@@ -172,9 +161,9 @@ def show_initial_status(request):
     """
     shows the status page with no message
     """
-    return show_status(request, session, "")
+    return show_status(request, "")
 
-def show_status(request, session, message):
+def show_status(request, message):
     """
     show the status of the existing upload task
     """
@@ -189,7 +178,7 @@ def show_status(request, session, message):
                                'user': session.user_full_name},
                               context_instance=RequestContext(request))
 
-def spin_off_upload(request, session):
+def spin_off_upload(request):
     """
     spins the upload process off to a background celery process
     """
@@ -271,7 +260,7 @@ def upload_files(request):
     view for upload process spawn
     """
     print "upload!"
-    return spin_off_upload(request, session)
+    return spin_off_upload(request)
 
 
 """
@@ -372,7 +361,10 @@ def login(request):
     session.current_user = request.user
 
     try:
-        tasks.clean_target_directory(session.target_dir, session.server_path, session.current_user, session.password)
+        tasks.clean_target_directory(session.target_dir,
+                                     session.server_path,
+                                     session.current_user,
+                                     session.password)
     except:
         return login_error(request, "failed to clear tar directory")
 
@@ -417,16 +409,16 @@ def get_children(request):
         if not parent:
             return ""
 
-        list = []
+        pathlist = []
         if os.path.isdir(parent):
             for item in os.listdir(parent):
                 itempath = os.path.join(parent, item)
 
                 if os.path.isfile(itempath):
-                    list.append({"title": item, "key": itempath, "folder": False})
+                    pathlist.append({"title": item, "key": itempath, "folder": False})
                 elif os.path.isdir(itempath):
-                    list.append({"title": item, "key": itempath, "folder": True, "lazy": True})
-        retval = json.dumps(list)
+                    pathlist.append({"title": item, "key": itempath, "folder": True, "lazy": True})
+        retval = json.dumps(pathlist)
 
     except Exception, e:
         print e
@@ -438,7 +430,9 @@ def error_response(err_str):
     """
     send an http error response with an appropriate error message
     """
-    return HttpResponse(json.dumps("Error: " + err_str), content_type="application/json", status=500)
+    return HttpResponse(json.dumps("Error: " + err_str),
+                        content_type="application/json",
+                        status=500)
 
 
 def make_leaf(title, path):
@@ -455,7 +449,10 @@ def make_leaf(title, path):
     session.files.bundle_size += size
 
     size_string = file_tools.size_string(size)
-    return {"title": title + " (" + size_string + ")", "key": path, "folder": is_folder, "data":{"size":size}}
+    return {"title": title + " (" + size_string + ")",
+            "key": path,
+            "folder": is_folder,
+            "data":{"size":size}}
 
 def add_branch(branches, subdirectories, title, path):
     '''
@@ -523,7 +520,12 @@ def get_bundle(request):
         lastnode = {}
 
         for node_name in session.files.archive_structure:
-            node = {"title": node_name, "key": 1, "folder": True, "expanded": True, "children": [], "data":""}
+            node = {"title": node_name,
+                    "key": 1,
+                    "folder": True,
+                    "expanded": True,
+                    "children": [],
+                    "data":""}
             children.append(node)
             children = node['children']
             lastnode = node
@@ -604,7 +606,8 @@ def incremental_status(request):
             #if we have successfully uploaded, cleanup the lists
             session.cleanup_upload()
 
-            result = "https://%s/myemsl/status/index.php/status/view/j/%s" % (session.server_path, job_id)
+            result = "https://%s/myemsl/status/index.php/status/view/j/%s" \
+                     % (session.server_path, job_id)
 
     # create json structure
     retval = json.dumps({'state':state, 'result':result})

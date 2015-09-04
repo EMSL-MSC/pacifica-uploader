@@ -305,11 +305,12 @@ class TarBundler(FileBundler):
 
                 # hash the file and store in hash_dict
                 # percent complete is reported only as read and hashed
-                # hopefully that being the slowest part and all we have access to for completion statistics
+                # hopefully that being the slowest part and all we have
+                # access to for completion statistics
                 self.hash_file(file_path, file_arcname)
 
-                # for version 1.2, push files to a data/ directory to avoid collisions with metadata.txt
-                # in the root
+                # for version 1.2, push files to a data/ directory
+                #to avoid collisions with metadata.txt in the root
                 modified_arc_name = os.path.join('data', file_arcname)
                 tarball.add(file_path, arcname=modified_arc_name, recursive=False)
 
@@ -322,8 +323,9 @@ class TarBundler(FileBundler):
         """
         send a celery message to the server process indicating the completion state of the bundle
         """
-        current_task.update_state(state=str(self.percent_complete), \
-                        meta={'Status': "Bundling percent complete: " + str(int(self.percent_complete))})
+        current_task.update_state(state=str(self.percent_complete),
+                                  meta={'Status': "Bundling percent complete: " \
+                                        + str(int(self.percent_complete))})
 
     def _bundle_metadata(self, metadata):
         """

@@ -3,7 +3,6 @@ manages the tar directory to keep it from overflowing
 """
 
 import os
-import platform
 import json
 import time
 
@@ -14,9 +13,9 @@ def job_list(directory):
     dir_files = os.listdir(directory)
     jobs = []
 
-    for file in dir_files:
-        if '_uploaded.tar' in file:
-            job = file.replace('_uploaded.tar', '')
+    for fpath in dir_files:
+        if '_uploaded.tar' in fpath:
+            job = fpath.replace('_uploaded.tar', '')
             jobs.append(job.encode('utf-8'))
 
     return jobs
@@ -26,8 +25,8 @@ def parse_job(url):
     parse job id from status url, ex:
     https://dev2.my.emsl.pnl.gov/myemsl/cgi-bin/status/2000796
     """
-    list = url.split('/')
-    job_id = list[-1]
+    joblist = url.split('/')
+    job_id = joblist[-1]
     if job_id:
         return job_id
     else:
@@ -65,9 +64,9 @@ def remove_orphans(directory):
     dir_files = os.listdir(directory)
 
     # compare the files to the contents of the directory
-    for file in dir_files:
+    for fpath in dir_files:
         # if a file is in the directory but not uploaded, remove it if it is out of date
-        full_path = os.path.join(directory, file)
+        full_path = os.path.join(directory, fpath)
         if not '_uploaded.tar' in file:
             # remove from directory
             if os.path.isfile(full_path):
