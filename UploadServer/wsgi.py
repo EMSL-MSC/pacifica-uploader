@@ -1,3 +1,6 @@
+#pylint: disable=invalid-name
+#justification: because pylint doesn't get django
+
 """
 WSGI config for UploadServer project.
 

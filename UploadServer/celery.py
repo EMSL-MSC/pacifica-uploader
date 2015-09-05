@@ -1,3 +1,7 @@
+#pylint: disable=no-member
+#pylint: disable=invalid-name
+#justification: because pylint doesn't get celery
+
 """
 Celery properties
 """

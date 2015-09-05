@@ -66,8 +66,8 @@ def remove_orphans(directory):
     # compare the files to the contents of the directory
     for fpath in dir_files:
         # if a file is in the directory but not uploaded, remove it if it is out of date
-        full_path = os.path.join(directory, fpath)
-        if not '_uploaded.tar' in file:
+        if not '_uploaded.tar' in fpath:
+            full_path = os.path.join(directory, fpath)
             # remove from directory
             if os.path.isfile(full_path):
                 timestamp = os.path.getmtime(full_path)

@@ -13,7 +13,7 @@ import os
 from uploader import get_info
 
 from home import file_tools
-from home.file_tools import file_manager
+from home.file_tools import FileManager
 
 class MetaData(object):
     """
@@ -27,7 +27,7 @@ class MetaData(object):
     def __init__(self):
         pass
 
-class session_state(object):
+class SessionState(object):
     """description of class"""
     """
     meta data about for a session
@@ -60,7 +60,7 @@ class session_state(object):
     data_dir = ''
     timeout = 30
 
-    files = file_manager()
+    files = FileManager()
 
     # meta data values
     meta_list = []
@@ -377,14 +377,14 @@ def write_default_config(filename):
     """
     write a default configuration file as a template
     """
-    dict = {}
-    dict['target'] = '/srv/localdata'
-    dict['dataRoot '] = '/srv/home'
-    dict['timeout'] = '10'
-    dict['server'] = 'dev2.my.emsl.pnl.gov'
-    dict['instrument'] = '0a'
+    configdict = {}
+    configdict['target'] = '/srv/localdata'
+    configdict['dataRoot '] = '/srv/home'
+    configdict['timeout'] = '10'
+    configdict['server'] = 'dev2.my.emsl.pnl.gov'
+    configdict['instrument'] = '0a'
 
-    dict['metadata'] = (('Tag', 'Tag'), ('Tag1', 'Taggy'), ('Tag2', 'Taggier'))
+    configdict['metadata'] = (('Tag', 'Tag'), ('Tag1', 'Taggy'), ('Tag2', 'Taggier'))
 
     with open(filename, 'w') as config:
-        json.dump(dict, config)
+        json.dump(configdict, config)

@@ -6,6 +6,9 @@
 #pylint: disable=no-self-use
 # justification: virtual class
 
+#pylint: disable=no-member
+#justification: because pylint is dumb
+
 """
 A Bundler module that aggregates files into a single bundle
 """

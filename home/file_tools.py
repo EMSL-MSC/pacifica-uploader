@@ -1,3 +1,5 @@
+#pylint: disable=unused-variable
+#justification: because I don't want to add extra code to parse a returned tuple
 """
 tools to bundle, parse file structures, etc.
 """
@@ -17,7 +19,7 @@ class FolderMeta(object):
     def __init__(self):
         pass
 
-class file_manager(object):
+class FileManager(object):
     """description of class"""
 
     bundle_filepath = ''

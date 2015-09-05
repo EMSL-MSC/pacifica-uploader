@@ -3,7 +3,7 @@
 An Uploader module that uses PycURL to transfer data
 """
 #pylint: disable=no-member
-#pylint: disable=no-member
+#justification: because pylint doesn't get pycurl
 
 import os
 import sys
@@ -49,9 +49,6 @@ class UploaderError(Exception):
 
         current_task.update_state(state='FAILURE', meta={'info': self.msg})
         return "Uploader failed: %s" % self.msg
-
-# Module level variables
-last_percent = 0
 
 def raise_upload_status(status, info):
     """
@@ -254,20 +251,25 @@ def job_status(protocol='https',
 
     return ''
 
+class TrackPercent(object):
+    """
+    yay, module level global that pylint doesn't bitch about
+    used to track percent uploaded between Curl callbacks
+    """
+    percent = 0
+
 def progress(download_t, download_d, upload_t, upload_d):
     """
     gets the progress of the current pycurl upload
     """
-    global last_percent
-
     if upload_t > 0:
         percent = 100.0 * float(upload_d) / float(upload_t)
 
-        if percent - last_percent > 5:
+        if percent - TrackPercent.percent > 5:
             current_task.update_state(state=str(percent),
                                       meta={'Status': "upload percent complete: " \
                                           + str(int(percent))})
-            last_percent = percent
+            TrackPercent.percent = percent
             print percent
 
 def upload(bundle_name='',
@@ -292,9 +294,6 @@ def upload(bundle_name='',
     @note This function assumes a bundle has been created already and is ready to upload
     """
     status = None
-
-    global last_percent
-    last_percent = 0
 
     bundle_path = os.path.abspath(bundle_name)
     if not os.path.exists(bundle_path):
@@ -382,6 +381,7 @@ def upload(bundle_name='',
         size = os.lstat(bundle_path)[stat.ST_SIZE]
         curl.setopt(pycurl.INFILESIZE_LARGE, size)
 
+        TrackPercent.percent = 0
         curl.setopt(pycurl.NOPROGRESS, 0)
         curl.setopt(pycurl.PROGRESSFUNCTION, progress)
         curl.perform()

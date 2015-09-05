@@ -1,3 +1,5 @@
+#pylint: disable=no-member
+#justification: because pylint doesn't get pycurl
 '''
 Created on Oct 30, 2014
 
