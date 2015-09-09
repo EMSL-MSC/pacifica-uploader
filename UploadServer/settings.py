@@ -46,7 +46,8 @@ ALLOWED_HOSTS = []
 
 # URL of the login page.
 LOGIN_URL = '/login/'
-LOGOUT_URL = '/logout/'
+# when we log out we want to immediately redirect to the login page
+LOGOUT_URL = '/login/'
 
 # login view
 LOGIN_VIEW = 'home/login.html'

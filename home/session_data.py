@@ -266,9 +266,6 @@ class SessionState(object):
 
         self.populate_proposal_users(self.proposal_id)
 
-        # no errors found
-        return ''
-
     def populate_proposal_users(self, proposal_id):
         """
         parses user for a proposal and instrument from a json struct

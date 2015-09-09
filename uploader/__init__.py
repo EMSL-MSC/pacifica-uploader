@@ -5,6 +5,9 @@ An Uploader module that uses PycURL to transfer data
 #pylint: disable=no-member
 #justification: because pylint doesn't get pycurl
 
+#pylint: disable=unused-argument
+#justification: pycurl callback
+
 import os
 import sys
 import re
@@ -258,7 +261,7 @@ class TrackPercent(object):
     """
     percent = 0
 
-def progress(download_t, download_d, upload_t, upload_d):
+def progress(_download_t, _download_d, upload_t, upload_d):
     """
     gets the progress of the current pycurl upload
     """

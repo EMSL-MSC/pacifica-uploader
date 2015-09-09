@@ -23,7 +23,7 @@ urlpatterns = patterns('',
                        url(r'^propUser/', 'home.views.get_proposal_users', name='propUser'),
                        url(r'^cookie/', 'home.views.cookie_test', name='cookie'),
                        (r'^login/$', 'home.views.login'),
-                       (r'^logout/$', 'home.views.logout'),)
+                       url(r'^logout/$', 'home.views.logout'),)
 
 urlpatterns += patterns('', (r'^media/(?P<path>.*)$', \
     'django.views.static.serve', {'document_root': settings.MEDIA_ROOT}))

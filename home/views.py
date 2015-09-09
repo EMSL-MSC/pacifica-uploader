@@ -51,7 +51,7 @@ from home import file_tools
 
 # Module level variables
 session = session_data.SessionState()
-version = '0.98.20'
+version = '0.98.21'
 
 def login_user_locally(request):
     """
@@ -60,7 +60,7 @@ def login_user_locally(request):
     before this function is called.
     """
     username = request.POST['username']
-    password = 'shrubbery'
+    password = request.POST['password']
 
     # does this user exist?
     try:
@@ -72,13 +72,21 @@ def login_user_locally(request):
         #create a new user
         user = User.objects.create_user(username=username, password=password)
         user.save()
+    else:
+        # user exists but their password may have changed
+        # if we make it this far, user has been validated by EUS
+        # so store the "new" password
+        user.set_password(password)
+        user.save()
 
-    # we have a local user that matches the already validated EUS user
+    # we now have a local user that matches the already validated EUS user
     # authenticate and log them in locally
     user = authenticate(username=username, password=password)
-    if user is not None:
+    if user:
         if user.is_active:
             auth.login(request, user)
+    else:
+        return "Unable to create user"
 
 
 def ping_celery():
@@ -246,15 +254,16 @@ def spin_off_upload(request):
                                          user=session.user,
                                          password=session.password)
     else: # for debug purposes
-        tasks.upload_files(bundle_name=session.bundle_filepath,
-                           instrument_name=session.instrument,
-                           proposal=session.proposal_id,
-                           file_list=tuples,
-                           bundle_size=session.files.bundle_size,
-                           groups=groups,
-                           server=session.server_path,
-                           user=session.user,
-                           password=session.password)
+        tasks.upload_files(
+            bundle_name=session.bundle_filepath,
+            instrument_name=session.instrument,
+            proposal=session.proposal_id,
+            bundle_size=session.files.bundle_size,
+            groups=groups,
+            server=session.server_path,
+            user=session.user,
+            password=session.password
+        )
 
     return HttpResponse(json.dumps("success"), content_type="application/json")
 
@@ -321,17 +330,13 @@ def login(request):
     if not request.POST:
         return login_error(request, '')
 
-    """
     # check to see if there is an existing user logged in
     if (session.current_user):
         # if the current user is still logged in, throw an error
         if (session.current_user.is_authenticated()):
             return login_error(request, 'User %s is currently logged in' % session.user_full_name)
-    # if this was the last user logged in, maintain the session state
-    if (request.user is not session.current_user):
-        cleanup_session(session)
-    """
 
+    # after login you lose your session context
     session.cleanup_session()
 
     #even if this is the current user, we still need to re-authenticate them
@@ -343,16 +348,17 @@ def login(request):
                                  server=session.server_path,
                                  user=session.user,
                                  password=session.password)
-
     if err_str:
         return login_error(request, err_str)
 
     err_str = session.populate_user_info()
-    if err_str is not '':
+    if err_str:
         return login_error(request, err_str)
 
     # if the user passes EUS authentication then log them in locally for our session
-    login_user_locally(request)
+    err_str = login_user_locally(request)    
+    if err_str:
+        return login_error(request, err_str)
 
     # did that work?
     if not request.user.is_authenticated():
@@ -379,12 +385,11 @@ def logout(request):
     which will bounce to the login page
     """
 
-    # pass pylint
-    request = request
+    session.current_user = None
 
     #logs out local user session
     # if the LOGOUT_URL is set to this view, we create a recursive call to here
-    #logout(request)
+    auth.logout(request)
 
     return HttpResponseRedirect(reverse('home.views.login'))
 
