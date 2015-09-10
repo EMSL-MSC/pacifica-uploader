@@ -1,4 +1,4 @@
-#pylint: disable=no-member
+﻿#pylint: disable=no-member
 # justification:  dynamic methods
 
 #pylint: disable=invalid-name
@@ -51,7 +51,7 @@ from home import file_tools
 
 # Module level variables
 session = session_data.SessionState()
-version = '0.98.21'
+version = '0.98.22'
 
 def login_user_locally(request):
     """

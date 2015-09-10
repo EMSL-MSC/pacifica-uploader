@@ -22,19 +22,19 @@ function FilterSingleBranch(clickedNode, parentNodes) {
 
     if (parentNodes.length != 1) return parentNodes;
 
-    parent = parentNodes[0];
+    myparent = parentNodes[0];
 
     // user selected it, go with it.
-    if (parent.key == clickedNode.key) return parentNodes;
+    if (myparent.key == clickedNode.key) return parentNodes;
 
-    var children = parent.getChildren();
+    var mychildren = myparent.getChildren();
 
-    if (children.length != 1) return parentNodes;
+    if (mychildren.length != 1) return parentNodes;
 
-    parent.selected = false;
-    parent.setTitle(parent.title);
+    myparent.selected = false;
+    myparent.setTitle(parent.title);
 
-    return FilterSingleBranch(clickedNode, children);
+    return FilterSingleBranch(clickedNode, mychildren);
 }
 
 function loadUploadTree(selected) {
