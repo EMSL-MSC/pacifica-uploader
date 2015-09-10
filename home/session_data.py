@@ -14,28 +14,12 @@ from uploader import get_info
 
 from home import file_tools
 from home.file_tools import FileManager
-
-class MetaData(object):
-    """
-    structure used to pass upload metadata back and forth to the upload page
-    """
-
-    label = ''
-    value = ''
-    name = ''
-
-    def __init__(self):
-        pass
+from home.instrument_server import InstrumentConfiguration
 
 class SessionState(object):
-    """description of class"""
     """
     meta data about for a session
     """
-
-    initialized = False
-
-    server_path = ''
 
     user = ''
     user_full_name = ''
@@ -44,10 +28,6 @@ class SessionState(object):
     current_user = None
     current_time = ''
 
-    instrument = ''
-    instrument_friendly = ''
-    instrument_short_name = ''
-
     proposal_friendly = ''
     proposal_id = ''
     proposal_list = []
@@ -55,13 +35,10 @@ class SessionState(object):
     proposal_user = ''
     proposal_users = []
 
-    server_path = ''
-    target_dir = ''
-    data_dir = ''
-    timeout = 30
-
     files = FileManager()
+    config = None
 
+    #Todo: mesh the meta lists for session and server
     # meta data values
     meta_list = []
 
@@ -69,69 +46,6 @@ class SessionState(object):
     bundle_process = None
 
     bundle_filepath = ''
-    free_size_str = ''
-
-    # free disk space
-    free_space = 0
-
-    # configuration dictionary
-    configuration = {}
-
-    def initialize_settings(self):
-        """
-        if the system hasn't been initialized, do so
-        """
-        try:
-            if not self.initialized: # first time through, initialize
-
-                self.read_config_file()
-
-                self.instrument = self.configuration['instrument']
-                if self.instrument == '':
-                    return 'Configuration: Missing instrument'
-
-                self.target_dir = self.configuration['target']
-                if self.target_dir == '':
-                    return 'Configuration: Missing target directory'
-
-                if not os.path.isdir(self.target_dir):
-                    return 'Configuration: target directory unmounted'
-
-                self.server_path = self.configuration['server']
-                if self.server_path == '':
-                    return 'Configuration: Missing server path'
-
-                self.timeout = int(self.configuration['timeout'])
-                if self.timeout == '':
-                    return 'Configuration: Missing timeout'
-
-                root_dir = os.path.normpath(self.configuration['dataRoot'])
-                if root_dir == '':
-                    return 'Configuration: Missing root directory'
-
-                if root_dir.endswith("\\"):
-                    root_dir = root_dir[:-1]
-
-                if not os.path.isdir(root_dir):
-                    return 'Configuration: root directory unmounted'
-
-                self.data_dir = root_dir
-
-                # create a list of metadata entries to pass to the list upload page
-                self.meta_list = []
-                for meta in self.configuration['metadata']:
-                    meta_entry = MetaData()
-                    meta_entry.name = meta[0]
-                    meta_entry.label = meta[1]
-                    meta_entry.value = ''
-                    self.meta_list.append(meta_entry)
-            else:
-                return ''
-        except Exception, err:
-            print err
-            return 'Configuration Error'
-
-        return ''
 
     def load_proposal(self, proposal):
         """
@@ -150,19 +64,16 @@ class SessionState(object):
         """
         self.proposal_user = proposal_user
 
-    def concatenated_instrument(self):
-        """
-        concatenate the instrument id with the description
-        """
-        return self.instrument + " " + self.instrument_friendly
-
-    def populate_user_info(self):
+    def populate_user_info(self, configuration):
         """
         parses user information from a json struct
         """
+
+        self.config = configuration
+
         # get the user's info from EUS
         info = get_info(protocol='https',
-                        server=self.server_path,
+                        server=self.config.server_path,
                         user=self.user,
                         password=self.password,
                         info_type='userinfo')
@@ -200,12 +111,14 @@ class SessionState(object):
                 if not inst_name:
                     inst_name = 'unnamed'
 
-                self.instrument_short_name = inst_block.get('name_short')
-                if not self.instrument_short_name:
-                    self.instrument_short_name = 'no short name'
+                instrument_short_name = inst_block.get('name_short')
+                if not instrument_short_name:
+                    instrument_short_name = 'no short name'
 
-                if self.instrument == inst_id:
-                    self.instrument_friendly = inst_name
+                # ToDo: get this information at the instrument level, not the user level
+                if self.config.instrument == inst_id:
+                    self.config.instrument_friendly = inst_name
+                    self.config.instrument_short_name = instrument_short_name
                     valid_instrument = True
                     break
 
@@ -249,7 +162,7 @@ class SessionState(object):
                 for inst_id in instruments:
                     if not inst_id:
                         continue
-                    if self.instrument == str(inst_id):
+                    if self.config.instrument == str(inst_id):
                         if prop_str not in self.proposal_list:
                             self.proposal_list.append(prop_str)
             except Exception:
@@ -276,7 +189,7 @@ class SessionState(object):
 
         # get the user's info from EUS
         info = get_info(protocol='https',
-                        server=self.server_path,
+                        server=self.config.server_path,
                         user=self.user,
                         password=self.password,
                         info_type='proposalinfo/' + proposal_id)
@@ -331,57 +244,13 @@ class SessionState(object):
         self.current_time = None
         self.files.cleanup_files()
 
-    def update_free_space(self):
-        """
-        update the amount of free space currently available
-        """
-        # get the disk usage
-        space = psutil.disk_usage(self.target_dir)
-
-        #give ourselves a cushion for other processes
-        self.free_space = int(.9 * space.free)
-
-        self.free_size_str = file_tools.size_string(self.free_space)
-
     def validate_space_available(self):
         """
         check the bundle size agains space available
         """
 
-        self.update_free_space()
+        self.config.update_free_space()
 
         if self.files.bundle_size == 0:
             return True
-        return self.files.bundle_size < self.free_space
-
-    def read_config_file(self):
-        """
-        read the configuration file
-        """
-        config_file = 'UploaderConfig.json'
-        if not os.path.isfile(config_file):
-            write_default_config(config_file)
-        self.read_config(config_file)
-
-    def read_config(self, filename):
-        """
-        read the configuration file
-        """
-        with open(filename, 'r') as config:
-            self.configuration = json.load(config)
-
-def write_default_config(filename):
-    """
-    write a default configuration file as a template
-    """
-    configdict = {}
-    configdict['target'] = '/srv/localdata'
-    configdict['dataRoot '] = '/srv/home'
-    configdict['timeout'] = '10'
-    configdict['server'] = 'dev2.my.emsl.pnl.gov'
-    configdict['instrument'] = '0a'
-
-    configdict['metadata'] = (('Tag', 'Tag'), ('Tag1', 'Taggy'), ('Tag2', 'Taggier'))
-
-    with open(filename, 'w') as config:
-        json.dump(configdict, config)
+        return self.files.bundle_size < self.config.free_space

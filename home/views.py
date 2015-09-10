@@ -48,16 +48,22 @@ import subprocess
 
 from home import session_data
 from home import file_tools
+from home import instrument_server
 
 # Module level variables
+# session is user specific information
 session = session_data.SessionState()
-version = '0.98.22'
+
+# server is instrument uploader specific information
+configuration = instrument_server.InstrumentConfiguration()
+
+# development version
+version = '0.98.23'
 
 def login_user_locally(request):
     """
     if we have a new user, let's create a new Django user and log them
-    in with a bogus password, "shrubbery".  Actual authentication will be done
-    before this function is called.
+    in. Actual EUS authentication will be done before this function is called.
     """
     username = request.POST['username']
     password = request.POST['password']
@@ -140,7 +146,7 @@ def populate_upload_page(request):
         # call login error with no error message
         return login_error(request, '')
 
-    root_dir = session.data_dir
+    root_dir = configuration.data_dir
 
     if not root_dir or root_dir == '':
         return login_error(request, 'Data share is not configured')
@@ -152,18 +158,17 @@ def populate_upload_page(request):
 
     # update the free space when the page is loaded
     # this will update after an upload is done
-    session.update_free_space()
-
+    configuration.update_free_space()
 
     # Render list page with the documents and the form
     return render_to_response('home/uploader.html',
-                              {'instrument': session.concatenated_instrument(),
+                              {'instrument': configuration.concatenated_instrument(),
                                'proposalList': session.proposal_list,
                                'user_list': session.proposal_users,
                                'proposal':session.proposal_friendly,
                                'proposal_user':session.proposal_user,
                                'proposal_users':session.proposal_users,
-                               'data_root':session.data_dir,
+                               'data_root':configuration.data_dir,
                                'metaList':session.meta_list,
                                'user':session.user_full_name},
                               context_instance=RequestContext(request))
@@ -179,13 +184,13 @@ def show_status(request, message):
     show the status of the existing upload task
     """
     return render_to_response('home/status.html',
-                              {'instrument':session.concatenated_instrument(),
+                              {'instrument':configuration.concatenated_instrument(),
                                'status': message,
                                'proposal':session.proposal_friendly,
                                'metaList':session. meta_list,
                                'current_time': session.current_time,
                                'bundle_size': session.files.bundle_size_str,
-                               'free_size': session.free_size_str,
+                               'free_size': configuration.free_size_str,
                                'user': session.user_full_name},
                               context_instance=RequestContext(request))
 
@@ -233,34 +238,34 @@ def spin_off_upload(request):
     for meta in session.meta_list:
         groups[meta.name] = meta.value
 
-    insty = 'Instrument.%s' % (session.instrument)
-    groups[insty] = session.instrument_friendly
+    insty = 'Instrument.%s' % (configuration.instrument)
+    groups[insty] = configuration.instrument_friendly
     groups["EMSL User"] = session.proposal_user
 
     session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
 
-    session.bundle_filepath = os.path.join(session.target_dir, session.current_time + ".tar")
+    session.bundle_filepath = os.path.join(configuration.target_dir, session.current_time + ".tar")
 
     # spin this off as a background process and load the status page
     if True:
         session.bundle_process = \
                 tasks.upload_files.delay(bundle_name=session.bundle_filepath,
-                                         instrument_name=session.instrument,
+                                         instrument_name=configuration.instrument,
                                          proposal=session.proposal_id,
                                          file_list=tuples,
                                          bundle_size=session.files.bundle_size,
                                          groups=groups,
-                                         server=session.server_path,
+                                         server=configuration.server_path,
                                          user=session.user,
                                          password=session.password)
     else: # for debug purposes
         tasks.upload_files(
             bundle_name=session.bundle_filepath,
-            instrument_name=session.instrument,
+            instrument_name=configuration.instrument,
             proposal=session.proposal_id,
             bundle_size=session.files.bundle_size,
             groups=groups,
-            server=session.server_path,
+            server=configuration.server_path,
             user=session.user,
             password=session.password
         )
@@ -283,12 +288,12 @@ def login_error(request, error_string):
     """
     returns to the login page with an error message
     """
-    if not session.initialized:
-        session.initialize_settings()
+    if not configuration.initialized:
+        configuration.initialize_settings()
 
     return render_to_response(settings.LOGIN_VIEW,
                               {'site_version':version,
-                               'instrument': session.instrument,
+                               'instrument': configuration.instrument,
                                'message': error_string},
                               context_instance=RequestContext(request))
 
@@ -317,14 +322,14 @@ def login(request):
     Otherwise, gets the user data to populate the main page
     """
 
-    # initialize session settings from scratch
-    session.initialized = False
-    err = session.initialize_settings()
+    # initialize server settings from scratch
+    configuration.initialized = False
+    err = configuration.initialize_settings()
     if err != '':
         return login_error(request, 'faulty configuration:  ' + err)
 
     # timeout
-    SESSION_COOKIE_AGE = session.timeout * 60
+    SESSION_COOKIE_AGE = configuration.timeout * 60
 
     # ignore GET
     if not request.POST:
@@ -345,13 +350,15 @@ def login(request):
 
     # test to see if the user authorizes against EUS
     err_str = test_authorization(protocol="https",
-                                 server=session.server_path,
+                                 server=configuration.server_path,
                                  user=session.user,
                                  password=session.password)
     if err_str:
         return login_error(request, err_str)
 
-    err_str = session.populate_user_info()
+    # this loads the user information and sets a local reference to the 
+    # configuration for the session object
+    err_str = session.populate_user_info(configuration)
     if err_str:
         return login_error(request, err_str)
 
@@ -370,8 +377,8 @@ def login(request):
     session.current_user = request.user
 
     try:
-        tasks.clean_target_directory(session.target_dir,
-                                     session.server_path,
+        tasks.clean_target_directory(configuration.target_dir,
+                                     configuration.server_path,
                                      session.current_user,
                                      session.password)
     except:
@@ -507,7 +514,7 @@ def initialize_archive_structure():
     initialize the structure used to store bundles in the archive
     """
     session.files.initialize_archive_structure(['Proposal ' + session.proposal_id,
-                                                session.instrument_short_name,
+                                                configuration.instrument_short_name,
                                                 datetime.datetime.now().strftime("%Y.%m.%d")])
 
 def get_bundle(request):
@@ -571,7 +578,7 @@ def get_bundle(request):
         uploadEnabled = session.validate_space_available()
 
         size_string = file_tools.size_string(session.files.bundle_size)
-        tree[0]['data'] = 'Bundle: %s, Free: %s' % (size_string, session.free_size_str)
+        tree[0]['data'] = 'Bundle: %s, Free: %s' % (size_string, configuration.free_size_str)
         retval = json.dumps(tree)
 
     except Exception, e:
@@ -615,7 +622,7 @@ def incremental_status(request):
             session.cleanup_upload()
 
             result = "https://%s/myemsl/status/index.php/status/view/j/%s" \
-                     % (session.server_path, job_id)
+                     % (configuration.server_path, job_id)
 
     # create json structure
     retval = json.dumps({'state':state, 'result':result})
