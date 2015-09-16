@@ -89,13 +89,15 @@ class InstrumentConfiguration(object):
                 self.data_dir = root_dir
 
                 # create a list of metadata entries to pass to the list upload page
-                self.meta_list = []
-                for meta in configuration['metadata']:
-                    meta_entry = MetaData()
-                    meta_entry.name = meta[0]
-                    meta_entry.label = meta[1]
-                    meta_entry.value = ''
-                    self.meta_list.append(meta_entry)
+                try:
+                    for meta in configuration['metadata']:
+                        meta_entry = MetaData()
+                        meta_entry.name = meta[0]
+                        meta_entry.label = meta[1]
+                        meta_entry.value = ''
+                        self.meta_list.append(meta_entry)
+                except KeyError:
+                    return 'Configuration: missing metadata'
             else:
                 return ''
         except Exception, err:
