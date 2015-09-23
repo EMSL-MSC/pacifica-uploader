@@ -71,21 +71,6 @@
                         </div>
 
                     </fieldset>
-
-                    <fieldset style="margin-top:1em;padding: 1em;">
-                        <legend>Choose Files to Upload</legend>
-                        <div class="full_width_block">
-                          <div id="tree">
-                            <ul id="root" style="display:none;" class="ui-fancytree-source ui-helper-hidden">
-                                <li id="{{data_root}}" class="lazy folder">
-                                    <span>My Data</span>
-                                </li>
-                            </ul>
-                          </div>
-                        </div>
-                        
-                    </fieldset>
-
                     <fieldset style="margin-top:1em;padding: 1em;">
                         <legend>Files to be Uploaded</legend>
                         <div class="full_width_block">
@@ -105,6 +90,19 @@
                               </div>
                           </div>
                         </div>
+                    </fieldset>
+                    <fieldset style="margin-top:1em;padding: 1em;">
+                        <legend>Choose Files to Upload</legend>
+                        <div class="full_width_block" style="max-height:500px;overflow-y:scroll;">
+                          <div id="tree">
+                            <ul id="root" style="display:none;" class="ui-fancytree-source ui-helper-hidden">
+                                <li id="{{data_root}}" class="lazy folder">
+                                    <span>My Data</span>
+                                </li>
+                            </ul>
+                          </div>
+                        </div>
+                        
                     </fieldset>
                 </form>
             </div>
