@@ -106,12 +106,24 @@ $(function () {
     $('select').select2({width:'resolve'});
     $('#instrument').prop('disabled', true);
 
+    function loadError(e, data) {
+        var error = data.error;
+        if (error.status && error.statusText) {
+            data.message = "Ajax error: " + data.message;
+            data.details = "Ajax error: " + error.statusText + ", status code = " + error.status;
+        } else {
+            data.message = "Custom error: " + data.message;
+            data.details = "An error occurred during loading: " + error;
+        }
+    }
+
     // Create the tree inside the <div id="tree"> element.
     // Create the tree inside the <div id="tree"> element.
     $("#tree").fancytree({
         //      extensions: ["select"],
         checkbox: true,
         selectMode: 3,
+        loadError: loadError,
         lazyLoad: function (event, data) {
             var node = data.node;
             // Load child nodes via ajax GET /getTreeData?mode=children&parent=1234

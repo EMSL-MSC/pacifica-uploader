@@ -141,6 +141,14 @@ def populate_upload_page(request):
     formats the main uploader page
     """
 
+    request.session.modified = True
+    age = request.session.get_expiry_age()
+
+    #request.session.set_expiry(10)
+
+    #age = request.session.get_expiry_age()
+
+
     # if not logged in
     if session.password == '':
         # call login error with no error message
@@ -335,18 +343,22 @@ def login(request):
     if not request.POST:
         return login_error(request, '')
 
+    new_user = request.POST['username']
+    new_password = request.POST['password']
+
     # check to see if there is an existing user logged in
     if (session.current_user):
-        # if the current user is still logged in, throw an error
+        # if the current user is still logged in and this is not that user, throw an error
         if (session.current_user.is_authenticated()):
-            return login_error(request, 'User %s is currently logged in' % session.user_full_name)
+            if new_user != session.user:
+                return login_error(request, 'User %s is currently logged in' % session.user_full_name)
 
     # after login you lose your session context
     session.cleanup_session()
 
     #even if this is the current user, we still need to re-authenticate them
-    session.user = request.POST['username']
-    session.password = request.POST['password']
+    session.user = new_user
+    session.password = new_password
 
     # test to see if the user authorizes against EUS
     err_str = test_authorization(protocol="https",
@@ -400,6 +412,7 @@ def logout(request):
 
     return HttpResponseRedirect(reverse('home.views.login'))
 
+@login_required(login_url=settings.LOGIN_URL)
 def get_proposal_users(request):
     """
     get the proposal users associated with a proposal
@@ -412,7 +425,7 @@ def get_proposal_users(request):
 
     return HttpResponse(retval, content_type="application/json")
 
-
+@login_required(login_url=settings.LOGIN_URL)
 def get_children(request):
     """
     get the children of a parent directory, used for lazy loading
@@ -509,14 +522,6 @@ def make_tree(tree, subdirectories, partial_path, title, path):
     subdirectories.insert(0, tail)
     make_tree(tree, subdirectories, head, title, path)
 
-def initialize_archive_structure():
-    """
-    initialize the structure used to store bundles in the archive
-    """
-    session.files.initialize_archive_structure(['Proposal ' + session.proposal_id,
-                                                configuration.instrument_short_name,
-                                                datetime.datetime.now().strftime("%Y.%m.%d")])
-
 def get_bundle(request):
     """
     return a tree structure containing directories and files to be uploaded
@@ -528,22 +533,7 @@ def get_bundle(request):
         if not pathstring:
             return error_response("bad input to get_bundle")
 
-        initialize_archive_structure()
-
-        tree = []
-        children = tree
-        lastnode = {}
-
-        for node_name in session.files.archive_structure:
-            node = {"title": node_name,
-                    "key": 1,
-                    "folder": True,
-                    "expanded": True,
-                    "children": [],
-                    "data":""}
-            children.append(node)
-            children = node['children']
-            lastnode = node
+        tree, lastnode = session.get_archive_tree()
 
         paths = json.loads(pathstring)
 

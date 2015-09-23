@@ -28,20 +28,6 @@ class FileManager(object):
 
     common_path = ''
     archive_path = ''
-    archive_structure = []
-
-    def initialize_archive_structure(self, nodes):
-        """
-        build the archive structure and archive path
-        """
-        if not nodes:
-            return
-
-        self.archive_structure = nodes
-
-        self.archive_path = nodes[0]
-        for i in range(1, len(nodes)):
-            self.archive_path = os.path.join(self.archive_path, nodes[i])
 
     def cleanup_files(self):
         """

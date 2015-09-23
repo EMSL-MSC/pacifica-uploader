@@ -7,8 +7,8 @@ maintains the state of a user session
 
 import json
 import psutil
-
 import os
+import datetime
 
 from uploader import get_info
 
@@ -254,3 +254,34 @@ class SessionState(object):
         if self.files.bundle_size == 0:
             return True
         return self.files.bundle_size < self.config.free_space
+
+    def get_archive_tree(self):
+        """
+        returns a nested structure that can be used to populate fancytree
+        """
+        nodes = ['Proposal ' + self.proposal_id,
+                 self.config.instrument_short_name,
+                 datetime.datetime.now().strftime("%Y.%m.%d")]
+
+        tree = []
+        children = tree
+        lastnode = {}
+        archive_path = ''
+
+        for node_name in nodes:
+            node = {"title": node_name,
+                    "key": 1,
+                    "folder": True,
+                    "expanded": True,
+                    "children": [],
+                    "data":""}
+            children.append(node)
+            children = node['children']
+            lastnode = node
+
+            # concatenate the archive path
+            archive_path = os.path.join(archive_path, node_name)
+
+        self.files.archive_path = archive_path
+
+        return tree, lastnode
