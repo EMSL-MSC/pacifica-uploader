@@ -140,7 +140,14 @@ $(function () {
 
             loadUploadTree(filtered);
         },
-
+        click: function (event, data) {
+            node = data.node;
+            var tree = $("#tree").fancytree("getTree");
+            var clicked_item_type = $.ui.fancytree.getEventTargetType(event.originalEvent);
+            if (clicked_item_type != 'checkbox' && clicked_item_type != 'expander') {
+                node.toggleExpanded();
+            }
+        },
         loadChildren: function (event, data) {
             // Apply parent's state to new child nodes:
             data.node.fixSelection3AfterClick();
