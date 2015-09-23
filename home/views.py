@@ -330,18 +330,22 @@ def login(request):
     if not request.POST:
         return login_error(request, '')
 
+    new_user = request.POST['username']
+    new_password = request.POST['password']
+
     # check to see if there is an existing user logged in
     if (session.current_user):
-        # if the current user is still logged in, throw an error
+        # if the current user is still logged in and this is not that user, throw an error
         if (session.current_user.is_authenticated()):
-            return login_error(request, 'User %s is currently logged in' % session.user_full_name)
+            if new_user != session.user:
+                return login_error(request, 'User %s is currently logged in' % session.user_full_name)
 
     # after login you lose your session context
     session.cleanup_session()
 
     #even if this is the current user, we still need to re-authenticate them
-    session.user = request.POST['username']
-    session.password = request.POST['password']
+    session.user = new_user
+    session.password = new_password
 
     # test to see if the user authorizes against EUS
     err_str = test_authorization(protocol="https",
