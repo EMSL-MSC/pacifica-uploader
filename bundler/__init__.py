@@ -323,7 +323,8 @@ class TarBundler(FileBundler):
         """
         send a celery message to the server process indicating the completion state of the bundle
         """
-        current_task.update_state(state=str(self.percent_complete),
+        if (current_task):
+            current_task.update_state(state=str(self.percent_complete),
                                   meta={'Status': "Bundling percent complete: " \
                                         + str(int(self.percent_complete))})
 
