@@ -9,6 +9,7 @@ import json
 import psutil
 import os
 import datetime
+import time
 
 from uploader import get_info
 
@@ -38,6 +39,10 @@ class SessionState(object):
     files = FileManager()
     config = None
 
+    last_touched_time = None
+
+    is_uploading = False
+
     #Todo: mesh the meta lists for session and server
     # meta data values
     meta_list = []
@@ -46,6 +51,28 @@ class SessionState(object):
     bundle_process = None
 
     bundle_filepath = ''
+
+    def touch(self):
+        self.last_touched_time = time.time()
+
+    def is_timed_out(self):
+
+        if self.is_uploading:
+            return False
+
+        if not self.last_touched_time:
+            return False
+
+        now = time.time()
+        elapsed = now - self.last_touched_time
+
+        timeout = self.config.timeout * 60
+        timeout = 60
+
+        if elapsed > timeout:
+            return True
+        else:
+            return False
 
     def load_proposal(self, proposal):
         """

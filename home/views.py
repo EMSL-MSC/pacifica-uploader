@@ -141,6 +141,12 @@ def populate_upload_page(request):
     formats the main uploader page
     """
 
+    if session.is_timed_out():
+        return logout(request)
+
+    # reset timeout
+    session.touch()
+
     request.session.modified = True
     age = request.session.get_expiry_age()
 
@@ -337,7 +343,7 @@ def login(request):
         return login_error(request, 'faulty configuration:  ' + err)
 
     # timeout
-    SESSION_COOKIE_AGE = configuration.timeout * 60
+    #SESSION_COOKIE_AGE = configuration.timeout * 60
 
     # ignore GET
     if not request.POST:
@@ -346,12 +352,18 @@ def login(request):
     new_user = request.POST['username']
     new_password = request.POST['password']
 
+
+
     # check to see if there is an existing user logged in
     if (session.current_user):
-        # if the current user is still logged in and this is not that user, throw an error
-        if (session.current_user.is_authenticated()):
-            if new_user != session.user:
-                return login_error(request, 'User %s is currently logged in' % session.user_full_name)
+        # if the session is timed out, logout the current user
+        if session.is_timed_out():
+            logout(request);
+        else:
+            # if the current user is still logged in and this is not that user, throw an error
+            if (session.current_user.is_authenticated()):
+                if new_user != session.user:
+                    return login_error(request, 'User %s is currently logged in' % session.user_full_name)
 
     # after login you lose your session context
     session.cleanup_session()
@@ -387,6 +399,7 @@ def login(request):
     # keep a copy of the user so we can keep other users from stepping on them if they are still
     # logged in
     session.current_user = request.user
+    session.touch()
 
     try:
         tasks.clean_target_directory(configuration.target_dir,
@@ -412,11 +425,13 @@ def logout(request):
 
     return HttpResponseRedirect(reverse('home.views.login'))
 
-@login_required(login_url=settings.LOGIN_URL)
 def get_proposal_users(request):
     """
     get the proposal users associated with a proposal
     """
+
+    # reset timeout
+    session.touch()
 
     prop = request.POST.get("proposal")
     session.load_proposal(prop)
@@ -425,7 +440,6 @@ def get_proposal_users(request):
 
     return HttpResponse(retval, content_type="application/json")
 
-@login_required(login_url=settings.LOGIN_URL)
 def get_children(request):
     """
     get the children of a parent directory, used for lazy loading
@@ -526,6 +540,10 @@ def get_bundle(request):
     """
     return a tree structure containing directories and files to be uploaded
     """
+
+    # reset timeout
+    session.touch()
+
     try:
         retval = ""
         pathstring = request.POST.get("packet")
@@ -616,5 +634,8 @@ def incremental_status(request):
 
     # create json structure
     retval = json.dumps({'state':state, 'result':result})
+
+    # reset timeout
+    session.touch()
 
     return HttpResponse(retval)

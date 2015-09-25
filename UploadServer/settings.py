@@ -110,8 +110,8 @@ USE_TZ = True
 
 #Session stuff
 SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
-# SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_AGE = 3 * 30
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+#SESSION_COOKIE_AGE = 3 * 30
 SESSION_SAVE_EVERY_REQUEST = True
 
 
