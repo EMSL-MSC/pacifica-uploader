@@ -24,6 +24,8 @@ import json
 
 import datetime
 
+import re
+
 #operating system
 import os
 
@@ -449,11 +451,19 @@ def get_children(request):
         parent = request.GET.get("parent")
 
         if not parent:
-            return ""
+            return ''
 
         pathlist = []
         if os.path.isdir(parent):
-            for item in os.listdir(parent):
+            lazy_list = os.listdir(parent)
+            lazy_list.sort()
+
+            # simple filter for hidden files in linux
+            # replace with configurable regex later
+            #regex  = re.compile('\.(.+?)')
+            filtered = [i for i in lazy_list if not i[0]=='.']
+
+            for item in filtered:
                 itempath = os.path.join(parent, item)
 
                 if os.path.isfile(itempath):
@@ -464,7 +474,7 @@ def get_children(request):
 
     except Exception, e:
         print e
-        return error_response("upload failed")
+        return error_response("lazyload failed")
 
     return HttpResponse(retval)
 
