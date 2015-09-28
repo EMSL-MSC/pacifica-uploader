@@ -78,6 +78,9 @@ def upload_files(bundle_name='',
 
     #clean tar directory
     target_dir = os.path.dirname(bundle_name)
+    if not os.path.isdir(target_dir):
+        current_task.update_state(state='ERROR', meta={'Status': 'Bundle directory does not exist'})
+
     err_str = clean_target_directory(target_dir, server, user, password)
     if err_str:
         current_task.update_state(state='PROGRESS', meta={'Status': err_str})
