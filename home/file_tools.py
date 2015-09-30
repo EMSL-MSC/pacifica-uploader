@@ -119,18 +119,13 @@ class FileManager(object):
         recursively gets file tuples for a folder
         """
 
-        #if we don't have access to this folder, bail
-        if not os.access(folder, os.R_OK & os.X_OK):
-            return
-
         for item in os.listdir(folder):
             path = os.path.join(folder, item)
-            if os.path.isfile(path):
-                if os.access(path, os.R_OK):
+            if accessible(path):
+                if os.path.isfile(path):
                     tuple_list.append((path, self.get_archive_path(path)))
-
-            elif os.path.isdir(path):
-                self.file_tuples_recursively(path, tuple_list)
+                elif os.path.isdir(path):
+                    self.file_tuples_recursively(path, tuple_list)
 
     def file_tuples(self, selected_list, tuple_list):
         """
@@ -139,11 +134,11 @@ class FileManager(object):
         and the relative path used to store the file in the archive
         """
         for path in selected_list:
-            if os.path.isfile(path):
-                if os.access(path, os.R_OK):
-                    tuple_list.append((path, self.get_archive_path(path)))
-            elif os.path.isdir(path):
-                self.file_tuples_recursively(path, tuple_list)
+            if accessible(path):
+                if os.path.isfile(path):
+                        tuple_list.append((path, self.get_archive_path(path)))
+                elif os.path.isdir(path):
+                    self.file_tuples_recursively(path, tuple_list)
 
     def upload_meta_string(self, folder):
         """
@@ -183,8 +178,30 @@ def get_size(start_path):
     for dirpath, dirnames, filenames in os.walk(start_path):
         for filename in filenames:
             filepath = os.path.join(dirpath, filename)
-            total_size += os.path.getsize(filepath)
+            if (accessible(filepath)):
+                total_size += os.path.getsize(filepath)
     return total_size
+
+def accessible(path):
+    """
+    os.access fails under certain situations so we wrote this POS
+    """
+    if os.path.isfile(path):
+        try:
+            if os.access(path, os.R_OK):
+                size = os.path.getsize(path)
+            else:
+                return false;
+        except:
+            return False
+
+    elif os.path.isdir(path):
+        try:
+            os.listdir(path)
+        except OSError:
+            return False
+
+    return True
 
 def size_string(total_size):
     """

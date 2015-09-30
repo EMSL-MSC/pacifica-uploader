@@ -60,7 +60,7 @@ session = session_data.SessionState()
 configuration = instrument_server.InstrumentConfiguration()
 
 # development version
-version = '0.98.24'
+version = '0.98.25'
 
 def login_user_locally(request):
     """
@@ -447,16 +447,20 @@ def get_children(request):
     get the children of a parent directory, used for lazy loading
     """
     try:
-        retval = ""
-        parent = request.GET.get("parent")
-
-        if not parent:
-            return ''
-
+        # return empty list on error, folder permissions, etc.
         pathlist = []
+        retval = json.dumps(pathlist)
+
+        parent = request.GET.get("parent")
+        if not parent:
+            return retval
+
+        if not file_tools.accessible(parent):
+            return retval
+
         if os.path.isdir(parent):
             lazy_list = os.listdir(parent)
-            lazy_list.sort()
+            lazy_list.sort(key=lambda s: s.lower())
 
             # simple filter for hidden files in linux
             # replace with configurable regex later
@@ -465,11 +469,11 @@ def get_children(request):
 
             for item in filtered:
                 itempath = os.path.join(parent, item)
-
-                if os.path.isfile(itempath):
-                    pathlist.append({"title": item, "key": itempath, "folder": False})
-                elif os.path.isdir(itempath):
-                    pathlist.append({"title": item, "key": itempath, "folder": True, "lazy": True})
+                if file_tools.accessible(itempath):
+                    if os.path.isfile(itempath):
+                        pathlist.append({"title": item, "key": itempath, "folder": False})
+                    elif os.path.isdir(itempath):
+                        pathlist.append({"title": item, "key": itempath, "folder": True, "lazy": True})
         retval = json.dumps(pathlist)
 
     except Exception, e:
