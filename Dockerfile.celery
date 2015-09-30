@@ -1,4 +1,4 @@
-from localhost/myemslcontroller
+from myemslcontroller
 
 USER 1
 WORKDIR /app
