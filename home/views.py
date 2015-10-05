@@ -60,7 +60,7 @@ session = session_data.SessionState()
 configuration = instrument_server.InstrumentConfiguration()
 
 # development version
-version = '0.98.25'
+version = '0.98.26'
 
 def login_user_locally(request):
     """
@@ -215,13 +215,11 @@ def spin_off_upload(request):
     spins the upload process off to a background celery process
     """
     # check to see if background celery process is alive
-    # if not, start it.  Wait 5 seconds, if it doesn't start,
-    # we're boned.
-    alive = ping_celery()
-    print 'Celery lives = %s' % (alive)
-    if not alive:
-        return HttpResponse(json.dumps("Celery background process is not started"),
-                            content_type="application/json", status=500)
+    # Wait 5 seconds
+    session.celery_is_alive = ping_celery()
+    print 'Celery lives = %s' % (session.celery_is_alive)
+    if not session.celery_is_alive:
+        show_status(request, 'Celery is dead')
 
     packet = request.POST.get('packet')
     try:
@@ -550,6 +548,21 @@ def make_tree(tree, subdirectories, partial_path, title, path):
     subdirectories.insert(0, tail)
     make_tree(tree, subdirectories, head, title, path)
 
+def return_bundle(tree, message):
+    """
+    formats the return message from get_bundle
+    """
+    # validate that the currently selected bundle will fit in the target space
+    uploadEnabled = session.validate_space_available()
+    size_string = file_tools.size_string(session.files.bundle_size)
+    if message != "":
+        tree[0]['data'] = 'Bundle: %s, Free: %s, Warning: %s' % (size_string, configuration.free_size_str, message)
+    else:
+        tree[0]['data'] = 'Bundle: %s, Free: %s' % (size_string, configuration.free_size_str)
+    
+    retval = json.dumps(tree)
+    return HttpResponse(retval, content_type="application/json")
+
 def get_bundle(request):
     """
     return a tree structure containing directories and files to be uploaded
@@ -559,33 +572,33 @@ def get_bundle(request):
     session.touch()
 
     try:
-        retval = ""
-        pathstring = request.POST.get("packet")
-
-        if not pathstring:
-            return error_response("bad input to get_bundle")
 
         tree, lastnode = session.get_archive_tree()
+        session.files.bundle_size = 0
+
+        pathstring = request.POST.get("packet")
+
+        # can get a request with 0 paths, return empty bundle
+        if not pathstring:
+            return return_bundle(tree, "")
 
         paths = json.loads(pathstring)
 
         # if no paths, return the empty archive structure
         if not paths:
-            retval = json.dumps(tree)
-            return HttpResponse(retval, content_type="application/json")
+            return return_bundle(tree, "")
 
         # this actually should be done already by getting parent nodes
         filtered = file_tools.filter_selected_list(paths)
 
         common_path = os.path.commonprefix(filtered)
+
         #get rid of dangling prefixes
         common_path, tail = os.path.split(common_path)
         common_path = os.path.join(common_path, '')
 
         # used later to modify arc names
         session.files.common_path = common_path
-
-        session.files.bundle_size = 0
 
         for itempath in paths:
             # title
@@ -596,18 +609,10 @@ def get_bundle(request):
             subdirs = []
             make_tree(lastnode, subdirs, clipped_path, item, itempath)
 
-        # validate that the currently selected bundle will fit in the target space
-        uploadEnabled = session.validate_space_available()
-
-        size_string = file_tools.size_string(session.files.bundle_size)
-        tree[0]['data'] = 'Bundle: %s, Free: %s' % (size_string, configuration.free_size_str)
-        retval = json.dumps(tree)
+        return return_bundle(tree, "")
 
     except Exception, e:
-        print e
-        return error_response("get_bundle failed")
-
-    return HttpResponse(retval, content_type="application/json")
+        return return_bundle(tree, "get_bundle failed:  " + e.message)
 
 def incremental_status(request):
     """
@@ -632,6 +637,10 @@ def incremental_status(request):
     if result is None:
         result = "UNKNOWN"
     print result
+    
+    if not session.celery_is_alive:
+        state = 'Celery is dead'
+
 
     if result is not None:
         if "http" in result:
