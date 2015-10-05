@@ -14,8 +14,11 @@
             var jqobject = $.ajax(url)
                 .done(function(data){
                     var dataObj = $.parseJSON(data);
-                    $('#currState').html(dataObj.result.Status);
-                    //$('#currState').html(dataObj.state);
+                    $('#currState').html(dataObj.state);
+                    if (dataObj.state == 'FAILURE') {
+                        $('#currState').html(JSON.stringify(dataObj.result));
+                    }
+
                     if (dataObj.state == 'DONE') {
                         var statusPage = dataObj.result;
                         //var win = window.open(statusPage, '_blank');
