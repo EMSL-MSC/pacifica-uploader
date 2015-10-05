@@ -415,6 +415,8 @@ def upload(bundle_name='',
         pyurl = url + "/myemsl/cgi-bin/finish" + location
         curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
 
+        print 'calling ' + pyurl
+
         curl.perform()
 
         print curl_http_code
@@ -440,7 +442,7 @@ def upload(bundle_name='',
     except pycurl.error:
         raise UploaderError("cURL operations failed for finalization:\n    %s" % curl.errstr())
     except Exception, err:
-        raise UploaderError(err.message)
+        raise UploaderError('finalization error:  ' + pyurl + ':  ' + err.message)
         #raise UploaderError("Unknown error during finalization:\n")
 
     try:
