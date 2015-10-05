@@ -46,10 +46,11 @@ class FileManager(object):
         total_size = 0
 
         for path in selected_paths:
-            if os.path.isfile(path):
-                total_size += os.path.getsize(path)
-            if os.path.isdir(path):
-                total_size += self.folder_size(path)
+            if accessible(path):
+                if os.path.isfile(path):
+                    total_size += os.path.getsize(path)
+                if os.path.isdir(path):
+                    total_size += self.folder_size(path)
 
         self.bundle_size = total_size
         self.bundle_size_str = size_string(total_size)
@@ -63,11 +64,12 @@ class FileManager(object):
 
         total_size = os.path.getsize(folder)
         for item in os.listdir(folder):
-            itempath = os.path.join(folder, item)
-            if os.path.isfile(itempath):
-                total_size += os.path.getsize(itempath)
-            elif os.path.isdir(itempath):
-                total_size += self.folder_size(itempath)
+            itempath = os.path.join(folder, item)            
+            if accessible(itempath):
+                if os.path.isfile(itempath):
+                    total_size += os.path.getsize(itempath)
+                elif os.path.isdir(itempath):
+                    total_size += self.folder_size(itempath)
 
         return total_size
 
@@ -83,11 +85,12 @@ class FileManager(object):
 
         for item in os.listdir(folder):
             itempath = os.path.join(folder, item)
-            if os.path.isfile(itempath):
-                meta.totalBytes += os.path.getsize(itempath)
-                meta.fileCount += 1
-            elif os.path.isdir(itempath):
-                self.folder_meta(itempath, meta)
+            if accessible(itempath):
+                if os.path.isfile(itempath):
+                    meta.totalBytes += os.path.getsize(itempath)
+                    meta.fileCount += 1
+                elif os.path.isdir(itempath):
+                    self.folder_meta(itempath, meta)
 
     def folder_meta_string(self, folder):
         """
@@ -186,13 +189,20 @@ def accessible(path):
     """
     os.access fails under certain situations so we wrote this POS
     """
-    if os.path.isfile(path):
+    if os.path.islink(path):
+        return false
+    elif os.path.isfile(path):
         try:
-            if os.access(path, os.R_OK):
-                size = os.path.getsize(path)
-            else:
-                return false;
-        except:
+            # this doesn't work, at least in windows.  A file may be readable
+            # by _someone_ and this will return true, but fail on reading
+            #if os.access(path, os.R_OK):
+            #    size = os.path.getsize(path)
+            #else:
+            #    return false;
+            with open(path) as tempFile:
+                tempFile.close()
+        except Exception as e:
+            print e
             return False
 
     elif os.path.isdir(path):
@@ -234,6 +244,9 @@ def filter_selected_list(files):
         if os.path.isdir(test_path):
             for i in xrange(len(filtered) - 1, -1, -1):
                 fpath = filtered[i]
-                if test_path in fpath and test_path != fpath:
+                if (accessible(fpath)):
+                    if test_path in fpath and test_path != fpath:
+                        filtered.remove(fpath)
+                else:
                     filtered.remove(fpath)
     return filtered
