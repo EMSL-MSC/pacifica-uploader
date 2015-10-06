@@ -12,12 +12,14 @@
 	$.ajaxSetup({cache:false});
         function worker() {
             var jqobject = $.ajax(url)
-                .done(function(data){
+                .done(function (data) {
+                    
                     var dataObj = $.parseJSON(data);
-                    $('#currState').html(dataObj.state);
-                    if (dataObj.state == 'FAILURE') {
-                        $('#currState').html(JSON.stringify(dataObj.result));
-                    }
+                    var state = dataObj.state;
+                    var result = JSON.stringify(dataObj.result);
+                    var stateStr = state.concat(': ');
+                    stateStr = stateStr.concat(result);
+                    $('#currState').html(stateStr);
 
                     if (dataObj.state == 'DONE') {
                         var statusPage = dataObj.result;
