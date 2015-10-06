@@ -395,7 +395,7 @@ def upload(bundle_name='',
             raise UploaderError(odata.read(), outage=True)
 
     except pycurl.error:
-        raise UploaderError("cURL operations failed during upload:\n    %s" % curl.errstr())
+        raise UploaderError("cURL operations failed during upload: %s" % curl.errstr())
 
     except IOError:
         raise UploaderError("Couldn't read from bundle file")
