@@ -273,7 +273,7 @@ def progress(_download_t, _download_d, upload_t, upload_d):
                                       meta={'Status': "upload percent complete: " \
                                           + str(int(percent))})
             TrackPercent.percent = percent
-            print percent
+            print 'upload %:  ' +  percent
 
 def upload(bundle_name='',
            protocol='https',
@@ -418,8 +418,6 @@ def upload(bundle_name='',
         print 'calling ' + pyurl
 
         curl.perform()
-
-        print curl_http_code
 
         curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
         if curl_http_code == 503:
