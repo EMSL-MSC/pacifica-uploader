@@ -95,6 +95,8 @@ def upload_files(bundle_name='',
            groups=groups,
            bundle_size=bundle_size)
 
+    current_task.update_state(state="PROGRESS", meta={'Status': "Completed Bundling"})
+
     current_task.update_state(state="PROGRESS", meta={'Status': "Starting Upload"})
 
     res = upload(bundle_name=bundle_name,
