@@ -266,14 +266,16 @@ def progress(_download_t, _download_d, upload_t, upload_d):
     gets the progress of the current pycurl upload
     """
     if upload_t > 0:
-        percent = 100.0 * float(upload_d) / float(upload_t)
+        try:
+            percent = 100.0 * float(upload_d) / float(upload_t)
 
-        if percent - TrackPercent.percent > 5:
-            current_task.update_state(state=str(percent),
-                                      meta={'Status': "upload percent complete: " \
-                                          + str(int(percent))})
-            TrackPercent.percent = percent
-            print 'upload %:  ' +  percent
+            if percent - TrackPercent.percent > 5:
+                meta_dict={'Status': "upload percent complete: " + str(int(percent))}
+                current_task.update_state(state="PROGRESS", meta=meta_dict)
+                TrackPercent.percent = percent
+
+        except Exception, e:
+            raise UploaderError("Error during callback: " + e.message)
 
 def upload(bundle_name='',
            protocol='https',
@@ -350,8 +352,8 @@ def upload(bundle_name='',
     except pycurl.error:
         raise UploaderError("cURL operations failed for preallocation:\n    %s" % curl.errstr())
 
-    except:
-        raise UploaderError("Unknown error during preallocation")
+    except Exception, e:
+        raise UploaderError("Error during preallocation: " + e.message)
 
 
     #*********************************************************************
