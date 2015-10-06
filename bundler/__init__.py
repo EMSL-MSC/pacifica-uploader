@@ -139,7 +139,9 @@ class FileBundler():
         # Strip the trailing comma off of the end and close the string
         metadata = metadata[:-2] + "]}"
 
-        print >> sys.stderr, "Preparing Metadata:\n%s" % metadata
+        print >> sys.stderr, "Preparing Metadata:\n"
+
+        # print >> sys.stderr, "Preparing Metadata:\n%s" % metadata
 
         self._bundle_metadata(metadata)
 
@@ -323,10 +325,11 @@ class TarBundler(FileBundler):
         """
         send a celery message to the server process indicating the completion state of the bundle
         """
+        meta_str = "Bundling percent complete: " + str(int(self.percent_complete))
+        print meta_str
+
         if (current_task):
-            current_task.update_state(state=str(self.percent_complete),
-                                  meta={'Status': "Bundling percent complete: " \
-                                        + str(int(self.percent_complete))})
+            current_task.update_state(state='PROGRESS', meta={'Status': meta_str})
 
     def _bundle_metadata(self, metadata):
         """
