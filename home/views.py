@@ -453,8 +453,10 @@ def get_children(request):
         if not parent:
             return retval
 
-        if not file_tools.accessible(parent):
+        if not session.files.accessible(parent):
             return retval
+
+        session.files.error_string = ''
 
         if os.path.isdir(parent):
             lazy_list = os.listdir(parent)
@@ -467,11 +469,12 @@ def get_children(request):
 
             for item in filtered:
                 itempath = os.path.join(parent, item)
-                if file_tools.accessible(itempath):
+                if session.files.accessible(itempath):
                     if os.path.isfile(itempath):
                         pathlist.append({"title": item, "key": itempath, "folder": False})
                     elif os.path.isdir(itempath):
                         pathlist.append({"title": item, "key": itempath, "folder": True, "lazy": True})
+
         retval = json.dumps(pathlist)
 
     except Exception, e:
@@ -493,15 +496,17 @@ def make_leaf(title, path):
     '''
     return a populated tree leaf
     '''
-    if os.path.isfile(path):
-        size = os.path.getsize(path)
-        is_folder = False
-    elif os.path.isdir(path):
-        size = file_tools.get_size(path)
-        is_folder = True
+    if session.files.accessible(path):
+        if os.path.isfile(path):
+            size = os.path.getsize(path)
+            is_folder = False
+        elif os.path.isdir(path):
+            size = session.files.get_size(path)
+            is_folder = True
 
     session.files.bundle_size += size
 
+    
     size_string = file_tools.size_string(size)
     return {"title": title + " (" + size_string + ")",
             "key": path,
@@ -515,7 +520,8 @@ def add_branch(branches, subdirectories, title, path):
     # if we are at a leaf, add the leaf to the children list
     if len(subdirectories) < 2:
         leaf = make_leaf(title, path)
-        branches.append(leaf)
+        if (leaf):
+            branches.append(leaf)
         return
 
     branch_name = subdirectories[0]
@@ -572,6 +578,7 @@ def get_bundle(request):
     session.touch()
 
     try:
+        session.files.error_string = ''
 
         tree, lastnode = session.get_archive_tree()
         session.files.bundle_size = 0
@@ -589,7 +596,7 @@ def get_bundle(request):
             return return_bundle(tree, "")
 
         # this actually should be done already by getting parent nodes
-        filtered = file_tools.filter_selected_list(paths)
+        filtered = session.files.filter_selected_list(paths)
 
         common_path = os.path.commonprefix(filtered)
 
@@ -609,7 +616,7 @@ def get_bundle(request):
             subdirs = []
             make_tree(lastnode, subdirs, clipped_path, item, itempath)
 
-        return return_bundle(tree, "")
+        return return_bundle(tree, session.files.error_string)
 
     except Exception, e:
         return return_bundle(tree, "get_bundle failed:  " + e.message)
@@ -635,7 +642,7 @@ def incremental_status(request):
 
     result = session.bundle_process.result
     if result is None:
-        result = "UNKNOWN"
+        result = ''
     print result
     
     if not session.celery_is_alive:
