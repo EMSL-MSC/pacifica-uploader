@@ -352,8 +352,6 @@ def login(request):
     new_user = request.POST['username']
     new_password = request.POST['password']
 
-
-
     # check to see if there is an existing user logged in
     if (session.current_user):
         # if the session is timed out, logout the current user
