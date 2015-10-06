@@ -29,6 +29,8 @@ class FileManager(object):
     common_path = ''
     archive_path = ''
 
+    error_string = ''
+
     def cleanup_files(self):
         """
         resets a class to a clean state
@@ -45,8 +47,10 @@ class FileManager(object):
         """
         total_size = 0
 
+        self.error_string = ''
+
         for path in selected_paths:
-            if accessible(path):
+            if self.accessible(path):
                 if os.path.isfile(path):
                     total_size += os.path.getsize(path)
                 if os.path.isdir(path):
@@ -65,7 +69,7 @@ class FileManager(object):
         total_size = os.path.getsize(folder)
         for item in os.listdir(folder):
             itempath = os.path.join(folder, item)            
-            if accessible(itempath):
+            if self.accessible(itempath):
                 if os.path.isfile(itempath):
                     total_size += os.path.getsize(itempath)
                 elif os.path.isdir(itempath):
@@ -85,7 +89,7 @@ class FileManager(object):
 
         for item in os.listdir(folder):
             itempath = os.path.join(folder, item)
-            if accessible(itempath):
+            if self.accessible(itempath):
                 if os.path.isfile(itempath):
                     meta.totalBytes += os.path.getsize(itempath)
                     meta.fileCount += 1
@@ -124,7 +128,7 @@ class FileManager(object):
 
         for item in os.listdir(folder):
             path = os.path.join(folder, item)
-            if accessible(path):
+            if self.accessible(path):
                 if os.path.isfile(path):
                     tuple_list.append((path, self.get_archive_path(path)))
                 elif os.path.isdir(path):
@@ -137,7 +141,7 @@ class FileManager(object):
         and the relative path used to store the file in the archive
         """
         for path in selected_list:
-            if accessible(path):
+            if self.accessible(path):
                 if os.path.isfile(path):
                         tuple_list.append((path, self.get_archive_path(path)))
                 elif os.path.isdir(path):
@@ -163,7 +167,7 @@ class FileManager(object):
         the common path will be clipped from the file archive structure,
         the archive structure will be added
         '''
-        filtered = filter_selected_list(files)
+        filtered = self.filter_selected_list(files)
 
         #create a list of tuples (filepath, arcpath)
         tuples = []
@@ -173,45 +177,69 @@ class FileManager(object):
 
         return tuples
 
-def get_size(start_path):
-    """
-    recursively add up the sizes of all files under a root dir
-    """
-    total_size = 0
-    for dirpath, dirnames, filenames in os.walk(start_path):
-        for filename in filenames:
-            filepath = os.path.join(dirpath, filename)
-            if (accessible(filepath)):
-                total_size += os.path.getsize(filepath)
-    return total_size
+    def accessible(self, path):
+        """
+        os.access fails under certain situations so we wrote this POS
+        """
+        retval = True
 
-def accessible(path):
-    """
-    os.access fails under certain situations so we wrote this POS
-    """
-    if os.path.islink(path):
-        return false
-    elif os.path.isfile(path):
-        try:
-            # this doesn't work, at least in windows.  A file may be readable
-            # by _someone_ and this will return true, but fail on reading
-            #if os.access(path, os.R_OK):
-            #    size = os.path.getsize(path)
-            #else:
-            #    return false;
-            with open(path) as tempFile:
-                tempFile.close()
-        except Exception as e:
-            print e
-            return False
+        if os.path.islink(path):
+            retval = False
+        elif os.path.isfile(path):
+            try:
+                # this doesn't work, at least in windows.  A file may be readable
+                # by _someone_ and this will return true, but fail on reading
+                #if os.access(path, os.R_OK):
+                #    size = os.path.getsize(path)
+                #else:
+                #    return false;
+                with open(path) as tempFile:
+                    tempFile.close()
+            except Exception as e:
+                print e
+                retval = False
 
-    elif os.path.isdir(path):
-        try:
-            os.listdir(path)
-        except OSError:
-            return False
+        elif os.path.isdir(path):
+            try:
+                os.listdir(path)
+            except OSError:
+                retval = False
 
-    return True
+
+        if not retval:
+            self.error_string = 'Unaccessible files were skipped'
+        
+        return retval
+
+    def get_size(self, start_path):
+        """
+        recursively add up the sizes of all files under a root dir
+        """
+        total_size = 0
+        for dirpath, dirnames, filenames in os.walk(start_path):
+            for filename in filenames:
+                filepath = os.path.join(dirpath, filename)
+                if (self.accessible(filepath)):
+                    total_size += os.path.getsize(filepath)
+        return total_size
+
+    def filter_selected_list(self, files):
+        """
+        remove filepaths that are contained in other filepaths to preclude redundant files when bundling
+        """
+        filtered = list(files)
+
+        for test_path in files:
+            if os.path.isdir(test_path):
+                for i in xrange(len(filtered) - 1, -1, -1):
+                    fpath = filtered[i]
+                    if (self.accessible(fpath)):
+                        if test_path in fpath and test_path != fpath:
+                            filtered.remove(fpath)
+                    else:
+                        filtered.remove(fpath)
+        return filtered
+
 
 def size_string(total_size):
     """
@@ -233,20 +261,3 @@ def size_string(total_size):
     else:
         gigabytes = float(total_size) / 1073741824.0
         return str(round(gigabytes, 2)) + " Gb"
-
-def filter_selected_list(files):
-    """
-    remove filepaths that are contained in other filepaths to preclude redundant files when bundling
-    """
-    filtered = list(files)
-
-    for test_path in files:
-        if os.path.isdir(test_path):
-            for i in xrange(len(filtered) - 1, -1, -1):
-                fpath = filtered[i]
-                if (accessible(fpath)):
-                    if test_path in fpath and test_path != fpath:
-                        filtered.remove(fpath)
-                else:
-                    filtered.remove(fpath)
-    return filtered
