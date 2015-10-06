@@ -102,7 +102,7 @@ class SessionState(object):
         for meta in self.config.meta_list:
             meta_entry = MetaData()
             meta_entry.name = meta.name
-            meta_entry.label = meta_entry.label
+            meta_entry.label = meta.label
             meta_entry.value = ''
             self.meta_list.append(meta_entry)
 
