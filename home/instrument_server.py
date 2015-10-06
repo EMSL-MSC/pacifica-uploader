@@ -90,6 +90,7 @@ class InstrumentConfiguration(object):
 
                 # create a list of metadata entries to pass to the list upload page
                 try:
+                    self.meta_list = []
                     for meta in configuration['metadata']:
                         meta_entry = MetaData()
                         meta_entry.name = meta[0]
