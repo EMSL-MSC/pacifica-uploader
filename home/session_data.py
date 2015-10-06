@@ -15,6 +15,7 @@ from uploader import get_info
 
 from home import file_tools
 from home.file_tools import FileManager
+from home.instrument_server import MetaData
 from home.instrument_server import InstrumentConfiguration
 
 class SessionState(object):
@@ -91,12 +92,31 @@ class SessionState(object):
         """
         self.proposal_user = proposal_user
 
+    def load_meta_list(self):
+        """
+        create a copy of the list of metadata entries to pass to upload page
+        this needs to be done on an individual session base so that we can have
+        user specific metadata settings
+        """
+        self.meta_list = []
+        for meta in self.config.meta_list:
+            meta_entry = MetaData()
+            meta_entry.name = meta.name
+            meta_entry.label = meta_entry.label
+            meta_entry.value = ''
+            self.meta_list.append(meta_entry)
+
     def populate_user_info(self, configuration):
         """
         parses user information from a json struct
         """
 
         self.config = configuration
+
+        try:
+            self.load_meta_list()
+        except Exception:
+            return 'Unable to copy metadata'
 
         # get the user's info from EUS
         info = get_info(protocol='https',
