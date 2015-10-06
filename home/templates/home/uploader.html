@@ -63,7 +63,7 @@
                             <ul>
                             {% for meta in metaList %}
                                 <li>
-                                   <label for="{{meta.name}}" style="display:block;">Metadata Tag: {{meta.label}}</label>
+                                   <label for="{{meta.name}}" style="display:block;">{{meta.label}}</label>
                                    <input type="text" id="{{meta.name}}" style="width:80%;border-width:1px;" name="{{meta.name}}" value = "{{meta.value}}">
                                 </li>
                             {% endfor %}
