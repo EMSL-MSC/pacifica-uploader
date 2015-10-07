@@ -60,7 +60,7 @@ session = session_data.SessionState()
 configuration = instrument_server.InstrumentConfiguration()
 
 # development version
-version = '0.98.28'
+version = '0.98.29'
 
 def login_user_locally(request):
     """
