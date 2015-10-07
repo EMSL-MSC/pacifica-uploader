@@ -252,7 +252,8 @@ class SessionState(object):
         # is this an error?
         if not members:
             self.proposal_users.append('No users for this proposal')
-            return
+            json_list.append({'id':name, 'text':name})
+            return json_list
 
         for member in members.iteritems():
             member_id = member[1]
@@ -262,13 +263,19 @@ class SessionState(object):
             last_name = member_id['last_name']
             if not last_name:
                 last_name = '?'
-            name = first_name + " " + last_name
+            name = last_name + ", " + first_name
 
             self.proposal_users.append(name)
-
             # put in format to be used by select2
             json_list.append({'id':name, 'text':name})
 
+        if not json_list:
+            name = 'No users for this proposal'
+            self.proposal_users.append(name)
+            json_list.append({'id':name, 'text':name})
+
+        json_list.sort()
+        self.proposal_users.sort()
         return json_list
 
     def cleanup_session(self):
