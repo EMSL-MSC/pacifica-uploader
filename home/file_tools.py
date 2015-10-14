@@ -204,7 +204,9 @@ class FileManager(object):
                 os.listdir(path)
             except OSError:
                 retval = False
-
+        # we only support files and directories
+        else:
+            retval = False
 
         if not retval:
             self.error_string = 'Unaccessible files were skipped'
