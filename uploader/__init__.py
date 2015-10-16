@@ -338,13 +338,20 @@ def upload(bundle_name='',
             odata.seek(0)
             print odata.read()
 
+        print "code"
+        print curl_http_code
+
         if curl_http_code == 503:
             odata.seek(0)
             raise UploaderError(odata.read(), outage=True)
 
         # Make sure that cURL was able to get server and location data
-        server = re.search(r'Server: ([\w\.-]*)', odata.getvalue()).group(1)
-        location = re.search(r'Location: ([\w\./-@]*)', odata.getvalue()).group(1)
+        try:
+            server = re.search(r'Server: ([\w\.-]*)', odata.getvalue()).group(1)
+            location = re.search(r'Location: ([\w\./-@]*)', odata.getvalue()).group(1)
+        except:
+            odata.seek(0)
+            raise UploaderError("Error on server:  " + odata.read(), outage=True)
 
         if server == '' or location == '':
             raise UploaderError("Got invalid server and/or location information from server")
