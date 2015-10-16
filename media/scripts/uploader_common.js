@@ -120,6 +120,9 @@ window.onbeforeunload = function (event) {
                     // update bundle size
                     var message = data[0]["data"];
                     $("#message").text(message);
+
+                    var enabled = data[0]["enabled"];
+                    document.getElementById("upload_btn").disabled = !enabled;
                 })
                 .fail(function (xhr, textStatus, errorThrown ) {
                     errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);

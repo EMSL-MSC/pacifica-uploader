@@ -557,13 +557,16 @@ def return_bundle(tree, message):
     formats the return message from get_bundle
     """
     # validate that the currently selected bundle will fit in the target space
-    uploadEnabled = session.validate_space_available()
+    upload_enabled = session.validate_space_available()
     size_string = file_tools.size_string(session.files.bundle_size)
     if message != "":
         tree[0]['data'] = 'Bundle: %s, Free: %s, Warning: %s' % (size_string, configuration.free_size_str, message)
     else:
         tree[0]['data'] = 'Bundle: %s, Free: %s' % (size_string, configuration.free_size_str)
-    
+
+    # disable the upload if there isn't enough space in the intermediate directory
+    tree[0]['enabled'] = upload_enabled
+
     retval = json.dumps(tree)
     return HttpResponse(retval, content_type="application/json")
 
