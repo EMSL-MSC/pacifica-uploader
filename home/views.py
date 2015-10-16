@@ -558,14 +558,19 @@ def return_bundle(tree, message):
     """
     # validate that the currently selected bundle will fit in the target space
     upload_enabled = session.validate_space_available()
+    upload_enabled = False
+    # disable the upload if there isn't enough space in the intermediate directory
+    tree[0]['enabled'] = upload_enabled
+    if not upload_enabled:
+        message = message + ' The amount of data you are trying to transfer is larger ' \
+            'than the space available in the Uploader Controller.  '\
+            'Reduce the size of the data set or contact an administrator to help address this issue.'
+
     size_string = file_tools.size_string(session.files.bundle_size)
     if message != "":
         tree[0]['data'] = 'Bundle: %s, Free: %s, Warning: %s' % (size_string, configuration.free_size_str, message)
     else:
         tree[0]['data'] = 'Bundle: %s, Free: %s' % (size_string, configuration.free_size_str)
-
-    # disable the upload if there isn't enough space in the intermediate directory
-    tree[0]['enabled'] = upload_enabled
 
     retval = json.dumps(tree)
     return HttpResponse(retval, content_type="application/json")
