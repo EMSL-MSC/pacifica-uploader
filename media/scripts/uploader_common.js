@@ -21,8 +21,9 @@ function logOutAndBack() {
     //alert("Logging you out");
     var jqobject = $.ajax("/logout")
     .done(function (data) {
-            var logoutPage = data;
-            window.open("/login", '_blank');
+        var logoutPage = data;
+            // uh, this opens two login windows
+            //window.open("/login", '_blank');
             window.location.href = '/';
     })
     .fail(function (obj, textStatus, error) {
@@ -289,31 +290,33 @@ window.onbeforeunload = function (event) {
                                        title: "Upload Status"
                                    });
                     $dialog.dialog('open');
+
+                    $.post("/upload/", { packet: JSON.stringify(pkt) },
+                        function (data) {
+                            //alert('success');
+                            //window.location.href = "/showStatus";
+                            // clear the selected files and get an empty bundle
+
+                            respondToSelect = false;
+
+                            selected.forEach(function (node) {
+                                node.setSelected(false);
+                            });
+
+                            respondToSelect = true;
+
+
+                            selected = tree.getSelectedNodes(stopOnParents = true);
+
+
+                            loadUploadTree(selected);
+
+                        });
                 });
 
             
 
-            $.post("/upload/", { packet: JSON.stringify(pkt) },
-                function (data) {
-                    //alert('success');
-                    //window.location.href = "/showStatus";
-                    // clear the selected files and get an empty bundle
-
-                    respondToSelect = false;
-
-                    selected.forEach(function (node) {
-                        node.setSelected(false);
-                    });
-
-                    respondToSelect = true;
-
-                    
-                    selected = tree.getSelectedNodes(stopOnParents = true);
-                    
-
-                    loadUploadTree(selected);
-
-                });
+            
         });
 
         $('#proposal').change(function () {
