@@ -220,7 +220,7 @@ def post_upload_metadata(request):
 
     data = request.POST.get('form')
     try:
-        print "got packet"
+        print "form"
         if data:
             form = json.loads(data)
         else:
@@ -255,28 +255,16 @@ def spin_off_upload(request):
     if not session.celery_is_alive:
         show_status(request, 'Celery is dead')
 
-    packet = request.POST.get('packet')
+    data = request.POST.get('files')
     try:
-        print "got packet"
-        if packet:
-            json_obj = json.loads(packet)
-            form = json_obj['form']
-            files = json_obj['files']
+        print "form"
+        if data:
+            files = json.loads(data)
         else:
             return
     except Exception, e:
         print e
         return
-
-    # get the meta data values from the post
-    for meta in session. meta_list:
-        value = form[meta.name]
-        if value:
-            meta.value = value
-
-    # get the selected proposal string from the post as it may not have been set in a previous post
-    session.load_proposal(form['proposal'])
-    session.load_proposal_user(form['proposal_user'])
 
     tuples = session.files.get_bundle_files(files)
 

@@ -273,7 +273,7 @@ window.onbeforeunload = function (event) {
 
             var frm = $("form").serializeFormJSON();
 
-            var pkt = { form: frm, files: fileList };
+            //var pkt = { form: frm, files: fileList };
 
             // populate session data before showing the status page
             $.post("/postData/", { form: JSON.stringify(frm) },
@@ -291,7 +291,7 @@ window.onbeforeunload = function (event) {
                                    });
                     $dialog.dialog('open');
 
-                    $.post("/upload/", { packet: JSON.stringify(pkt) },
+                    $.post("/upload/", { files: JSON.stringify(fileList) },
                         function (data) {
                             //alert('success');
                             //window.location.href = "/showStatus";
