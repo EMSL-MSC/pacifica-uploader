@@ -199,6 +199,8 @@ def show_status(request, message):
     """
     show the status of the existing upload task
     """
+    session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
+
     return render_to_response('home/status.html',
                               {'instrument':configuration.concatenated_instrument(),
                                'status': message,
@@ -209,6 +211,38 @@ def show_status(request, message):
                                'free_size': configuration.free_size_str,
                                'user': session.user_full_name},
                               context_instance=RequestContext(request))
+
+def post_upload_metadata(request):
+    """
+    populates the upload metadata from the upload form
+    """
+    
+
+    data = request.POST.get('form')
+    try:
+        print "got packet"
+        if data:
+            form = json.loads(data)
+        else:
+            return
+    except Exception, e:
+        print e
+        return
+
+    # get the meta data values from the post
+    for meta in session.meta_list:
+        value = form[meta.name]
+        if value:
+            meta.value = value
+
+    # get the selected proposal string from the post as it may not have been set in a previous post
+    session.load_proposal(form['proposal'])
+    session.load_proposal_user(form['proposal_user'])
+
+    session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
+
+    return HttpResponse(json.dumps("success"), content_type="application/json")
+
 
 def spin_off_upload(request):
     """
@@ -558,7 +592,6 @@ def return_bundle(tree, message):
     """
     # validate that the currently selected bundle will fit in the target space
     upload_enabled = session.validate_space_available()
-    upload_enabled = False
     # disable the upload if there isn't enough space in the intermediate directory
     tree[0]['enabled'] = upload_enabled
     if not upload_enabled:
@@ -566,11 +599,11 @@ def return_bundle(tree, message):
             'than the space available in the Uploader Controller.  '\
             'Reduce the size of the data set or contact an administrator to help address this issue.'
 
-    size_string = file_tools.size_string(session.files.bundle_size)
+    session.files.bundle_size_str = file_tools.size_string(session.files.bundle_size)
     if message != "":
-        tree[0]['data'] = 'Bundle: %s, Free: %s, Warning: %s' % (size_string, configuration.free_size_str, message)
+        tree[0]['data'] = 'Bundle: %s, Free: %s, Warning: %s' % (session.files.bundle_size_str, configuration.free_size_str, message)
     else:
-        tree[0]['data'] = 'Bundle: %s, Free: %s' % (size_string, configuration.free_size_str)
+        tree[0]['data'] = 'Bundle: %s, Free: %s' % (session.files.bundle_size_str, configuration.free_size_str)
 
     retval = json.dumps(tree)
     return HttpResponse(retval, content_type="application/json")
@@ -641,15 +674,19 @@ def incremental_status(request):
             session.cleanup_upload()
             return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
-    state = session.bundle_process.status
-    if state is None:
-        state = "UNKNOWN"
-    print state
+    if not session.bundle_process:
+        state = 'PENDING'
+        result = 'Spinning off background process'
+    else:
+        state = session.bundle_process.status
+        if state is None:
+            state = "UNKNOWN"
+        print state
 
-    result = session.bundle_process.result
-    if result is None:
-        result = ''
-    print result
+        result = session.bundle_process.result
+        if result is None:
+            result = ''
+        print result
     
     if not session.celery_is_alive:
         state = 'Celery is dead'

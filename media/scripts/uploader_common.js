@@ -88,6 +88,8 @@ window.onbeforeunload = function (event) {
         return FilterSingleBranch(clickedNode, mychildren);
     }
 
+    var respondToSelect = true;
+
     function loadUploadTree(selected) {
 
         resetTimeout();
@@ -174,7 +176,6 @@ window.onbeforeunload = function (event) {
         }
 
         // Create the tree inside the <div id="tree"> element.
-        // Create the tree inside the <div id="tree"> element.
         $("#tree").fancytree({
             //      extensions: ["select"],
             checkbox: true,
@@ -191,6 +192,9 @@ window.onbeforeunload = function (event) {
             },
 
             select: function (event, data) {
+
+                if (!respondToSelect)
+                    return;
 
                 resetTimeout();
 
@@ -270,10 +274,45 @@ window.onbeforeunload = function (event) {
 
             var pkt = { form: frm, files: fileList };
 
+            // populate session data before showing the status page
+            $.post("/postData/", { form: JSON.stringify(frm) },
+                function (data) {
+                    var page = "/showStatus";
+
+                    var $dialog = $('<div></div>')
+                                   .html('<iframe style="border: 0px; " src="' + page + '" width="100%" height="100%"></iframe>')
+                                   .dialog({
+                                       autoOpen: false,
+                                       modal: true,
+                                       height: 625,
+                                       width: 500,
+                                       title: "Upload Status"
+                                   });
+                    $dialog.dialog('open');
+                });
+
+            
+
             $.post("/upload/", { packet: JSON.stringify(pkt) },
                 function (data) {
                     //alert('success');
-                    window.location.href = "/showStatus";
+                    //window.location.href = "/showStatus";
+                    // clear the selected files and get an empty bundle
+
+                    respondToSelect = false;
+
+                    selected.forEach(function (node) {
+                        node.setSelected(false);
+                    });
+
+                    respondToSelect = true;
+
+                    
+                    selected = tree.getSelectedNodes(stopOnParents = true);
+                    
+
+                    loadUploadTree(selected);
+
                 });
         });
 

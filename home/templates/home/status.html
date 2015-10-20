@@ -25,7 +25,11 @@
                         var statusPage = dataObj.result;
                         //var win = window.open(statusPage, '_blank');
                         window.open(statusPage, '_blank');
-                        window.location.href = '/';
+
+                        // close this window
+                        window.close();
+
+                        //window.location.href = '/';
                         //win.focus();
                     }
                 })
