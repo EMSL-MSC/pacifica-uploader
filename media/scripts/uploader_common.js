@@ -280,38 +280,32 @@ window.onbeforeunload = function (event) {
                 function (data) {
                     var page = "/showStatus";
 
-                    var $dialog = $('<div></div>')
-                                   .html('<iframe style="border: 0px; " src="' + page + '" width="100%" height="100%"></iframe>')
-                                   .dialog({
-                                       autoOpen: false,
-                                       modal: true,
-                                       height: 625,
-                                       width: 500,
-                                       title: "Upload Status"
-                                   });
-                    $dialog.dialog('open');
+                    $.get(page, function (status_data) {
+                        $('#status_info_container').html(status_data);
+                    });
 
-                    $.post("/upload/", { files: JSON.stringify(fileList) },
-                        function (data) {
-                            //alert('success');
-                            //window.location.href = "/showStatus";
-                            // clear the selected files and get an empty bundle
-
-                            respondToSelect = false;
-
-                            selected.forEach(function (node) {
-                                node.setSelected(false);
+                    $('#status_info_container').dialog({
+                        autoOpen: true,
+                        modal: true,
+                        width: 500,
+                        title: "Upload Status",
+                        close: function (event, ui) {
+                            window.clearTimeout(statusTimeoutHandler);
+                        },
+                        open: function (event, ui) {
+                            $.post("/upload", {
+                                packet: JSON.stringify(fileList)
+                            }, function (data) {
+                                respondToSelect = false;
+                                selected.forEach(function (node) {
+                                    node.setSelected(false);
+                                });
+                                respondToSelect = true;
+                                selected = tree.getSelectedNodes(stopOnParents = true);
+                                loadUploadTree(selected);
                             });
-
-                            respondToSelect = true;
-
-
-                            selected = tree.getSelectedNodes(stopOnParents = true);
-
-
-                            loadUploadTree(selected);
-
-                        });
+                        }
+                    });
                 });
 
             

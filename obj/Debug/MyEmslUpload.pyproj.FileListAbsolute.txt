@@ -63,3 +63,16 @@ C:\Users\d3k857\Documents\Visual Studio 2013\Projects\Uploader_Controller_theme_
 C:\Users\d3k857\Documents\Visual Studio 2013\Projects\Uploader_Controller_theme_test\bin\wfastcgi.py
 C:\Users\d3k857\Documents\Visual Studio 2013\Projects\Uploader_Controller_theme_test\obj\Debug\web.config
 C:\Users\d3k857\Documents\Visual Studio 2013\Projects\Uploader_Controller_theme_test\obj\Debug\web.debug.config
+C:\Users\d3k857\Documents\Visual Studio 2013\Projects\Upload_Controller_2015-10-21\bin\Microsoft.PythonTools.WebRole.dll
+C:\Users\d3k857\Documents\Visual Studio 2013\Projects\Upload_Controller_2015-10-21\obj\Debug\attach_server.py
+C:\Users\d3k857\Documents\Visual Studio 2013\Projects\Upload_Controller_2015-10-21\obj\Debug\visualstudio_py_debugger.py
+C:\Users\d3k857\Documents\Visual Studio 2013\Projects\Upload_Controller_2015-10-21\obj\Debug\visualstudio_py_repl.py
+C:\Users\d3k857\Documents\Visual Studio 2013\Projects\Upload_Controller_2015-10-21\obj\Debug\visualstudio_py_util.py
+C:\Users\d3k857\Documents\Visual Studio 2013\Projects\Upload_Controller_2015-10-21\obj\Debug\__init__.py
+C:\Users\d3k857\Documents\Visual Studio 2013\Projects\Upload_Controller_2015-10-21\obj\Debug\__main__.py
+C:\Users\d3k857\Documents\Visual Studio 2013\Projects\Upload_Controller_2015-10-21\bin\AzureSetup.cfg
+C:\Users\d3k857\Documents\Visual Studio 2013\Projects\Upload_Controller_2015-10-21\bin\Microsoft.PythonTools.AzureSetup.exe
+C:\Users\d3k857\Documents\Visual Studio 2013\Projects\Upload_Controller_2015-10-21\bin\Microsoft.PythonTools.AzureSetup.exe.config
+C:\Users\d3k857\Documents\Visual Studio 2013\Projects\Upload_Controller_2015-10-21\bin\wfastcgi.py
+C:\Users\d3k857\Documents\Visual Studio 2013\Projects\Upload_Controller_2015-10-21\obj\Debug\web.config
+C:\Users\d3k857\Documents\Visual Studio 2013\Projects\Upload_Controller_2015-10-21\obj\Debug\web.debug.config

@@ -1,47 +1,22 @@
-﻿<span class="ui-icon ui-icon-circle-check" style="float:left; margin:0 7px 50px 0;"></span>
-<section id="main_content" class="themed">
-    <fieldset>
-        <legend>Current Upload Status</legend>
-        <div class="full_width_block">
-            <dl>
-                <dt>Date of Upload:</dt>
-                    <dd>{{current_time}}</dd>
-                <dt>Current Status:</dt>
-                    <dd><span id="currState">Unknown</span></dd>
-                <dt>User:</dt>
-                    <dd>{{user}}</dd>
-                <dt>Instrument:</dt>
-                    <dd>{{instrument}}</dd>
-                <dt>Proposal Name:</dt>
-                    <dd>{{proposal}}</dd>
-                <dt>Bundle Size:</dt>
-                    <dd>{{bundle_size}}</dd>
-                <dt>Available Free Space:</dt>
-                    <dd>{{free_size}}</dd>
-            </dl>
-        </div>
-    </fieldset>
-    <fieldset>
-        <legend>Metadata Tags</legend>
-        <dl>
-            {% for meta in metaList %}
-            <dt>{{meta.label}}</dt>
-                <dd>{{meta.value}}</dd> 
-            {% endfor %}
-        </dl>
-    </fieldset>
-
-</section>
+﻿<div style="font-size:0.80em;">
+    <div class="full_width_block"><strong>Bundle Size:</strong> {{bundle_size}}</div>
+    <div class="full_width_block"><strong>Available Free Space:</strong> {{free_size}}</div>
+    <div class="full_width_block" style="margin-top:10px;">
+        <div><strong>Current Upload Processing Status:</strong></div>
+        <div><span id="currState"></span></div>
+    </div>
+</div>
 
 <form  action="{% url "incStatus" %}" method="post" enctype="multipart/form-data">
 {% csrf_token %}			
-	<div style="text-align: center; position: relative; margin-top: 2em;">	
-        <input type="submit" name = "Cancel Upload" value="Cancel Upload" />            
+	<div style="text-align: center; position: relative; margin-top: 1em; font-size:0.85em;">	
+        <input type="submit" name = "Cancel Upload" value="Cancel Upload" class="ui-button"/>            
     </div>
 </form>
 
 <script type="text/javascript">
-var url = '/incStatus';
+    var url = '/incStatus';
+    var statusTimeoutHandler;
        
 $.ajaxSetup({cache:false});
     function worker() {
@@ -68,7 +43,7 @@ $.ajaxSetup({cache:false});
                     //win.focus();
                 }
                 else {
-                    setTimeout(worker, 1000);
+                    statusTimeoutHandler = setTimeout(worker, 1000);
                 }
             })
             .fail(function(obj, textStatus, error){
