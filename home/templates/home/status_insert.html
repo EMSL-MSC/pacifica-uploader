@@ -1,0 +1,60 @@
+﻿<div style="font-size:0.80em;">
+    <div class="full_width_block"><strong>Bundle Size:</strong> {{bundle_size}}</div>
+    <div class="full_width_block"><strong>Available Free Space:</strong> {{free_size}}</div>
+    <div class="full_width_block" style="margin-top:10px;">
+        <div><strong>Current Upload Processing Status:</strong></div>
+        <div><span id="currState"></span></div>
+    </div>
+</div>
+
+<form  action="{% url "incStatus" %}" method="post" enctype="multipart/form-data">
+{% csrf_token %}			
+	<div style="text-align: center; position: relative; margin-top: 1em; font-size:0.85em;">	
+        <input type="submit" name = "Cancel Upload" value="Cancel Upload" class="ui-button"/>            
+    </div>
+</form>
+
+<script type="text/javascript">
+    var url = '/incStatus';
+    var statusTimeoutHandler;
+       
+$.ajaxSetup({cache:false});
+    function worker() {
+        var jqobject = $.ajax(url)
+            .done(function (data) {
+                    
+                var dataObj = $.parseJSON(data);
+                var state = dataObj.state;
+                var result = JSON.stringify(dataObj.result);
+                var stateStr = state.concat(': ');
+                stateStr = stateStr.concat(result);
+                $('#currState').html(stateStr);
+
+                if (dataObj.state == 'DONE') {
+                    var statusPage = dataObj.result;
+                    //var win = window.open(statusPage, '_blank');
+                    window.open(statusPage, '_blank');
+
+                    // close this window
+                    //window.close();
+                    $(this).closest('.ui-dialog-content').dialog('close');
+
+                    //window.location.href = '/';
+                    //win.focus();
+                }
+                else {
+                    statusTimeoutHandler = setTimeout(worker, 1000);
+                }
+            })
+            .fail(function(obj, textStatus, error){
+                $('#currState').html('Unknown');
+            })
+            //.always(function(){
+            //    setTimeout(worker, 1000);
+            //});
+
+    };
+    $(function () {
+        worker();
+    });
+</script>

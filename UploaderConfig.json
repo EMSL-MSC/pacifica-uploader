@@ -1,8 +1,8 @@
 {
-    "dataRoot": "M:\\8_Clean_Representative_Data",
+    "dataRoot": "Y:\\7_Representative_Data",
     "instrument": "34075",
-    "target": "C:\\tar",
-    "timeout": "10",
+    "target": "E:\\tar",
+    "timeout": "1",
     "server": "dev1.my.emsl.pnl.gov",
     "metadata": [
         [ "Tag", "Tag" ],

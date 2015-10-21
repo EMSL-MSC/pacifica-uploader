@@ -97,7 +97,7 @@ def main():
     # we should get the same relative file lists
     for i in range(len(upfiles)):
         if hash_file(upfiles[i]) == hash_file(downfiles[i]):
-            print "match" + upfiles[i]
+            print "matched:  " + upfiles[i]
         else:
             print "unmatched hash"
             print upfiles[i]

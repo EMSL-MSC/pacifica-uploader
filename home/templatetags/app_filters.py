@@ -1,3 +1,6 @@
+#pylint: disable=invalid-name
+#justification: because pylint doesn't get celery
+
 '''
 Created on Dec 3, 2014
 
