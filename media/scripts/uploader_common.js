@@ -83,8 +83,9 @@ window.onbeforeunload = function (event) {
 
         if (mychildren.length != 1) return parentNodes;
 
+        // kludge to update the selection state without triggering a selection event
         myparent.selected = false;
-        myparent.setTitle(parent.title);
+        myparent.setTitle(myparent.title);
 
         return FilterSingleBranch(clickedNode, mychildren);
     }
@@ -271,6 +272,12 @@ window.onbeforeunload = function (event) {
                 fileList.push(node.key);
             });
 
+            if (jQuery.isEmptyObject(fileList)) {
+                alert("upload list is empty");
+                return;
+            }
+
+
             var frm = $("form").serializeFormJSON();
 
             //var pkt = { form: frm, files: fileList };
@@ -287,7 +294,15 @@ window.onbeforeunload = function (event) {
                                        modal: true,
                                        height: 625,
                                        width: 500,
-                                       title: "Upload Status"
+                                       title: "Upload Status",
+                                       buttons: {
+                                           "SUBMIT": function () {
+                                               $("form").submit();
+                                           },
+                                           "CANCEL": function () {
+                                               $(this).dialog("close");
+                                           }
+                                       },
                                    });
                     $dialog.dialog('open');
 
@@ -311,6 +326,9 @@ window.onbeforeunload = function (event) {
 
                             loadUploadTree(selected);
 
+                        })
+                        .fail(function (jqXHR, textStatus, errorThrown) {
+                            alert(jqXHR.responseText);
                         });
                 });
 
