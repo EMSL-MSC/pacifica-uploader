@@ -7,13 +7,6 @@
     </div>
 </div>
 
-<form  action="{% url "incStatus" %}" method="post" enctype="multipart/form-data">
-{% csrf_token %}			
-	<div style="text-align: center; position: relative; margin-top: 1em; font-size:0.85em;">	
-        <input type="submit" name = "Cancel Upload" value="Cancel Upload" class="ui-button"/>            
-    </div>
-</form>
-
 <script type="text/javascript">
     var url = '/incStatus';
     var statusTimeoutHandler;
@@ -32,26 +25,22 @@ $.ajaxSetup({cache:false});
 
                 if (dataObj.state == 'DONE') {
                     var statusPage = dataObj.result;
-                    //var win = window.open(statusPage, '_blank');
+
                     window.open(statusPage, '_blank');
 
-                    // close this window
-                    //window.close();
-                    $(this).closest('.ui-dialog-content').dialog('close');
+                    $('#status_info_container').dialog('close');
 
-                    //window.location.href = '/';
-                    //win.focus();
+                }
+                else if (dataObj.state == 'CANCELLED') {
+                    $('#status_info_container').dialog('close');
                 }
                 else {
                     statusTimeoutHandler = setTimeout(worker, 1000);
                 }
             })
             .fail(function(obj, textStatus, error){
-                $('#currState').html('Unknown');
+                $('#currState').html(textStatus);
             })
-            //.always(function(){
-            //    setTimeout(worker, 1000);
-            //});
 
     };
     $(function () {

@@ -683,46 +683,50 @@ def incremental_status(request):
     """
     # pass pylint
     request = request
-
-    if request.POST:
-        if request.POST.get("Cancel Upload"):
+    try:
+        if request.POST:
             if session.bundle_process:
                 session.bundle_process.revoke(terminate=True)
             session.cleanup_upload()
-            return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
-
-    if not session.bundle_process:
-        state = 'PENDING'
-        result = 'Spinning off background process'
-    else:
-        state = session.bundle_process.status
-        if state is None:
-            state = "UNKNOWN"
-        print state
-
-        result = session.bundle_process.result
-        if result is None:
+            state = 'CANCELLED'
             result = ''
-        print result
+        else:
+            if not session.bundle_process:
+                state = 'PENDING'
+                result = 'Spinning off background process'
+            else:
+                state = session.bundle_process.status
+                if state is None:
+                    state = "UNKNOWN"
+                print state
+
+                result = session.bundle_process.result
+                if result is None:
+                    result = ''
+                print result
 
 
-    if result is not None:
-        if "http" in result:
-            state = 'DONE'
-            result = result.strip('"')
-            job_id = result
-            job_id = tar_man.parse_job(result)
+            if result is not None:
+                if "http" in result:
+                    state = 'DONE'
+                    result = result.strip('"')
+                    job_id = result
+                    job_id = tar_man.parse_job(result)
 
-            #if we have successfully uploaded, cleanup the lists
-            session.cleanup_upload()
+                    #if we have successfully uploaded, cleanup the lists
+                    session.cleanup_upload()
 
-            result = "https://%s/myemsl/status/index.php/status/view/j/%s" \
-                     % (configuration.server_path, job_id)
+                    result = "https://%s/myemsl/status/index.php/status/view/j/%s" \
+                             % (configuration.server_path, job_id)
 
-    # create json structure
-    retval = json.dumps({'state':state, 'result':result})
+        # create json structure
+        retval = json.dumps({'state':state, 'result':result})
 
-    # reset timeout
-    session.touch()
+        # reset timeout
+        session.touch()
 
-    return HttpResponse(retval)
+        return HttpResponse(retval)
+
+    except Exception, e:
+        print e.message
+

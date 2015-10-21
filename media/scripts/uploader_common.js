@@ -296,23 +296,43 @@ window.onbeforeunload = function (event) {
                         modal: true,
                         width: 500,
                         title: "Upload Status",
+                        buttons: {
+                            "Cancel Upload": function () {
+                                $.post("/incStatus/", "Cancel Upload",
+                                function (data) {
+                                    $('#status_info_container').dialog('close');
+                                });
+                            }
+                        },
                         close: function (event, ui) {
                             window.clearTimeout(statusTimeoutHandler);
-                        },
-                        open: function (event, ui) {
-                            $.post("/upload", {
-                                packet: JSON.stringify(fileList)
-                            }, function (data) {
-                                respondToSelect = false;
-                                selected.forEach(function (node) {
-                                    node.setSelected(false);
-                                });
-                                respondToSelect = true;
-                                selected = tree.getSelectedNodes(stopOnParents = true);
-                                loadUploadTree(selected);
-                            });
                         }
                     });
+
+                    $.post("/upload/", { files: JSON.stringify(fileList) },
+                        function (data) {
+                            //alert('success');
+                            //window.location.href = "/showStatus";
+                            // clear the selected files and get an empty bundle
+
+                            respondToSelect = false;
+
+                            selected.forEach(function (node) {
+                                node.setSelected(false);
+                            });
+
+                            respondToSelect = true;
+
+
+                            selected = tree.getSelectedNodes(stopOnParents = true);
+
+
+                            loadUploadTree(selected);
+
+                        })
+                        .fail(function (jqXHR, textStatus, errorThrown) {
+                            alert(jqXHR.responseText);
+                        });
                 });
 
             
