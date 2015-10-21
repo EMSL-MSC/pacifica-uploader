@@ -17,7 +17,11 @@ from django.conf import settings
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponseRedirect
+
 from django.http import HttpResponse
+from django.http import HttpResponseBadRequest
+from django.http import HttpResponseServerError
+
 from django.core.urlresolvers import reverse
 
 import json
@@ -220,91 +224,92 @@ def post_upload_metadata(request):
 
     data = request.POST.get('form')
     try:
-        print "form"
-        if data:
-            form = json.loads(data)
-        else:
-            return
+        form = json.loads(data)
+
+        # get the meta data values from the post
+        for meta in session.meta_list:
+            value = form[meta.name]
+            if value:
+                meta.value = value
+
+        # get the selected proposal string from the post as it may not have been set in a previous post
+        session.load_proposal(form['proposal'])
+        session.load_proposal_user(form['proposal_user'])
+
+        session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
+
+        return HttpResponse(json.dumps("success"), content_type="application/json")
+
     except Exception, e:
-        print e
-        return
-
-    # get the meta data values from the post
-    for meta in session.meta_list:
-        value = form[meta.name]
-        if value:
-            meta.value = value
-
-    # get the selected proposal string from the post as it may not have been set in a previous post
-    session.load_proposal(form['proposal'])
-    session.load_proposal_user(form['proposal_user'])
-
-    session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
-
-    return HttpResponse(json.dumps("success"), content_type="application/json")
+        return HttpResponseServerError(json.dumps(e.message), content_type="application/json")
 
 
 def spin_off_upload(request):
     """
     spins the upload process off to a background celery process
     """
+
+    data = request.POST.get('files')
+    try:
+        if data:
+            files = json.loads(data)
+        else:
+            return HttpResponseBadRequest(json.dumps("missing files in post"), content_type="application/json")
+    except Exception, e:
+        return HttpResponseBadRequest(json.dumps(e.message), content_type="application/json")
+
+    if not files:
+        return HttpResponseBadRequest(json.dumps("missing files in post"), content_type="application/json")
+
     # check to see if background celery process is alive
     # Wait 5 seconds
     session.celery_is_alive = ping_celery()
     print 'Celery lives = %s' % (session.celery_is_alive)
     if not session.celery_is_alive:
-        show_status(request, 'Celery is dead')
+        return HttpResponseServerError(json.dumps('Celery is dead'), content_type="application/json")
 
-    data = request.POST.get('files')
     try:
-        print "form"
-        if data:
-            files = json.loads(data)
-        else:
-            return
+        tuples = session.files.get_bundle_files(files)
+
+        # create the groups dictionary
+        #{"groups":[{"name":"FOO1", "type":"Tag"}]}
+        groups = {}
+        for meta in session.meta_list:
+            groups[meta.name] = meta.value
+
+        insty = 'Instrument.%s' % (configuration.instrument)
+        groups[insty] = configuration.instrument_friendly
+        groups["EMSL User"] = session.proposal_user
+
+        session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
+
+        session.bundle_filepath = os.path.join(configuration.target_dir, session.current_time + ".tar")
+
+        # spin this off as a background process and load the status page
+        if True:
+            session.bundle_process = \
+                    tasks.upload_files.delay(bundle_name=session.bundle_filepath,
+                                             instrument_name=configuration.instrument,
+                                             proposal=session.proposal_id,
+                                             file_list=tuples,
+                                             bundle_size=session.files.bundle_size,
+                                             groups=groups,
+                                             server=configuration.server_path,
+                                             user=session.user,
+                                             password=session.password)
+        else: # for debug purposes
+            tasks.upload_files(
+                bundle_name=session.bundle_filepath,
+                instrument_name=configuration.instrument,
+                proposal=session.proposal_id,
+                bundle_size=session.files.bundle_size,
+                groups=groups,
+                server=configuration.server_path,
+                user=session.user,
+                password=session.password
+            )
     except Exception, e:
-        print e
-        return
-
-    tuples = session.files.get_bundle_files(files)
-
-    # create the groups dictionary
-    #{"groups":[{"name":"FOO1", "type":"Tag"}]}
-    groups = {}
-    for meta in session.meta_list:
-        groups[meta.name] = meta.value
-
-    insty = 'Instrument.%s' % (configuration.instrument)
-    groups[insty] = configuration.instrument_friendly
-    groups["EMSL User"] = session.proposal_user
-
-    session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
-
-    session.bundle_filepath = os.path.join(configuration.target_dir, session.current_time + ".tar")
-
-    # spin this off as a background process and load the status page
-    if True:
-        session.bundle_process = \
-                tasks.upload_files.delay(bundle_name=session.bundle_filepath,
-                                         instrument_name=configuration.instrument,
-                                         proposal=session.proposal_id,
-                                         file_list=tuples,
-                                         bundle_size=session.files.bundle_size,
-                                         groups=groups,
-                                         server=configuration.server_path,
-                                         user=session.user,
-                                         password=session.password)
-    else: # for debug purposes
-        tasks.upload_files(
-            bundle_name=session.bundle_filepath,
-            instrument_name=configuration.instrument,
-            proposal=session.proposal_id,
-            bundle_size=session.files.bundle_size,
-            groups=groups,
-            server=configuration.server_path,
-            user=session.user,
-            password=session.password
-        )
+        return HttpResponseServerError(json.dumps(e.message), content_type="application/json")
 
     return HttpResponse(json.dumps("success"), content_type="application/json")
 
@@ -312,8 +317,14 @@ def upload_files(request):
     """
     view for upload process spawn
     """
-    print "upload!"
-    return spin_off_upload(request)
+    try:
+        reply = spin_off_upload(request)
+
+        return reply
+
+    except Exception, e:
+        return e.message
+
 
 
 """
@@ -675,9 +686,6 @@ def incremental_status(request):
         if result is None:
             result = ''
         print result
-    
-    if not session.celery_is_alive:
-        state = 'Celery is dead'
 
 
     if result is not None:
