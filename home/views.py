@@ -193,7 +193,7 @@ def show_initial_status(request):
     """
     shows the status page with no message
     """
-    return show_status(request, "")
+    return show_status_insert(request, "")
 
 def show_status(request, message):
     """
@@ -211,6 +211,24 @@ def show_status(request, message):
                                'free_size': configuration.free_size_str,
                                'user': session.user_full_name},
                               context_instance=RequestContext(request))
+
+def show_status_insert(request, message):
+    """
+    show the status of the existing upload task
+    """
+    session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
+
+    return render_to_response('home/status_insert.html',
+                              {'instrument':configuration.concatenated_instrument(),
+                               'status': message,
+                               'proposal':session.proposal_friendly,
+                               'metaList':session. meta_list,
+                               'current_time': session.current_time,
+                               'bundle_size': session.files.bundle_size_str,
+                               'free_size': configuration.free_size_str,
+                               'user': session.user_full_name},
+                              context_instance=RequestContext(request))
+
 
 def post_upload_metadata(request):
     """
