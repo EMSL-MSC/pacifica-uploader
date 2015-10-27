@@ -38,7 +38,7 @@ function logOut() {
 
 function setLogoutTimer() {
     // 10 minutes hardcoded for now
-    timeoutID = window.setTimeout(logOutAndBack, 60000);
+    timeoutID = window.setTimeout(logOutAndBack, 600000);
 }
 
 function clearLogoutTimer() {
