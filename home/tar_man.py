@@ -66,14 +66,15 @@ def remove_orphans(directory):
     # compare the files to the contents of the directory
     for fpath in dir_files:
         # if a file is in the directory but not uploaded, remove it if it is out of date
-        if not '_uploaded.tar' in fpath:
-            full_path = os.path.join(directory, fpath)
-            # remove from directory
-            if os.path.isfile(full_path):
-                timestamp = os.path.getmtime(full_path)
-                current = time.time()
-                if current - timestamp > 86400: # a day in seconds
-                    os.remove(full_path)
+        # kludge in place to remove things that never progress in the database
+        # if not '_uploaded.tar' in fpath:
+        full_path = os.path.join(directory, fpath)
+        # remove from directory
+        if os.path.isfile(full_path):
+            timestamp = os.path.getmtime(full_path)
+            current = time.time()
+            if current - timestamp > 86400: # a day in seconds
+                os.remove(full_path)
 
 def clean_tar_directory(directory, jobs_state):
     """
