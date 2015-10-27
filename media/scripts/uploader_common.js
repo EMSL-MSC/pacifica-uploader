@@ -10,12 +10,9 @@ function setup_upload_tree() {
 }
 
 //**********************************************************************
+// timer for auto logout
 var timeoutID;
 
-function setLogoutTimer() {
-    // 10 minutes hardcoded for now
-    timeoutID = window.setTimeout(logOutAndBack, 600000);
-}
 
 function logOutAndBack() {
     //alert("Logging you out");
@@ -37,6 +34,11 @@ function logOut() {
     .fail(function (obj, textStatus, error) {
         $('#currState').html('Unknown');
     })
+}
+
+function setLogoutTimer() {
+    // 10 minutes hardcoded for now
+    timeoutID = window.setTimeout(logOutAndBack, 60000);
 }
 
 function clearLogoutTimer() {
@@ -260,7 +262,8 @@ window.onbeforeunload = function (event) {
 
         $("form").submit(function (event) {
 
-            resetTimeout();
+            // stop the logout timer
+            clearLogoutTimer();
 
             event.preventDefault();
 
@@ -277,10 +280,7 @@ window.onbeforeunload = function (event) {
                 return;
             }
 
-
             var frm = $("form").serializeFormJSON();
-
-            //var pkt = { form: frm, files: fileList };
 
             // populate session data before showing the status page
             $.post("/postData/", { form: JSON.stringify(frm) },
@@ -305,15 +305,8 @@ window.onbeforeunload = function (event) {
                             }
                         },
                         close: function (event, ui) {
+                            // stop the status update timer
                             window.clearTimeout(statusTimeoutHandler);
-                        }
-                    });
-
-                    $.post("/upload/", { files: JSON.stringify(fileList) },
-                        function (data) {
-                            //alert('success');
-                            //window.location.href = "/showStatus";
-                            // clear the selected files and get an empty bundle
 
                             respondToSelect = false;
 
@@ -328,6 +321,16 @@ window.onbeforeunload = function (event) {
 
 
                             loadUploadTree(selected);
+
+                            // restart the logout timer
+                            resetTimeout();
+                        }
+                    });
+
+                    $.post("/upload/", { files: JSON.stringify(fileList) },
+                        function (data) {
+
+                            
 
                         })
                         .fail(function (jqXHR, textStatus, errorThrown) {
