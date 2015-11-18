@@ -63,7 +63,7 @@ session = session_data.SessionState()
 # server is instrument uploader specific information
 configuration = instrument_server.InstrumentConfiguration()
 
-# development version
+# development version thingy
 version = '1.0.0'
 
 def login_user_locally(request):
