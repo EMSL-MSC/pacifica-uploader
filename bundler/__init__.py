@@ -39,7 +39,7 @@ class BundlerError(Exception):
         super(BundlerError, self).__init__(msg)
         self.msg = msg
 
-        # send message to the front end
+        # send message to the front end if one exists
         current_task.update_state(state='FAILURE', meta={'info': msg})
 
     def __str__(self):
