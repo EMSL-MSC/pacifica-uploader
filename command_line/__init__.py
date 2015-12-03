@@ -155,6 +155,8 @@ def upload_from_options( parser ):
 
 def main():
     try:
+        print 'MyEmsl Uploader, Version 1.0.0'
+
         parser = OptionParser()
         add_usage( parser )
         add_options( parser )
