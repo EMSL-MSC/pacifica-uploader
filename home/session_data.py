@@ -314,8 +314,9 @@ class SessionState(object):
         returns a nested structure that can be used to populate fancytree
         """
         nodes = ['Proposal ' + self.proposal_id,
-                 self.config.instrument_short_name,
-                 datetime.datetime.now().strftime("%Y.%m.%d")]
+                 self.config.instrument_short_name]
+                 #,
+                 #datetime.datetime.now().strftime("%Y.%m.%d")]
 
         tree = []
         children = tree
