@@ -226,6 +226,8 @@
     <Content Include="media\scripts\jquery-ui\jquery-ui.structure.min.css" />
     <Content Include="media\scripts\jquery-ui\jquery-ui.theme.css" />
     <Content Include="media\scripts\jquery-ui\jquery-ui.theme.min.css" />
+    <Content Include="media\scripts\jquery-ui\jquery.ui-contextmenu.min.js" />
+    <Content Include="media\scripts\jquery-ui\jquery.ui-contextmenu.min.js.map" />
     <Content Include="media\scripts\jquery\jquery-1.11.2.js" />
     <Content Include="media\scripts\jquery\jquery-2.1.3.js" />
     <Content Include="media\scripts\jquery\jquery-2.1.3.min.js" />
