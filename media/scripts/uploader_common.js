@@ -233,6 +233,43 @@ window.onbeforeunload = function (event) {
             loadChildren: function (event, data) {
                 // Apply parent's state to new child nodes:
                 data.node.fixSelection3AfterClick();
+
+                var node = data.node;
+
+                // sort here
+                var cmp = function (a, b) {
+                //    var x = (a.isFolder() ? "0" : "1") + a.title.toLowerCase(),
+                //        y = (b.isFolder() ? "0" : "1") + b.title.toLowerCase();
+                
+                //var dateA = $.parseJSON(a.data);
+                //var dateB = $.parseJSON(b.data);
+
+                var x = (a.isFolder() ? "1" : "0") + a.data.time,
+                    y = (b.isFolder() ? "1" : "0") + b.data.time;
+
+                // sort with newest first
+                return x === y ? 0 : x > y ? -1 : 1;
+                };
+
+                node.sortChildren(cmp, false);
+            }
+        });
+
+        $("#tree").contextmenu({
+            delegate: "span.fancytree-title",
+            //      menu: "#options",
+            menu: [
+                { title: "Set as Base Directory", cmd: "root" },
+                { title: "Toggle Sort", cmd: "sort" }
+            ],
+            beforeOpen: function (event, ui) {
+                var node = $.ui.fancytree.getNode(ui.target);
+                //                node.setFocus();
+                node.setActive();
+            },
+            select: function (event, ui) {
+                var node = $.ui.fancytree.getNode(ui.target);
+                alert("select " + ui.cmd + " on " + node);
             }
         });
 
