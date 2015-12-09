@@ -22,6 +22,7 @@ class FolderMeta(object):
 class FileManager(object):
     """description of class"""
 
+    data_dir = ''
     bundle_filepath = ''
     bundle_size = 0
     bundle_size_str = ''
