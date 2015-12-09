@@ -64,7 +64,7 @@ session = session_data.SessionState()
 configuration = instrument_server.InstrumentConfiguration()
 
 # development version
-version = '0.99.2'
+version = '0.99.3'
 
 def login_user_locally(request):
     """
@@ -166,7 +166,7 @@ def populate_upload_page(request):
         # call login error with no error message
         return login_error(request, '')
 
-    root_dir = configuration.data_dir
+    root_dir = session.files.data_dir
 
     if not root_dir or root_dir == '':
         return login_error(request, 'Data share is not configured')
@@ -188,7 +188,7 @@ def populate_upload_page(request):
                                'proposal':session.proposal_friendly,
                                'proposal_user':session.proposal_user,
                                'proposal_users':session.proposal_users,
-                               'data_root':configuration.data_dir,
+                               'data_root':session.files.data_dir,
                                'metaList':session.meta_list,
                                'user':session.user_full_name},
                               context_instance=RequestContext(request))
@@ -198,6 +198,28 @@ def show_initial_status(request):
     shows the status page with no message
     """
     return show_status_insert(request, "")
+
+def set_data_root(request):
+    """
+    explicitly set the data root
+    """
+    try:
+        mode = request.POST.get("mode")
+
+        # if empty root, restore the original
+        if (mode == 'restore'):
+            session.restore_session_root()
+        else:
+            parent = request.POST.get("parent")
+            if not parent:
+                return HttpResponseServerError(json.dumps("missing root directory"), content_type="application/json")
+
+            session.set_session_root(parent)
+
+        return HttpResponse(json.dumps("success"), content_type="application/json")
+
+    except Exception, e:
+        return HttpResponseServerError(json.dumps(e.message), content_type="application/json")
 
 def show_status(request, message):
     """
@@ -516,13 +538,17 @@ def get_children(request):
             #regex  = re.compile('\.(.+?)')
             filtered = [i for i in lazy_list if not i[0]=='.']
 
+            # folders first
             for item in filtered:
                 itempath = os.path.join(parent, item)
+                time = os.path.getmtime(itempath)
+
                 if session.files.accessible(itempath):
                     if os.path.isfile(itempath):
-                        pathlist.append({"title": item, "key": itempath, "folder": False})
+                        pathlist.append({"title": item, "key": itempath, "folder": False, "data":{"time":time}})
                     elif os.path.isdir(itempath):
-                        pathlist.append({"title": item, "key": itempath, "folder": True, "lazy": True})
+                        pathlist.append({"title": item, "key": itempath, "folder": True, "lazy": True, "data":{"time":time}})
+
 
         retval = json.dumps(pathlist)
 
@@ -554,7 +580,6 @@ def make_leaf(title, path):
             is_folder = True
 
     session.files.bundle_size += size
-
     
     size_string = file_tools.size_string(size)
     return {"title": title + " (" + size_string + ")",
@@ -636,8 +661,27 @@ def get_bundle(request):
     try:
         session.files.error_string = ''
 
-        tree, lastnode = session.get_archive_tree()
+        #tree, lastnode = session.get_archive_tree()
+
+        # getting rid of the concept of an archive path,
+        # leaving in the code for now in case we backtrack
+        session.files.archive_path = ''
         session.files.bundle_size = 0
+
+        tree = []
+        children = tree
+        lastnode = {}
+        archive_path = ''
+
+        node = {"title": "Upload",
+                "key": 1,
+                "folder": True,
+                "expanded": True,
+                "children": [],
+                "data":""}
+        children.append(node)
+        children = node['children']
+        lastnode = node
 
         pathstring = request.POST.get("packet")
 
