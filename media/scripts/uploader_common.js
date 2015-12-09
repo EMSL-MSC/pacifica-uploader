@@ -236,40 +236,92 @@ window.onbeforeunload = function (event) {
 
                 var node = data.node;
 
-                // sort here
-                var cmp = function (a, b) {
-                //    var x = (a.isFolder() ? "0" : "1") + a.title.toLowerCase(),
-                //        y = (b.isFolder() ? "0" : "1") + b.title.toLowerCase();
-                
-                //var dateA = $.parseJSON(a.data);
-                //var dateB = $.parseJSON(b.data);
+                SortByName(node);
+            }
+        });
 
+        function SortByTime(node) {
+            var cmp = function (a, b) {
                 var x = (a.isFolder() ? "1" : "0") + a.data.time,
                     y = (b.isFolder() ? "1" : "0") + b.data.time;
 
                 // sort with newest first
                 return x === y ? 0 : x > y ? -1 : 1;
-                };
+            };
 
-                node.sortChildren(cmp, false);
-            }
-        });
+            node.sortChildren(cmp, false);
+        }
+
+        function SortByName(node) {
+            var cmp = function (a, b) {
+                var x = (a.isFolder() ? "0" : "1") + a.title,
+                    y = (b.isFolder() ? "0" : "1") + b.title;
+
+                // sort with newest first
+                return x === y ? 0 : x > y ? 1 : -1;
+            };
+
+            node.sortChildren(cmp, false);
+        }
+
+        function SetRoot(setmode, root) {
+            $.post("/setRoot/", {mode:setmode, parent: root },
+            function (data) {
+                // reload the page
+                document.location.reload(true);
+            })
+            .fail(function (jqXHR, textStatus, errorThrown) {
+                alert(jqXHR.responseText);
+            });
+        }
+
+
 
         $("#tree").contextmenu({
             delegate: "span.fancytree-title",
             //      menu: "#options",
             menu: [
-                { title: "Set as Base Directory", cmd: "root" },
-                { title: "Toggle Sort", cmd: "sort" }
+                { title: "Set as Base Directory", cmd: "reroute" },
+                { title: "Restore Base Directory", cmd: "root" },
+                { title: "Sort by Timestamp", cmd: "sortTime" },
+                { title: "Sort by Name", cmd: "sortName" }
             ],
             beforeOpen: function (event, ui) {
                 var node = $.ui.fancytree.getNode(ui.target);
-                //                node.setFocus();
+
+                if (node.isFolder()) {
+                    $("#tree").contextmenu("replaceMenu", [
+                        { title: "Set as Base Directory", cmd: "reroute" },
+                        { title: "Restore Base Directory", cmd: "root" },
+                        { title: "Sort by Timestamp", cmd: "sortTime" },
+                        { title: "Sort by Name", cmd: "sortName" }
+                    ]);
+                }
+                else {
+                    $("#tree").contextmenu("replaceMenu", []);
+                }
+
                 node.setActive();
             },
             select: function (event, ui) {
                 var node = $.ui.fancytree.getNode(ui.target);
-                alert("select " + ui.cmd + " on " + node);
+
+                switch (ui.cmd)
+                {
+                    case "reroute":
+                        SetRoot("set", node.key);
+                        break;
+                    case "root":
+                        SetRoot("restore", "");
+                        break;
+                    case "sortTime":
+                        SortByTime(node);
+                        break;
+                    case "sortName":
+                        SortByName(node);
+                        break;
+                }
+                
             }
         });
 
