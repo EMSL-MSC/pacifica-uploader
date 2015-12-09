@@ -106,12 +106,21 @@ class SessionState(object):
             meta_entry.value = ''
             self.meta_list.append(meta_entry)
 
+    def set_session_root(self, filepath):
+        self.files.data_dir = filepath
+
+    def restore_session_root(self):
+        self.files.data_dir = self.config.data_dir
+
     def populate_user_info(self, configuration):
         """
         parses user information from a json struct
         """
 
         self.config = configuration
+
+        # set the original root directory to the default
+        self.restore_session_root()
 
         try:
             self.load_meta_list()
@@ -312,11 +321,13 @@ class SessionState(object):
     def get_archive_tree(self):
         """
         returns a nested structure that can be used to populate fancytree
+        currently empty
         """
-        nodes = ['Proposal ' + self.proposal_id,
-                 self.config.instrument_short_name]
-                 #,
-                 #datetime.datetime.now().strftime("%Y.%m.%d")]
+        nodes = [
+                #'Proposal ' + self.proposal_id,
+                 #self.config.instrument_short_name],
+                 #datetime.datetime.now().strftime("%Y.%m.%d")
+                 ]
 
         tree = []
         children = tree
