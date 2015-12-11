@@ -248,7 +248,7 @@ window.onbeforeunload = function (event) {
                 // sort with newest first
                 return x === y ? 0 : x > y ? -1 : 1;
             };
-
+            node.data["sorting"] = "sortTime";
             node.sortChildren(cmp, false);
         }
 
@@ -260,7 +260,7 @@ window.onbeforeunload = function (event) {
                 // sort with newest first
                 return x === y ? 0 : x > y ? 1 : -1;
             };
-
+            node.data["sorting"] = "sortName";
             node.sortChildren(cmp, false);
         }
 
@@ -278,7 +278,7 @@ window.onbeforeunload = function (event) {
 
 
         $("#tree").contextmenu({
-            delegate: "span.fancytree-title",
+            delegate: "span.fancytree-node",
             //      menu: "#options",
             menu: [
                 { title: "Set as Base Directory", cmd: "reroute" },
@@ -286,16 +286,25 @@ window.onbeforeunload = function (event) {
                 { title: "Sort by Timestamp", cmd: "sortTime" },
                 { title: "Sort by Name", cmd: "sortName" }
             ],
+            show: { effect: "fadeIn", duration: 100 },
+            hide: { effect: "fadeOut", duration: 100 },
             beforeOpen: function (event, ui) {
                 var node = $.ui.fancytree.getNode(ui.target);
+                var sort_type = "sortName";
+                if ("sorting" in node.data){
+                    sort_type = node.data.sorting;
+                }
+                var menu_replacement = [];
 
                 if (node.isFolder()) {
-                    $("#tree").contextmenu("replaceMenu", [
-                        { title: "Set as Base Directory", cmd: "reroute" },
-                        { title: "Restore Base Directory", cmd: "root" },
-                        { title: "Sort by Timestamp", cmd: "sortTime" },
-                        { title: "Sort by Name", cmd: "sortName" }
-                    ]);
+                    menu_replacement.push({ title: "Set as Base Directory", cmd: "reroute" });
+                    menu_replacement.push({ title: "Restore Base Directory", cmd: "root" });
+                    if (sort_type == 'sortName') {
+                        menu_replacement.push({ title: "Sort by Time", cmd: "sortTime" });
+                    } else {
+                        menu_replacement.push({ title: "Sort by Name", cmd: "sortName" });
+                    }
+                    $("#tree").contextmenu("replaceMenu", menu_replacement);
                 }
                 else {
                     $("#tree").contextmenu("replaceMenu", []);
