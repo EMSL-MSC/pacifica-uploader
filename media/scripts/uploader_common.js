@@ -195,39 +195,6 @@ window.onbeforeunload = function (event) {
                 };
             },
 
-            //click: function (event, data) {
-            //    // Tree is in multiselect mode, so we have to handle
-            //    // deselecting ourselves
-            //    var anchor, idx, inc,
-            //        tree = data.tree,
-            //        node = data.node;
-            //    if (event.shiftKey) {
-            //        // Select contigous region (only inside a common parent)
-            //        tree.visit(function (n) {
-            //            n.setSelected(false);
-            //        });
-            //        node.setSelected();
-            //        anchor = tree.getActiveNode();
-            //        if (anchor && anchor.parent === node.parent) {
-            //            // select range up to active node (only if within common parent)
-            //            idx = anchor.getIndex();
-            //            inc = (idx <= node.getIndex()) ? +1 : -1;
-            //            do {
-            //                anchor.setSelected();
-            //                idx += inc;
-            //                anchor = node.parent.children[idx];
-            //            } while (anchor && anchor !== node);
-            //        }
-            //    } else if (event.ctrlKey || event.altKey || event.metaKey) {
-            //        node.toggleSelected();
-            //    } else {
-            //        data.tree.visit(function (n) {
-            //            n.setSelected(false);
-            //        });
-            //        data.node.setSelected();
-            //    }
-            //},
-
             select: function (event, data) {
 
                 if (!respondToSelect)
@@ -288,7 +255,7 @@ window.onbeforeunload = function (event) {
 
 
                     // Select contigous region (only inside a common parent)
-                    tree.visit(function (n) {
+                    node.parent.visit(function (n) {
                         n.setSelected(false);
                     });
                     //node.setSelected();

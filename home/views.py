@@ -64,7 +64,7 @@ session = session_data.SessionState()
 configuration = instrument_server.InstrumentConfiguration()
 
 # development version
-version = '0.99.4'
+version = '0.99.5'
 
 def login_user_locally(request):
     """
@@ -698,13 +698,22 @@ def get_bundle(request):
         # this actually should be done already by getting parent nodes
         filtered = session.files.filter_selected_list(paths)
 
-        common_path = os.path.commonprefix(filtered)
+        # spec was changed to not remove the common path.  
+        # leaving the code in until the new requirements are vetted
+
+        #common_path = os.path.commonprefix(filtered)
+
+        # get the root directory
+        #path = paths[0]
+        #common_path = path[:path.index(os.sep)] if os.sep in path else path
+
+        common_path = session.files.data_dir
 
         #get rid of dangling prefixes
         common_path, tail = os.path.split(common_path)
         common_path = os.path.join(common_path, '')
 
-        # used later to modify arc names
+        ## used later to modify arc names
         session.files.common_path = common_path
 
         for itempath in paths:
@@ -715,6 +724,9 @@ def get_bundle(request):
             clipped_path = itempath.replace(common_path, '')
             subdirs = []
             make_tree(lastnode, subdirs, clipped_path, item, itempath)
+
+        # get rid of the placeholder top node
+        tree = tree[0]["children"]
 
         return return_bundle(tree, session.files.error_string)
 
