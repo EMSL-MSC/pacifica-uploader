@@ -195,6 +195,39 @@ window.onbeforeunload = function (event) {
                 };
             },
 
+            //click: function (event, data) {
+            //    // Tree is in multiselect mode, so we have to handle
+            //    // deselecting ourselves
+            //    var anchor, idx, inc,
+            //        tree = data.tree,
+            //        node = data.node;
+            //    if (event.shiftKey) {
+            //        // Select contigous region (only inside a common parent)
+            //        tree.visit(function (n) {
+            //            n.setSelected(false);
+            //        });
+            //        node.setSelected();
+            //        anchor = tree.getActiveNode();
+            //        if (anchor && anchor.parent === node.parent) {
+            //            // select range up to active node (only if within common parent)
+            //            idx = anchor.getIndex();
+            //            inc = (idx <= node.getIndex()) ? +1 : -1;
+            //            do {
+            //                anchor.setSelected();
+            //                idx += inc;
+            //                anchor = node.parent.children[idx];
+            //            } while (anchor && anchor !== node);
+            //        }
+            //    } else if (event.ctrlKey || event.altKey || event.metaKey) {
+            //        node.toggleSelected();
+            //    } else {
+            //        data.tree.visit(function (n) {
+            //            n.setSelected(false);
+            //        });
+            //        data.node.setSelected();
+            //    }
+            //},
+
             select: function (event, data) {
 
                 if (!respondToSelect)
@@ -223,12 +256,61 @@ window.onbeforeunload = function (event) {
 
                 resetTimeout();
 
-                node = data.node;
-                var tree = $("#tree").fancytree("getTree");
-                var clicked_item_type = $.ui.fancytree.getEventTargetType(event.originalEvent);
-                if (clicked_item_type != 'checkbox' && clicked_item_type != 'expander') {
-                    node.toggleExpanded();
-                }
+                var anchor, idx, inc,
+                    tree = data.tree,
+                    node = data.node;
+
+                if (event.shiftKey) {
+
+                    respondToSelect = false;
+
+                    if (!anchor) {
+                        // search up, select the highest selected node
+                        idx = node.getIndex() - 1;
+                        while (idx >= 0) {
+                            if (node.parent.children[idx].isSelected() && !node.parent.children[idx].isFolder()) {
+                                anchor = node.parent.children[idx];
+                            }
+                            idx--;
+                        } 
+                    }
+
+                    if (!anchor) {
+                        // search down, select the lowest selected node
+                        idx = node.getIndex() + 1;
+                        while (idx < node.parent.children.length) {
+                            if (node.parent.children[idx].isSelected() && !node.parent.children[idx].isFolder()) {
+                                anchor = node.parent.children[idx];
+                            }
+                            idx++;
+                        }
+                    }
+
+
+                    // Select contigous region (only inside a common parent)
+                    tree.visit(function (n) {
+                        n.setSelected(false);
+                    });
+                    //node.setSelected();
+                    
+                    if (anchor && anchor.parent === node.parent) {
+                        // select range up to active node (only if within common parent)
+                        idx = anchor.getIndex();
+                        inc = (idx <= node.getIndex()) ? +1 : -1;
+                        do {
+                            anchor.setSelected();
+                            idx += inc;
+                            anchor = node.parent.children[idx];
+                        } while (anchor && anchor !== node);
+                    }
+
+                    respondToSelect = true;
+
+                    var clicked_item_type = $.ui.fancytree.getEventTargetType(event.originalEvent);
+                    if (clicked_item_type != 'checkbox' && clicked_item_type != 'expander') {
+                        node.toggleExpanded();
+                    }
+                } 
             },
             loadChildren: function (event, data) {
                 // Apply parent's state to new child nodes:
