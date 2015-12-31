@@ -55,7 +55,7 @@ window.onload = function () {
 };
 
 window.onbeforeunload = function (event) {
-    logOut();
+    //logOut();
 };
 
     //**********************************************************************
@@ -363,6 +363,8 @@ window.onbeforeunload = function (event) {
             },
             select: function (event, ui) {
                 var node = $.ui.fancytree.getNode(ui.target);
+
+                resetTimeout();
 
                 switch (ui.cmd)
                 {
