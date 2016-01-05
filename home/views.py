@@ -64,7 +64,7 @@ session = session_data.SessionState()
 configuration = instrument_server.InstrumentConfiguration()
 
 # development version
-version = '0.99.9'
+version = '0.99.10'
 
 def login_user_locally(request):
     """
@@ -662,11 +662,9 @@ def get_bundle(request):
         session.files.error_string = ''
 
         tree, lastnode = session.get_archive_tree()
-
-        session.files.archive_path = ''
         session.files.bundle_size = 0
 
-        #adding the proposal and 
+        # if no archive path
         #tree = []
         #children = tree
         #lastnode = {}
