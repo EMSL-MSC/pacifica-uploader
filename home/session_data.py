@@ -324,10 +324,9 @@ class SessionState(object):
         currently empty
         """
         nodes = [
-                #'Proposal ' + self.proposal_id,
-                 #self.config.instrument_short_name],
+                'Proposal ' + self.proposal_id,
+                self.config.instrument_short_name]
                  #datetime.datetime.now().strftime("%Y.%m.%d")
-                 ]
 
         tree = []
         children = tree
