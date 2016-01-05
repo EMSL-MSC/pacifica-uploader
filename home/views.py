@@ -64,7 +64,7 @@ session = session_data.SessionState()
 configuration = instrument_server.InstrumentConfiguration()
 
 # development version
-version = '0.99.8'
+version = '0.99.9'
 
 def login_user_locally(request):
     """
@@ -661,27 +661,26 @@ def get_bundle(request):
     try:
         session.files.error_string = ''
 
-        #tree, lastnode = session.get_archive_tree()
+        tree, lastnode = session.get_archive_tree()
 
-        # getting rid of the concept of an archive path,
-        # leaving in the code for now in case we backtrack
         session.files.archive_path = ''
         session.files.bundle_size = 0
 
-        tree = []
-        children = tree
-        lastnode = {}
-        archive_path = ''
+        #adding the proposal and 
+        #tree = []
+        #children = tree
+        #lastnode = {}
+        #archive_path = ''
 
-        node = {"title": "Upload",
-                "key": 1,
-                "folder": True,
-                "expanded": True,
-                "children": [],
-                "data":""}
-        children.append(node)
-        children = node['children']
-        lastnode = node
+        #node = {"title": "Upload",
+        #        "key": 1,
+        #        "folder": True,
+        #        "expanded": True,
+        #        "children": [],
+        #        "data":""}
+        #children.append(node)
+        #children = node['children']
+        #lastnode = node
 
         pathstring = request.POST.get("packet")
 
@@ -710,7 +709,10 @@ def get_bundle(request):
         common_path = session.files.data_dir
 
         #get rid of dangling prefixes
-        common_path, tail = os.path.split(common_path)
+        #common_path, tail = os.path.split(common_path)
+        #common_path = os.path.join(common_path, '')
+
+        # add a final separator
         common_path = os.path.join(common_path, '')
 
         ## used later to modify arc names
@@ -725,8 +727,10 @@ def get_bundle(request):
             subdirs = []
             make_tree(lastnode, subdirs, clipped_path, item, itempath)
 
-        # get rid of the placeholder top node
-        tree = tree[0]["children"]
+        # this is gone because we no longer use a place holder as the
+        # top node in the tree 
+        # proposal is always there
+        # tree = tree[0]["children"]
 
         return return_bundle(tree, session.files.error_string)
 
