@@ -89,7 +89,7 @@ def pycurl_session(protocol='https',
 
     # Set the user name and password for the queries.  Equivalent to --user cli
     # option
-    pycurl_userpwd = "%s:%s" % (user, password)
+    pycurl_userpwd = '%s:%s' % (user, password)
 
     # Enable basic http authentication
     #pycurl_httpauth = pycurl.HTTPAUTH_ANY
@@ -98,17 +98,13 @@ def pycurl_session(protocol='https',
     # Set verbose mode in cURL
     pycurl_verbose = True
 
-    #cookie_file = tempfile.NamedTemporaryFile()
-    #cookie_jar = cookie_file.name
+    # make cookie file specific to user
+    cookie_jar = '%s_%s' % (user, 'cookies.txt')
 
-    cookie_file = "cookies.txt"
-    cookie_jar = "cookies.txt"
-
-    if os.path.exists(cookie_file):
-        print "deleting " + cookie_file
+    if os.path.exists(cookie_jar):
+        print "deleting " + cookie_jar
         os.remove(cookie_file)
 
-    print >> sys.stderr, 'cookie file: %s' % cookie_file
     print >> sys.stderr, 'cookie jar: %s' % cookie_jar
     print >> sys.stderr, 'Performing cURL preallocation'
 
