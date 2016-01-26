@@ -64,7 +64,7 @@ session = session_data.SessionState()
 configuration = instrument_server.InstrumentConfiguration()
 
 # development version
-version = '0.99.10'
+version = '0.99.11'
 
 def login_user_locally(request):
     """
@@ -741,7 +741,13 @@ def incremental_status(request):
     """
     # pass pylint
     request = request
+
+    # reset timeout
+    session.touch()
+
     try:
+        #raise Exception('thrpppppt')
+
         if request.POST:
             if session.bundle_process:
                 session.bundle_process.revoke(terminate=True)
@@ -780,11 +786,10 @@ def incremental_status(request):
         # create json structure
         retval = json.dumps({'state':state, 'result':result})
 
-        # reset timeout
-        session.touch()
-
         return HttpResponse(retval)
 
     except Exception, e:
         print e.message
+        retval = json.dumps({'state':'Status Error', 'result':e.message})
+        return HttpResponse(retval)
 
