@@ -1,9 +1,0 @@
-#!/usr/bin/expect -f
-set timeout -1
-spawn python manage.py createsuperuser --username=emslmgr --email=david.brown@pnnl.gov
-expect "Password: "
-send "password\r"
-expect "Password (again): "
-send "password\r"
-expect "Superuser created successfully."
-puts "I HAVE ENDED......."
