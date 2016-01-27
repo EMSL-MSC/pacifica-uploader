@@ -13,7 +13,8 @@
     <WebBrowserUrl>
     </WebBrowserUrl>
     <WebBrowserPort>9999</WebBrowserPort>
-    <CommandLineArguments>-s test1.my.emsl.pnl.gov  -p 45796 -u d3e889 -i 34075 -c S:\\7_Representative_Data -t E:\\tar -g Tag=bunny -f 2013</CommandLineArguments>
+    <CommandLineArguments>
+    </CommandLineArguments>
   </PropertyGroup>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -21,7 +22,7 @@
     <ProjectGuid>df27394f-b873-49e1-bce6-b03b40acfe78</ProjectGuid>
     <ProjectHome>.</ProjectHome>
     <ProjectTypeGuids>{5F0BE9CA-D677-4A4D-8806-6076C0FAAD37};{349c5851-65df-11da-9384-00065b846f21};{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
-    <StartupFile>command_line\__init__.py</StartupFile>
+    <StartupFile>manage.py</StartupFile>
     <SearchPath>.</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <LaunchProvider>Django launcher</LaunchProvider>
@@ -55,6 +56,7 @@
     <Compile Include="home\templatetags\__init__.py" />
     <Compile Include="home\views.py" />
     <Compile Include="home\__init__.py" />
+    <Compile Include="manage.py" />
     <Compile Include="uploader\PycurlSession.py" />
     <Compile Include="uploader\__init__.py" />
     <Compile Include="UploadServer\celery.py" />
@@ -95,6 +97,9 @@
     <Folder Include="UploadServer\static\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="command line.txt">
+      <SubType>Code</SubType>
+    </Content>
     <Content Include="Doc\ToDo.txt" />
     <Content Include="home\templates\home\css\bunny.jpg" />
     <Content Include="home\templates\home\css\style.css" />
