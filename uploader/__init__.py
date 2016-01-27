@@ -103,7 +103,7 @@ def pycurl_session(protocol='https',
 
     if os.path.exists(cookie_jar):
         print "deleting " + cookie_jar
-        os.remove(cookie_file)
+        os.remove(cookie_jar)
 
     print >> sys.stderr, 'cookie jar: %s' % cookie_jar
     print >> sys.stderr, 'Performing cURL preallocation'
