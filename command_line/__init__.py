@@ -118,19 +118,15 @@ def upload_from_options( parser ):
     """
     Upload files based upon command line options supecified in an OptionParser
     """
-    # populate the session
+    # populate the session so that we are running the same process as the django uploader
     session = session_data.SessionState()
 
+    # get rid of redundant file paths
     filtered = session.files.filter_selected_list(parser.values.file_list)
 
-    common_path = os.path.commonprefix(filtered)
-
-    #get rid of dangling prefixes
-    common_path, tail = os.path.split(common_path)
-    common_path = os.path.join(common_path, '')
-
-    # used to arc names
-    session.files.common_path = common_path
+    session.files.data_dir = parser.values.work_dir
+    # add a final separator
+    session.files.common_path = os.path.join(parser.values.work_dir, '')
 
     # build archive path
     configuration = instrument_server.InstrumentConfiguration()
