@@ -1,0 +1,5 @@
+from myemslcontroller
+
+USER 1
+WORKDIR /app
+ENTRYPOINT ["celery", "-A", "UploadServer", "worker", "--loglevel=info"]
