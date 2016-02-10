@@ -15,6 +15,8 @@ from home import tar_man
 
 import os
 
+CLEAN_TAR = True
+
 def clean_target_directory(target_dir='', server='', user='', password=''):
     """
     deletes local files that have made it to the archive
@@ -73,17 +75,17 @@ def upload_files(bundle_name='',
     task created on a separate Celery process to bundle and upload in the background
     status and errors are pushed by celery to the main server through RabbitMQ
     """
-
-    current_task.update_state("PROGRESS", meta={'Status': "Cleaning previous uploads"})
-
-    #clean tar directory
     target_dir = os.path.dirname(bundle_name)
     if not os.path.isdir(target_dir):
         current_task.update_state(state='ERROR', meta={'Status': 'Bundle directory does not exist'})
 
-    err_str = clean_target_directory(target_dir, server, user, password)
-    if err_str:
-        current_task.update_state(state='PROGRESS', meta={'Status': err_str})
+        current_task.update_state("PROGRESS", meta={'Status': "Cleaning previous uploads"})
+
+    #clean tar directory
+    if CLEAN_TAR:
+        err_str = clean_target_directory(target_dir, server, user, password)
+        if err_str:
+            current_task.update_state(state='PROGRESS', meta={'Status': err_str})
 
     # initial state pushed through celery
     current_task.update_state("PROGRESS", meta={'Status': "Starting Bundle/Upload Process"})
