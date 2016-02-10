@@ -78,7 +78,7 @@ def add_options( parser ):
                        help="Change the uploader's working directory to DIR", metavar='DIR' )
 
     # Set the directory in which to bundle
-    parser.add_option( '-t', '--tar', type='string', action='store', dest='tar_dir', default=os.getcwd(),
+    parser.add_option( '-t', '--tar', type='string', action='store', dest='tar_dir', default='NONE',
                        help="Set the uploader's tar directory to DIR", metavar='DIR' )
 
     # Set the instrument to use
@@ -107,10 +107,13 @@ def check_options( parser, bundle_name_optional=True ):
     """
     Performs custom option checks for this module given an OptionParser
     """
+    parser.values.password = getpass( "Enter Password:" )
+
+    if parser.values.tar_dir == 'NONE':
+        parser.values.tar_dir = parser.values.work_dir
+
     current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
     parser.values.bundle_name = os.path.join(parser.values.tar_dir, current_time + ".tar")
-
-    parser.values.password = getpass( "Enter Password:" )
 
 
 
