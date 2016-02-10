@@ -118,6 +118,10 @@ def upload_from_options( parser ):
     """
     Upload files based upon command line options supecified in an OptionParser
     """
+
+    # don't clean tar directory
+    tasks.CLEAN_TAR = False
+
     # populate the session so that we are running the same process as the django uploader
     session = session_data.SessionState()
 
