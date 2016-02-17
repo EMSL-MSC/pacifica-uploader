@@ -113,6 +113,14 @@ class InstrumentConfiguration(object):
         """
         return self.instrument + " " + self.instrument_friendly
 
+    def deconcatenated_instrument(self, concat_str):
+        """
+        split the instrument string into ID and description
+        """
+        split = concat_str.split(' ', 1)
+        self.instrument = split[0]
+        self.instrument_friendly = split[1]
+
     def update_free_space(self):
         """
         update the amount of free space currently available

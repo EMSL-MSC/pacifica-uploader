@@ -64,7 +64,7 @@ session = session_data.SessionState()
 configuration = instrument_server.InstrumentConfiguration()
 
 # development version
-version = '0.99.14'
+version = '0.99.15'
 
 def login_user_locally(request):
     """
@@ -180,9 +180,15 @@ def populate_upload_page(request):
     # this will update after an upload is done
     configuration.update_free_space()
 
+    instrumentList = []
+    instrumentList.append(configuration.concatenated_instrument())
+    instrumentList.append("1234 judge")
+    instrumentList.append("5678 dead")
+
     # Render list page with the documents and the form
     return render_to_response('home/uploader.html',
-                              {'instrument': configuration.concatenated_instrument(),
+                              {'instrumentList': instrumentList,
+                               'instrument': configuration.concatenated_instrument(),
                                'proposalList': session.proposal_list,
                                'user_list': session.proposal_users,
                                'proposal':session.proposal_friendly,
@@ -215,6 +221,20 @@ def set_data_root(request):
                 return HttpResponseServerError(json.dumps("missing root directory"), content_type="application/json")
 
             session.set_session_root(parent)
+
+        return HttpResponse(json.dumps("success"), content_type="application/json")
+
+    except Exception, e:
+        return HttpResponseServerError(json.dumps(e.message), content_type="application/json")
+
+def set_instrument(request):
+    """
+    explicitly set the data root
+    """
+    try:
+        instrument = request.POST.get("instrument")
+
+        configuration.deconcatenated_instrument (instrument)
 
         return HttpResponse(json.dumps("success"), content_type="application/json")
 
