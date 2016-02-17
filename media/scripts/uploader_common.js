@@ -166,7 +166,7 @@ window.onbeforeunload = function (event) {
         });
 
         $('select').select2({width:'resolve'});
-        $('#instrument').prop('disabled', true);
+        //$('#instrument').prop('disabled', true);
 
         function loadError(e, data) {
             var error = data.error;
@@ -477,11 +477,7 @@ window.onbeforeunload = function (event) {
                     });
 
                     $.post("/upload/", { files: JSON.stringify(fileList) },
-                        function (data) {
-
-                            
-
-                        })
+                        function (data) {})
                         .fail(function (jqXHR, textStatus, errorThrown) {
                             alert(jqXHR.responseText);
                         });
@@ -522,6 +518,22 @@ window.onbeforeunload = function (event) {
 
         });
 
+        $('#instrument').change(function () {
+
+            resetTimeout();
+
+            i = $("#instrument").val();
+            instStr = { instrument: i };
+
+
+            var posting = $.post("/setInstrument/", instStr,
+            function (data) {
+            });
+        })
+            .fail(function (xhr, textStatus, errorThrown) {
+                errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
+                window.open(errtext, '_self');
+            });
 
     });
 

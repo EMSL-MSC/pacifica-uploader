@@ -28,9 +28,14 @@
                         <div class="full_width_block">
                             <label for="instrument">Instrument</label><br>
                             <select name="instrument" id="instrument" class="main_page_selector">
-                                <option selected="selected" value="">
-                                    {{instrument}}
-                                </option>
+                                {% for inst in instrumentList %}
+                                    {% if instrument == inst %}
+                                        <option selected="selected" value="{{inst}}">{{inst}}</option>
+                                    {% else %}
+                                        <option value="{{inst}}">{{inst}}</option>
+                                    {% endif %}
+                                {% endfor %}
+
                             </select>
                         </div>
                         <div class="full_width_block" style="margin-top:1em;">
@@ -38,9 +43,9 @@
                             <select name="proposal" id="proposal" class="main_page_selector">
                             {% for prop in proposalList %}
                                 {% if proposal == prop %}
-                                <option selected="selected" value="{{prop}}">{{prop}}</option>
+                                    <option selected="selected" value="{{prop}}">{{prop}}</option>
                                 {% else %}
-                                <option value="{{prop}}">{{prop}}</option>
+                                    <option value="{{prop}}">{{prop}}</option>
                                 {% endif %}
                             {% endfor %}
                             </select>
