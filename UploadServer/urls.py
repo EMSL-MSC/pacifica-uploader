@@ -23,6 +23,7 @@ urlpatterns = patterns('',
                        url(r'^getChildren/', 'home.views.get_children', name='getChildren'),
                        url(r'^getBundle/', 'home.views.get_bundle', name='getBundle'),
                        url(r'^propUser/', 'home.views.get_proposal_users', name='propUser'),
+                       url(r'^setInstrument/', 'home.views.set_instrument', name='setInstrument'),
                        url(r'^cookie/', 'home.views.cookie_test', name='cookie'),
                        (r'^login/$', 'home.views.login'),
                        url(r'^logout/$', 'home.views.logout'),)
