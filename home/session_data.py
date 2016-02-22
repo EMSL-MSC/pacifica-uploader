@@ -31,9 +31,19 @@ class SessionState(object):
     current_user = None
     current_time = ''
 
+    # user info in a dictionary, used to refresh lists on user interaction
+    user_inf = ''
+
     proposal_friendly = ''
     proposal_id = ''
     proposal_list = []
+
+    is_analytical = False
+
+    instrument = ''
+    instrument_friendly = ''
+    instrument_short_name = ''
+    instrument_list = []
 
     proposal_user = ''
     proposal_users = []
@@ -112,12 +122,254 @@ class SessionState(object):
     def restore_session_root(self):
         self.files.data_dir = self.config.data_dir
 
+    def concatenated_instrument(self):
+        """
+        concatenate the instrument id with the description
+        """
+        return self.instrument + " " + self.instrument_friendly
+
+    def deconcatenated_instrument(self, concat_str):
+        """
+        split the instrument string into ID and description
+        """
+        split = concat_str.split(' ', 1)
+        self.instrument = split[0]
+        self.instrument_friendly = split[1]
+
+
+    def populate_by_instrument(self):
+        """
+        parses user information from a json struct based on a selected instrument id
+        """
+
+        instruments = self.user_info['instruments']
+        if not instruments:
+            return 'User is not valid for this instrument'
+
+        try:
+            valid_instrument = False
+            for inst_id, inst_block in instruments.iteritems():
+                if not inst_id:
+                    continue
+                if not inst_block:
+                    continue
+                inst_name = inst_block.get('instrument_name')
+                if not inst_name:
+                    inst_name = 'unnamed'
+
+                instrument_short_name = inst_block.get('name_short')
+                if not instrument_short_name:
+                    instrument_short_name = 'no short name'
+
+                if self.instrument == inst_id:
+                    self.instrument_friendly = inst_name
+                    self.instrument_short_name = instrument_short_name
+                    self.instrument_list = []
+                    self.instrument_list.append(self.concatenated_instrument)
+                    valid_instrument = True
+                    break
+
+            if not valid_instrument:
+                return 'User is not valid for this instrument'
+        except Exception:
+            return 'Unable to parse user instruments'
+
+        """
+        need to filter proposals based on the existing instrument 
+        if there is no valid proposal for the user for this instrument
+        throw an error
+        """
+        props = self.user_info['proposals']
+        if not props:
+            return 'user has no proposals'
+
+        self.proposal_list = []
+        for prop_id, prop_block in props.iteritems():
+
+            if not prop_id:
+                continue
+
+            if not prop_block:
+                continue
+
+            title = prop_block.get('title')
+            # if the title is missing we've established that it isn't in the db
+            # so skip it
+            if not title:
+                continue
+
+            prop_str = prop_id + "  " + title
+
+            # list only proposals valid for this instrument
+            instruments = prop_block.get('instruments')
+            if not instruments:
+                continue
+
+            try:
+                for inst_id in instruments:
+                    if not inst_id:
+                        continue
+                    if self.instrument == str(inst_id):
+                        if prop_str not in self.proposal_list:
+                            self.proposal_list.append(prop_str)
+            except Exception:
+                return 'No valid proposals for this user on this instrument'
+
+        if not self.proposal_list:
+            return 'No valid proposals for this user on this instrument'
+
+        #self.proposal_list.sort(key=lambda x: int(x.split(' ')[0]), reverse=True)
+        self.proposal_list.sort(reverse=True)
+
+        # initialize the proposal to the first in the list
+        self.load_proposal(self.proposal_list[0])
+
+        self.populate_proposal_users(self.proposal_id)
+
+
+    def populate_by_proposal(self):
+        """
+        parses user information from a json struct based on proposal
+        """
+
+        props = self.user_info['proposals']
+        if not props:
+            return 'user has no proposals'
+
+        self.proposal_list = []
+        for prop_id, prop_block in props.iteritems():
+
+            if not prop_id:
+                continue
+
+            if not prop_block:
+                continue
+
+            title = prop_block.get('title')
+            # if the title is missing we've established that it isn't in the db
+            # so skip it
+            if not title:
+                continue
+
+            prop_str = prop_id + "  " + title
+
+            self.proposal_list.append(prop_str)
+
+        if not self.proposal_list:
+            return 'No valid proposals for this user'
+
+        self.proposal_list.sort(reverse=True)
+
+        # initialize the proposal to the first in the list
+        self.load_proposal(self.proposal_list[0])
+
+        self.populate_proposal_users(self.proposal_id)
+
+        self.populate_proposal_instruments(self.proposal_id)
+
+    def instrument_names (self, id):
+        """
+        get the names for the instrument id
+        """
+        
+        # id is getting cast to integer and I don't know why
+        str_id = str(id)
+        u_id = unicode(str_id)
+
+        instruments = self.user_info['instruments']
+
+        try:
+            for inst_id, inst_block in instruments.iteritems():
+                if not inst_id:
+                    continue
+                if not inst_block:
+                    continue
+                
+
+                if u_id == inst_id:
+                    inst_name = inst_block.get('instrument_name')
+                    if not inst_name:
+                        inst_name = 'unnamed'
+
+                    instrument_short_name = inst_block.get('name_short')
+                    if not instrument_short_name:
+                        instrument_short_name = 'no short name'
+                    return (inst_name, instrument_short_name)
+
+            return ('missing', 'missing')
+
+        except Exception:
+            return ('error', 'error')
+
+    def populate_proposal_instruments (self, proposal_id):
+        """
+        populate the instrument list for the selected proposal
+        """
+        props = self.user_info['proposals']
+        if not props:
+            return 'user has no proposals'
+
+        for prop_id, prop_block in props.iteritems():
+
+            if not prop_id:
+                continue
+
+            if not prop_block:
+                continue
+
+            if self.proposal_id != prop_id:
+                continue
+
+            # list only proposals valid for this instrument
+            instruments = prop_block.get('instruments')
+            if not instruments:
+                return 'user has no proposals'
+
+            try:
+                self.instrument_list = []
+                json_list = []
+                searched = []
+
+                for inst_id in instruments:
+                    if not inst_id:
+                        continue
+
+                    # instrument list has massive amounts of dupes
+                    if (inst_id in searched):
+                        continue
+
+                    searched.append(inst_id)
+
+                    inst_name, instrument_short_name = self.instrument_names(inst_id)
+                    if (inst_name is not 'missing' and inst_name is not 'error'):
+                        self.instrument_friendly = inst_name
+                        self.instrument_short_name = instrument_short_name
+                        name = self.concatenated_instrument()
+                        self.instrument_list.append(name)
+
+                         # put in format to be used by select2
+                        json_list.append({'id':name, 'text':name})
+            except Exception:
+                return 'No valid instruments for this user on this proposal'
+
+           
+
+        if not json_list:
+            name = 'No instruments for this proposal'
+            self.instrument_list.append(name)
+            json_list.append({'id':name, 'text':name})
+
+        json_list.sort()
+        self.instrument_list.sort()
+        return json_list
+
     def populate_user_info(self, configuration):
         """
         parses user information from a json struct
         """
 
         self.config = configuration
+        self.instrument = configuration.instrument
 
         # set the original root directory to the default
         self.restore_session_root()
@@ -152,88 +404,15 @@ class SessionState(object):
 
         self.user_full_name = '%s (%s %s)' % (self.user, first_name, last_name)
 
-        instruments = info['instruments']
-        if not instruments:
-            return 'User is not valid for this instrument'
+        self.user_info = info
 
-        try:
-            valid_instrument = False
-            for inst_id, inst_block in instruments.iteritems():
-                if not inst_id:
-                    continue
-                if not inst_block:
-                    continue
-                inst_name = inst_block.get('instrument_name')
-                if not inst_name:
-                    inst_name = 'unnamed'
-
-                instrument_short_name = inst_block.get('name_short')
-                if not instrument_short_name:
-                    instrument_short_name = 'no short name'
-
-                # ToDo: get this information at the instrument level, not the user level
-                if self.config.instrument == inst_id:
-                    self.config.instrument_friendly = inst_name
-                    self.config.instrument_short_name = instrument_short_name
-                    valid_instrument = True
-                    break
-
-            if not valid_instrument:
-                return 'User is not valid for this instrument'
-        except Exception:
-            return 'Unable to parse user instruments'
-
-        """
-        need to filter proposals based on the existing instrument 
-        if there is no valid proposal for the user for this instrument
-        throw an error
-        """
-        props = info['proposals']
-        if not props:
-            return 'user has no proposals'
-
-        self.proposal_list = []
-        for prop_id, prop_block in props.iteritems():
-
-            if not prop_id:
-                continue
-
-            if not prop_block:
-                continue
-
-            title = prop_block.get('title')
-            # if the title is missing we've established that it isn't in the db
-            # so skip it
-            if not title:
-                continue
-
-            prop_str = prop_id + "  " + title
-
-            # list only proposals valid for this instrument
-            instruments = prop_block.get('instruments')
-            if not instruments:
-                continue
-
-            try:
-                for inst_id in instruments:
-                    if not inst_id:
-                        continue
-                    if self.config.instrument == str(inst_id):
-                        if prop_str not in self.proposal_list:
-                            self.proposal_list.append(prop_str)
-            except Exception:
-                return 'No valid proposals for this user on this instrument'
-
-        if not self.proposal_list:
-            return 'No valid proposals for this user on this instrument'
-
-        #self.proposal_list.sort(key=lambda x: int(x.split(' ')[0]), reverse=True)
-        self.proposal_list.sort(reverse=True)
-
-        # initialize the proposal to the first in the list
-        self.load_proposal(self.proposal_list[0])
-
-        self.populate_proposal_users(self.proposal_id)
+        if (configuration.mode == 'instrument'):
+            self.is_analytical = False
+            return self.populate_by_instrument()
+        else:
+            self.is_analytical = True
+            return self.populate_by_proposal()
+            
 
     def populate_proposal_users(self, proposal_id):
         """
@@ -325,7 +504,7 @@ class SessionState(object):
         """
         nodes = [
                 'Proposal ' + self.proposal_id,
-                self.config.instrument_short_name]
+                self.instrument_short_name]
                  #datetime.datetime.now().strftime("%Y.%m.%d")
 
         tree = []

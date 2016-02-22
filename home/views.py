@@ -180,15 +180,11 @@ def populate_upload_page(request):
     # this will update after an upload is done
     configuration.update_free_space()
 
-    instrumentList = []
-    instrumentList.append(configuration.concatenated_instrument())
-    instrumentList.append("1234 judge")
-    instrumentList.append("5678 dead")
 
     # Render list page with the documents and the form
     return render_to_response('home/uploader.html',
-                              {'instrumentList': instrumentList,
-                               'instrument': configuration.concatenated_instrument(),
+                              {'instrument': session.concatenated_instrument(),
+                               'instrumentList': session.instrument_list,
                                'proposalList': session.proposal_list,
                                'user_list': session.proposal_users,
                                'proposal':session.proposal_friendly,
@@ -234,7 +230,7 @@ def set_instrument(request):
     try:
         instrument = request.POST.get("instrument")
 
-        configuration.deconcatenated_instrument (instrument)
+        session.deconcatenated_instrument (instrument)
 
         return HttpResponse(json.dumps("success"), content_type="application/json")
 
@@ -248,7 +244,8 @@ def show_status(request, message):
     session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
 
     return render_to_response('home/status.html',
-                              {'instrument':configuration.concatenated_instrument(),
+                              {'instrument':session.concatenated_instrument(),
+                               'instrumentList': session.instrument_list,
                                'status': message,
                                'proposal':session.proposal_friendly,
                                'metaList':session. meta_list,
@@ -265,7 +262,8 @@ def show_status_insert(request, message):
     session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
 
     return render_to_response('home/status_insert.html',
-                              {'instrument':configuration.concatenated_instrument(),
+                              {'instrument':session.concatenated_instrument(),
+                               'instrumentList': session.instrument_list,
                                'status': message,
                                'proposal':session.proposal_friendly,
                                'metaList':session. meta_list,
@@ -337,8 +335,8 @@ def spin_off_upload(request):
         for meta in session.meta_list:
             groups[meta.name] = meta.value
 
-        insty = 'Instrument.%s' % (configuration.instrument)
-        groups[insty] = configuration.instrument_friendly
+        insty = 'Instrument.%s' % (session.instrument)
+        groups[insty] = session.instrument_friendly
         groups["EMSL User"] = session.proposal_user
 
         session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
@@ -349,7 +347,7 @@ def spin_off_upload(request):
         if True:
             session.bundle_process = \
                     tasks.upload_files.delay(bundle_name=session.bundle_filepath,
-                                             instrument_name=configuration.instrument,
+                                             instrument_name=session.instrument,
                                              proposal=session.proposal_id,
                                              file_list=tuples,
                                              bundle_size=session.files.bundle_size,
@@ -528,6 +526,20 @@ def get_proposal_users(request):
     session.load_proposal(prop)
     users = session.populate_proposal_users(session.proposal_id)
     retval = json.dumps(users)
+
+    return HttpResponse(retval, content_type="application/json")
+
+def get_proposal_instruments(request):
+    """
+    get the proposal users associated with a proposal
+    """
+
+    # reset timeout
+    session.touch()
+
+    prop = request.POST.get("proposal")
+    instruments = session.populate_proposal_instruments(session.proposal_id)
+    retval = json.dumps(instruments)
 
     return HttpResponse(retval, content_type="application/json")
 

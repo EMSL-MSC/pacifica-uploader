@@ -33,13 +33,12 @@ class InstrumentConfiguration(object):
     initialized = False
 
     instrument = ''
-    instrument_friendly = ''
-    instrument_short_name = ''
 
     server_path = ''
     target_dir = ''
     data_dir = ''
     timeout = 30
+    mode = 'instrument'
 
     # meta data values
     meta_list = []
@@ -76,6 +75,10 @@ class InstrumentConfiguration(object):
                 if self.timeout == '':
                     return 'Configuration: Missing timeout'
 
+                self.mode = configuration['mode']
+                if self.mode == '':
+                    return 'Configuration: Missing mode'
+
                 root_dir = os.path.normpath(configuration['dataRoot'])
                 if root_dir == '':
                     return 'Configuration: Missing root directory'
@@ -106,20 +109,6 @@ class InstrumentConfiguration(object):
             return 'Configuration Error'
 
         return ''
-
-    def concatenated_instrument(self):
-        """
-        concatenate the instrument id with the description
-        """
-        return self.instrument + " " + self.instrument_friendly
-
-    def deconcatenated_instrument(self, concat_str):
-        """
-        split the instrument string into ID and description
-        """
-        split = concat_str.split(' ', 1)
-        self.instrument = split[0]
-        self.instrument_friendly = split[1]
 
     def update_free_space(self):
         """
@@ -162,6 +151,8 @@ def write_default_config(filename):
     config_dict['timeout'] = '10'
     config_dict['server'] = 'dev2.my.emsl.pnl.gov'
     config_dict['instrument'] = '0a'
+    config_dict['mode'] = 'instrument'
+
 
     config_dict['metadata'] = (('Tag', 'Tag'))
 
