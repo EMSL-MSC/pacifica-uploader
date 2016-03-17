@@ -64,7 +64,7 @@ session = session_data.SessionState()
 configuration = instrument_server.InstrumentConfiguration()
 
 # development version
-version = '0.99.15'
+version = '0.99.17'
 
 def login_user_locally(request):
     """
@@ -319,11 +319,14 @@ def spin_off_upload(request):
     if not files:
         return HttpResponseBadRequest(json.dumps("missing files in post"), content_type="application/json")
 
+    session.is_uploading = True
+
     # check to see if background celery process is alive
     # Wait 5 seconds
     session.celery_is_alive = ping_celery()
     print 'Celery lives = %s' % (session.celery_is_alive)
     if not session.celery_is_alive:
+        session.is_uploading = False
         return HttpResponseServerError(json.dumps('Celery is dead'), content_type="application/json")
 
     try:
@@ -367,6 +370,7 @@ def spin_off_upload(request):
                 password=session.password
             )
     except Exception, e:
+        session.is_uploading = False
         return HttpResponseServerError(json.dumps(e.message), content_type="application/json")
 
     return HttpResponse(json.dumps("success"), content_type="application/json")
@@ -786,6 +790,7 @@ def incremental_status(request):
             session.cleanup_upload()
             state = 'CANCELLED'
             result = ''
+            session.is_uploading = False
         else:
             if not session.bundle_process:
                 state = 'PENDING'
@@ -811,6 +816,7 @@ def incremental_status(request):
 
                     #if we have successfully uploaded, cleanup the lists
                     session.cleanup_upload()
+                    session.is_uploading = False
 
                     result = "https://%s/myemsl/status/index.php/status/view/j/%s" \
                              % (configuration.server_path, job_id)
@@ -822,6 +828,7 @@ def incremental_status(request):
 
     except Exception, e:
         print e.message
+        session.is_uploading = False
         retval = json.dumps({'state':'Status Error', 'result':e.message})
         return HttpResponse(retval)
 
