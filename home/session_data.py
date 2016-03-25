@@ -54,6 +54,7 @@ class SessionState(object):
     last_touched_time = None
 
     is_uploading = False
+    is_logged_in = False
 
     #Todo: mesh the meta lists for session and server
     # meta data values

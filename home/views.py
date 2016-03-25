@@ -46,6 +46,9 @@ from django.contrib.auth.decorators import login_required
 from home import tasks
 from home import tar_man
 
+# for checking celery status
+from celery.result import AsyncResult
+
 # delay for celery heartbeat
 from time import sleep
 
@@ -492,6 +495,7 @@ def login(request):
     # keep a copy of the user so we can keep other users from stepping on them if they are still
     # logged in
     session.current_user = request.user
+    session.is_logged_in = True
     session.touch()
 
     try:
@@ -515,6 +519,8 @@ def logout(request):
     #logs out local user session
     # if the LOGOUT_URL is set to this view, we create a recursive call to here
     auth.logout(request)
+
+    session.is_logged_in = False
 
     return HttpResponseRedirect(reverse('home.views.login'))
 
@@ -578,10 +584,11 @@ def get_children(request):
             for item in filtered:
                 itempath = os.path.join(parent, item)
                 time = os.path.getmtime(itempath)
+                mod_time = datetime.datetime.fromtimestamp(time).strftime("%m/%d/%Y %I:%M%p")
 
                 if session.files.accessible(itempath):
                     if os.path.isfile(itempath):
-                        pathlist.append({"title": item, "key": itempath, "folder": False, "data":{"time":time}})
+                        pathlist.append({"title": item + ' ' + '<span class="fineprint"> Last Modified[' + mod_time + ']</span>', "key": itempath, "folder": False, "data":{"time":time}})
                     elif os.path.isdir(itempath):
                         pathlist.append({"title": item, "key": itempath, "folder": True, "lazy": True, "data":{"time":time}})
 
@@ -770,6 +777,26 @@ def get_bundle(request):
 
     except Exception, e:
         return return_bundle(tree, "get_bundle failed:  " + e.message)
+
+def get_state(request):
+    """
+    returns the status of the uploader
+        logged_in
+        uploading
+        idle
+    """
+    state = "idle"
+    if session.is_logged_in:
+        state = 'logged in: '
+
+    if session.bundle_process:
+        print session.bundle_process.task_id
+        res = AsyncResult(session.bundle_process.task_id)
+        if not res.ready():
+            state += 'uploading'
+
+    retval = json.dumps({'state':state})
+    return HttpResponse(retval)
 
 def incremental_status(request):
     """
