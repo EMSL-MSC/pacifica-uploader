@@ -67,7 +67,7 @@ session = session_data.SessionState()
 configuration = instrument_server.InstrumentConfiguration()
 
 # development version
-version = '0.99.17'
+version = '0.99.18'
 
 def login_user_locally(request):
     """
@@ -588,7 +588,7 @@ def get_children(request):
 
                 if session.files.accessible(itempath):
                     if os.path.isfile(itempath):
-                        pathlist.append({"title": item + ' ' + '<span class="fineprint"> Last Modified[' + mod_time + ']</span>', "key": itempath, "folder": False, "data":{"time":time}})
+                        pathlist.append({"title": item + ' ' + '<span class="fineprint"> [Last Modified ' + mod_time + ']</span>', "key": itempath, "folder": False, "data":{"time":time}})
                     elif os.path.isdir(itempath):
                         pathlist.append({"title": item, "key": itempath, "folder": True, "lazy": True, "data":{"time":time}})
 
