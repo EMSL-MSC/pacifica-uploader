@@ -25,40 +25,8 @@ from uploader.PycurlSession import PycurlSession
 
 from time import sleep
 
-from celery import current_task
+from home.task_comm import task_error, task_state
 
-class UploaderError(Exception):
-    """
-    A special exception class especially for the uploader module
-    """
-
-    def __init__(self, msg, outage=False):
-        """
-        Initializes an Uploader_Error
-
-        @param msg: A custom message packaged with the exception
-        """
-        super(UploaderError, self).__init__(msg)
-
-        self.msg = msg
-        self.outage = outage
-
-    def __str__(self):
-        """
-        Produces a string representation of an Uploader_Error
-        """
-        if self.outage:
-            return "Outage: %s" % self.msg
-
-        current_task.update_state(state='FAILURE', meta={'info': self.msg})
-        return "Uploader failed: %s" % self.msg
-
-def raise_upload_status(status, info):
-    """
-    send a celery message to the server process indicating the status of the upload
-    """
-    current_task.update_state(state=status, meta={'info': info})
-    print >> sys.stderr, info
 
 def pycurl_session(protocol='https',
                    server='dev2.my.emsl.pnl.gov',
@@ -267,11 +235,11 @@ def progress(_download_t, _download_d, upload_t, upload_d):
 
             if percent - TrackPercent.percent > 5:
                 meta_dict={'Status': "upload percent complete: " + str(int(percent))}
-                current_task.update_state(state="PROGRESS", meta=meta_dict)
+                task_state("PROGRESS", meta_dict)
                 TrackPercent.percent = percent
 
         except Exception, e:
-            raise UploaderError("Error during callback: " + e.message)
+            raise task_error("Error during callback: " + e.message)
 
 def upload(bundle_name='',
            protocol='https',
@@ -298,7 +266,7 @@ def upload(bundle_name='',
 
     bundle_path = os.path.abspath(bundle_name)
     if not os.path.exists(bundle_path):
-        raise UploaderError("The target bundle does not exist:\n    %s" % bundle_path)
+        raise task_error("The target bundle does not exist:\n    %s" % bundle_path)
 
     # @todo: get cURL to use protocol as a guide for authentication type
     url = '%s://%s' % (protocol, server)
@@ -319,7 +287,7 @@ def upload(bundle_name='',
 
     #**************************************************
     # Pre-allocate with cURL
-    raise_upload_status('UPLOAD', 'Performing cURL preallocation *status*')
+    task_state('UPLOAD', 'Performing cURL preallocation *status*')
 
     try:
         # Set the URL for the curl query.
@@ -329,7 +297,7 @@ def upload(bundle_name='',
         curl.perform()
         curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
         if curl_http_code / 100 == 4:
-            raise UploaderError("Authentication failed with code %i" % curl_http_code)
+            raise task_error("Authentication failed with code %i" % curl_http_code)
         else:
             odata.seek(0)
             print odata.read()
@@ -339,7 +307,7 @@ def upload(bundle_name='',
 
         if curl_http_code == 503:
             odata.seek(0)
-            raise UploaderError(odata.read(), outage=True)
+            raise task_error(odata.read(), outage=True)
 
         # Make sure that cURL was able to get server and location data
         try:
@@ -347,16 +315,16 @@ def upload(bundle_name='',
             location = re.search(r'Location: ([\w\./-@]*)', odata.getvalue()).group(1)
         except:
             odata.seek(0)
-            raise UploaderError("Error on server:  " + odata.read(), outage=True)
+            raise task_error("Error on server:  " + odata.read(), outage=True)
 
         if server == '' or location == '':
-            raise UploaderError("Got invalid server and/or location information from server")
+            raise task_error("Got invalid server and/or location information from server")
 
     except pycurl.error:
-        raise UploaderError("cURL operations failed for preallocation:\n    %s" % curl.errstr())
+        raise task_error("cURL operations failed for preallocation:\n    %s" % curl.errstr())
 
     except Exception, e:
-        raise UploaderError("Error during preallocation: " + e.message)
+        raise task_error("Error during preallocation: " + e.message)
 
 
     #*********************************************************************
@@ -372,7 +340,7 @@ def upload(bundle_name='',
     print >> sys.stderr, 'New Server URL: %s' % url
 
     # Upload bundle with cURL
-    raise_upload_status('UPLOAD', 'Peforming cURL upload of bundle of %s' % bundle_path)
+    task_state('UPLOAD', 'Peforming cURL upload of bundle of %s' % bundle_path)
 
     try:
         # Set the URL for the curl query.
@@ -397,19 +365,19 @@ def upload(bundle_name='',
         curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
         if curl_http_code == 503:
             odata.seek(0)
-            raise UploaderError(odata.read(), outage=True)
+            raise task_error(odata.read(), outage=True)
 
     except pycurl.error:
-        raise UploaderError("cURL operations failed during upload: %s" % curl.errstr())
+        raise task_error("cURL operations failed during upload: %s" % curl.errstr())
 
     except IOError:
-        raise UploaderError("Couldn't read from bundle file")
+        raise task_error("Couldn't read from bundle file")
 
     #************************************************************************
 
     #************************************************************************
     # Finalize the upload
-    raise_upload_status('UPLOAD', 'Peforming cURL finalization of upload')
+    task_state('UPLOAD', 'Peforming cURL finalization of upload')
 
     try:
         #turn off upload
@@ -427,39 +395,39 @@ def upload(bundle_name='',
         curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
         if curl_http_code == 503:
             odata.seek(0)
-            raise UploaderError(odata.read(), outage=True)
+            raise task_error(odata.read(), outage=True)
 
         print "curl_http_code " + str(curl_http_code)
 
         print  odata.getvalue()
 
         if re.search(r'Error', odata.getvalue()) is not None:
-            raise UploaderError(odata.getvalue())
+            raise task_error(odata.getvalue())
 
         if re.search(r'Accepted', odata.getvalue()) == None:
-            raise UploaderError("Upload was not accepted")
+            raise task_error("Upload was not accepted")
 
         status = re.search(r'Status: (.*)', odata.getvalue()).group(1)
         print "status " + status
 
     except pycurl.error:
-        raise UploaderError("cURL operations failed for finalization:\n    %s" % curl.errstr())
+        raise task_error("cURL operations failed for finalization:\n    %s" % curl.errstr())
     except Exception, err:
-        raise UploaderError('finalization error:  ' + pyurl + ':  ' + err.message)
-        #raise UploaderError("Unknown error during finalization:\n")
+        raise task_error('finalization error:  ' + pyurl + ':  ' + err.message)
+        #raise task_error("Unknown error during finalization:\n")
 
     try:
         # Set the URL for the curl query.
-        raise_upload_status('UPLOAD', 'Logging out')
+        task_state('UPLOAD', 'Logging out')
         pyurl = url + "/myemsl/logout"
         curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
 
         curl.perform()
 
     except pycurl.error:
-        raise UploaderError("cURL operations failed for logout:\n    %s" % curl.errstr())
+        raise task_error("cURL operations failed for logout:\n    %s" % curl.errstr())
     except:
-        raise UploaderError("Unknown error on logout:\n    %s" % curl.errstr())
+        raise task_error("Unknown error on logout:\n    %s" % curl.errstr())
 
     #************************************************************************
 

@@ -36,6 +36,8 @@ import os
 #uploader
 from uploader import test_authorization
 
+from home.task_comm import TASK_STATE, TASK_INFO, USE_CELERY
+
 #session imports
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
@@ -324,13 +326,14 @@ def spin_off_upload(request):
 
     session.is_uploading = True
 
-    # check to see if background celery process is alive
-    # Wait 5 seconds
-    session.celery_is_alive = ping_celery()
-    print 'Celery lives = %s' % (session.celery_is_alive)
-    if not session.celery_is_alive:
-        session.is_uploading = False
-        return HttpResponseServerError(json.dumps('Celery is dead'), content_type="application/json")
+    if USE_CELERY:
+        # check to see if background celery process is alive
+        # Wait 5 seconds
+        session.celery_is_alive = ping_celery()
+        print 'Celery lives = %s' % (session.celery_is_alive)
+        if not session.celery_is_alive:
+            session.is_uploading = False
+            return HttpResponseServerError(json.dumps('Celery is dead'), content_type="application/json")
 
     try:
         tuples = session.files.get_bundle_files(files)
@@ -350,7 +353,7 @@ def spin_off_upload(request):
         session.bundle_filepath = os.path.join(configuration.target_dir, session.current_time + ".tar")
 
         # spin this off as a background process and load the status page
-        if True:
+        if USE_CELERY:
             session.bundle_process = \
                     tasks.upload_files.delay(bundle_name=session.bundle_filepath,
                                              instrument_name=session.instrument,
@@ -361,17 +364,16 @@ def spin_off_upload(request):
                                              server=configuration.server_path,
                                              user=session.user,
                                              password=session.password)
-        else: # for debug purposes
-            tasks.upload_files(
-                bundle_name=session.bundle_filepath,
-                instrument_name=configuration.instrument,
-                proposal=session.proposal_id,
-                bundle_size=session.files.bundle_size,
-                groups=groups,
-                server=configuration.server_path,
-                user=session.user,
-                password=session.password
-            )
+        else: # run local in blocking mode
+            tasks.upload_files(bundle_name=session.bundle_filepath,
+                                             instrument_name=session.instrument,
+                                             proposal=session.proposal_id,
+                                             file_list=tuples,
+                                             bundle_size=session.files.bundle_size,
+                                             groups=groups,
+                                             server=configuration.server_path,
+                                             user=session.user,
+                                             password=session.password)
     except Exception, e:
         session.is_uploading = False
         return HttpResponseServerError(json.dumps(e.message), content_type="application/json")
@@ -819,19 +821,24 @@ def incremental_status(request):
             result = ''
             session.is_uploading = False
         else:
-            if not session.bundle_process:
-                state = 'PENDING'
-                result = 'Spinning off background process'
-            else:
-                state = session.bundle_process.status
-                if state is None:
-                    state = "UNKNOWN"
-                print state
+            if USE_CELERY:
+                if not session.bundle_process:
+                    state = 'PENDING'
+                    result = 'Spinning off background process'
+                else:
+                    state = session.bundle_process.status
+                    if state is None:
+                        state = "UNKNOWN"
+                    print state
 
-                result = session.bundle_process.result
-                if result is None:
-                    result = ''
-                print result
+                    result = session.bundle_process.result
+                    if result is None:
+                        result = ''
+                    print result
+
+            else:
+                result = TASK_INFO
+                state = TASK_STATE
 
 
             if result is not None:

@@ -29,6 +29,7 @@ class InstrumentConfiguration(object):
     """
     meta data about for a session
     """
+    run_without_celery = True
 
     initialized = False
 

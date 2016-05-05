@@ -4,16 +4,19 @@ Celery tasks to be run in the background
 
 
 from __future__ import absolute_import
-from celery import shared_task, current_task
+from celery import shared_task
 import sys
 
-from bundler import bundle
 from uploader import upload
 from uploader import job_status
+
+from bundler import bundle
 
 from home import tar_man 
 
 import os
+
+from home.task_comm import task_error, task_state
 
 CLEAN_TAR = True
 
@@ -58,7 +61,7 @@ def ping():
     check to see if the celery task process is started.
     """
     print "Pinged!"
-    current_task.update_state(state='PING', meta={'Status': "Background process is alive"})
+    task_state('PING', "Background process is alive")
 
 #tag to show this def as a celery task
 @shared_task
@@ -79,16 +82,16 @@ def upload_files(bundle_name='',
     if not os.path.isdir(target_dir):
         current_task.update_state(state='ERROR', meta={'Status': 'Bundle directory does not exist'})
 
-        current_task.update_state("PROGRESS", meta={'Status': "Cleaning previous uploads"})
+        task_state("PROGRESS", "Cleaning previous uploads")
 
     #clean tar directory
     if CLEAN_TAR:
         err_str = clean_target_directory(target_dir, server, user, password)
         if err_str:
-            current_task.update_state(state='PROGRESS', meta={'Status': err_str})
+            task_state('PROGRESS', err_str)
 
     # initial state pushed through celery
-    current_task.update_state("PROGRESS", meta={'Status': "Starting Bundle/Upload Process"})
+    task_state("PROGRESS", "Starting Bundle/Upload Process")
 
     bundle(bundle_name=bundle_name,
            instrument_name=instrument_name,
@@ -97,9 +100,9 @@ def upload_files(bundle_name='',
            groups=groups,
            bundle_size=bundle_size)
 
-    current_task.update_state(state="PROGRESS", meta={'Status': "Completed Bundling"})
+    task_state("PROGRESS", "Completed Bundling")
 
-    current_task.update_state(state="PROGRESS", meta={'Status': "Starting Upload"})
+    task_state("PROGRESS", "Starting Upload")
 
     res = upload(bundle_name=bundle_name,
                  protocol="https",
@@ -108,12 +111,11 @@ def upload_files(bundle_name='',
                  password=password)
 
     if res is None:
-        current_task.update_state("FAILURE", \
-            meta={'Status': "Uploader dieded. We don't know why it did"})
+        task_state("FAILURE",  "Uploader dieded. We don't know why it did")
 
     print >> sys.stderr, "upload completed"
 
-    current_task.update_state("PROGRESS", meta={'Status': "Completing Upload Process"})
+    task_state("PROGRESS", "Completing Upload Process")
 
     if "http" in res:
         print "rename"
@@ -122,9 +124,9 @@ def upload_files(bundle_name='',
         tar_man.rename_tar_file(target_dir, bundle_name, job_id)
 
         print >> sys.stderr, "Status Page: {0}".format(res)
-        current_task.update_state(state='SUCCESS', meta={'url': res})
+        task_state('SUCCESS', res)
 
         return res
     else:
-        current_task.update_state("FAILURE", meta={'Status': "No URL"})
+        task_state("FAILURE", "No URL")
         return "Upload Failed"

@@ -23,30 +23,7 @@ import tarfile
 import tempfile
 from optparse import OptionParser
 
-from celery import current_task
-
-class BundlerError(Exception):
-    """
-    A special exception class especially for the uploader module
-    """
-
-    def __init__(self, msg):
-        """
-        Initializes a Bundler_error
-
-        @param msg: A custom message packaged with the exception
-        """
-        super(BundlerError, self).__init__(msg)
-        self.msg = msg
-
-        # send message to the front end
-        current_task.update_state(state='FAILURE', meta={'info': msg})
-
-    def __str__(self):
-        """
-        Produces a string representation of an Bundler_Error
-        """
-        return "Bundler failed: %s" % self.msg
+from home.task_comm import task_error, task_state
 
 class FileBundler():
     """
@@ -164,13 +141,13 @@ class FileBundler():
             file_arcname = os.path.basename(file_path)
 
         if not os.path.exists(file_path):
-            raise BundlerError("%s doesn't exist" % file_path)
+            task_error("%s doesn't exist" % file_path)
         if not os.access(file_path, os.R_OK):
-            raise BundlerError("Can't read from %s" % file_path)
+            task_error("Can't read from %s" % file_path)
 
         file_mode = os.stat(file_path)[stat.ST_MODE]
         if not stat.S_ISDIR(file_mode) and not stat.S_ISREG(file_mode):
-            raise BundlerError("Unknown file type for %s" % file_path)
+            task_error("Unknown file type for %s" % file_path)
 
 
         file_in = None
@@ -178,7 +155,7 @@ class FileBundler():
             # open to read binary.  This is important.
             file_in = open(file_path, 'rb')
         except IOError:
-            raise BundlerError("Couldn't read from file: %s" % file_path)
+            task_error("Couldn't read from file: %s" % file_path)
 
         # hash file 1Mb at a time
         hashval = hashlib.sha1()
@@ -208,7 +185,7 @@ class FileBundler():
         if file_arcname in self.hash_dict:
             if hash != self.hash_dict[file_arcname]:
                 print file_arcname
-                raise BundlerError("Different file with the same arcname is already in the bundle")
+                task_error("Different file with the same arcname is already in the bundle")
             return
         self.hash_dict[file_arcname] = file_hash
 
@@ -217,7 +194,7 @@ class FileBundler():
         A 'Pure Virtual' function that will perform metadata bundling in a child class
         @param metadata: The metadata string to bundle
         """
-        raise BundlerError("Can't bundle metadata with the base class")
+        task_error("Can't bundle metadata with the base class")
 
 
 
@@ -231,7 +208,7 @@ class FileBundler():
             file_arcname
                 An alternative name to use for the file inside of the bundle
         """
-        raise BundlerError("Can't bundle a file with the base class")
+        task_error("Can't bundle a file with the base class")
 
 
 
@@ -273,7 +250,7 @@ class TarBundler(FileBundler):
             tarball = tarfile.TarFile(name=self.bundle_path, mode='w')
             tarball.close()
         except:
-            raise BundlerError("Couldn't create bundle tarball: %s" % self.bundle_path)
+            task_error("Couldn't create bundle tarball: %s" % self.bundle_path)
 
         self.empty_tar = True
 
@@ -317,19 +294,18 @@ class TarBundler(FileBundler):
                 tarball.add(file_path, arcname=modified_arc_name, recursive=False)
 
         except BundlerError, err:
-            raise BundlerError("Failed to bundle file: %s" % (err.msg))
+            task_error("Failed to bundle file: %s" % (err.msg))
 
         tarball.close()
 
     def report_percent_complete(self):
         """
-        send a celery message to the server process indicating the completion state of the bundle
+        update the task state with the progress of the bundle
         """
         meta_str = "Bundling percent complete: " + str(int(self.percent_complete))
         print meta_str
 
-        if (current_task):
-            current_task.update_state(state='PROGRESS', meta={'Status': meta_str})
+        task_state('PROGRESS', meta_str)
 
     def _bundle_metadata(self, metadata):
         """
@@ -344,7 +320,7 @@ class TarBundler(FileBundler):
         try:
             metadata_file = tempfile.TemporaryFile()
         except IOError:
-            raise BundlerError("Can't create metadata file in working directory")
+            task_error("Can't create metadata file in working directory")
 
         metadata_file.write(metadata)
         metadata_file.seek(0)
@@ -388,19 +364,19 @@ def bundle(bundle_name='',
 
     # validate parameters
     if bundle_name == None or bundle_name == '':
-        raise BundlerError("Missing bundle name")
+        task_error("Missing bundle name")
 
     if instrument_name == None or instrument_name == '':
-        raise BundlerError("Missing instrument name")
+        task_error("Missing instrument name")
 
     if proposal == None or proposal == '':
-        raise BundlerError("Missing proposal")
+        task_error("Missing proposal")
 
     if file_list == None or len(file_list) == 0:
-        raise BundlerError("Missing file list")
+        task_error("Missing file list")
 
     if groups == None or groups == '':
-        raise BundlerError("Missing groups")
+        task_error("Missing groups")
 
     #print >> sys.stderr, "Start bundling %s" % bundle_name
 
@@ -425,7 +401,7 @@ def bundle(bundle_name='',
     bundler.bundle_metadata()
 
     #print >> sys.stderr, "Finished bundling"
-    current_task.update_state(state='Bundle complete', meta={'Status': "Bundling complete"})
+    task_state('PROGRESS', "Bundling complete")
 
 def main():
     """
