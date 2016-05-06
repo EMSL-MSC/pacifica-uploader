@@ -1,6 +1,6 @@
 from celery import current_task
 
-USE_CELERY = False
+USE_CELERY = True
 
 global TASK_STATE
 global TASK_INFO
