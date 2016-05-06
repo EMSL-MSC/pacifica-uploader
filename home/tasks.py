@@ -78,6 +78,7 @@ def upload_files(bundle_name='',
     task created on a separate Celery process to bundle and upload in the background
     status and errors are pushed by celery to the main server through RabbitMQ
     """
+
     target_dir = os.path.dirname(bundle_name)
     if not os.path.isdir(target_dir):
         current_task.update_state(state='ERROR', meta={'Status': 'Bundle directory does not exist'})

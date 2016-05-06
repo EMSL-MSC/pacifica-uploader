@@ -36,7 +36,7 @@ import os
 #uploader
 from uploader import test_authorization
 
-from home.task_comm import TASK_STATE, TASK_INFO, USE_CELERY
+import home.task_comm
 
 #session imports
 from django.contrib.auth.models import User
@@ -312,6 +312,9 @@ def spin_off_upload(request):
     spins the upload process off to a background celery process
     """
 
+    # initialize the task state
+    home.task_comm.set_state('', '')
+
     data = request.POST.get('files')
     try:
         if data:
@@ -326,7 +329,7 @@ def spin_off_upload(request):
 
     session.is_uploading = True
 
-    if USE_CELERY:
+    if home.task_comm.USE_CELERY:
         # check to see if background celery process is alive
         # Wait 5 seconds
         session.celery_is_alive = ping_celery()
@@ -353,7 +356,7 @@ def spin_off_upload(request):
         session.bundle_filepath = os.path.join(configuration.target_dir, session.current_time + ".tar")
 
         # spin this off as a background process and load the status page
-        if USE_CELERY:
+        if home.task_comm.USE_CELERY:
             session.bundle_process = \
                     tasks.upload_files.delay(bundle_name=session.bundle_filepath,
                                              instrument_name=session.instrument,
@@ -821,7 +824,7 @@ def incremental_status(request):
             result = ''
             session.is_uploading = False
         else:
-            if USE_CELERY:
+            if home.task_comm.USE_CELERY:
                 if not session.bundle_process:
                     state = 'PENDING'
                     result = 'Spinning off background process'
@@ -837,9 +840,7 @@ def incremental_status(request):
                     print result
 
             else:
-                result = TASK_INFO
-                state = TASK_STATE
-
+                state, result = home.task_comm.get_state()
 
             if result is not None:
                 if "http" in result:
