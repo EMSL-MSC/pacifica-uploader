@@ -12,6 +12,8 @@ import os
 
 from home import file_tools
 
+from home import task_comm
+
 class MetaData(object):
     """
     structure used to pass upload metadata back and forth to the upload page
@@ -79,6 +81,17 @@ class InstrumentConfiguration(object):
                 self.mode = configuration['mode']
                 if self.mode == '':
                     return 'Configuration: Missing mode'
+
+                try:
+                    use_celery = configuration['use_celery']
+                    if self.mode == '':
+                        task_comm.USE_CELERY = True
+                    else:
+                        task_comm.USE_CELERY = (use_celery == 'True')
+                except:
+                    task_comm.USE_CELERY = True
+
+                
 
                 root_dir = os.path.normpath(configuration['dataRoot'])
                 if root_dir == '':
