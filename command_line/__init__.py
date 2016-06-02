@@ -16,6 +16,7 @@ import datetime
 from home import tasks
 from home import session_data
 from home import instrument_server
+from home import file_tools
 
 def _add_file_cb( option, opt, value, parser ):
     """
@@ -51,6 +52,21 @@ def _add_file_cb( option, opt, value, parser ):
     # Add the new file names to the parser's file name list
     parser.values.file_list.extend( files )
 
+def _add_directory( option, opt, value, parser ):
+    """
+    A Callback function for an OptionParser that adds a file into the file list
+    
+    :Parameters:
+        option
+        opt
+        value
+            The filename that was passed to this callback
+        parser
+            The OptionParser that calls the callback
+    """
+
+    _add_file_cb(option, opt, value, parser)
+
 
 def add_usage( parser ):
     """
@@ -81,6 +97,10 @@ def add_options( parser ):
     parser.add_option( '-t', '--tar', type='string', action='store', dest='tar_dir', default='NONE',
                        help="Set the uploader's tar directory to DIR", metavar='DIR' )
 
+    # Create a tar file with the bundler, then wrap that tar file in a second tar file for upload
+    parser.add_option( '-tt', '--tartar', type='string', action='store', dest='tartar', default='false',
+                       help="Upload the file list as a single tar file", metavar='TARTAR' )
+
     # Set the instrument to use
     parser.add_option( '-i', '--instrument', type='string', action='store', dest='instrument', default='',
                        help="Set used instrument to INST", metavar='INST' )
@@ -96,7 +116,12 @@ def add_options( parser ):
     # Add a file to the list to be bundled
     parser.add_option( '-f', '--file', type='string', action='callback', callback=_add_file_cb,
                        dest='file_list', default=[],
-                       help="Add the file or directory FILE to the list to be bundled", metavar='FILE' )
+                       help="Add the file FILE to the list to be bundled", metavar='FILE' )
+
+    # Add a file to the list to be bundled
+    parser.add_option( '-d', '--directory', type='string', action='callback', callback=_add_directory,
+                       dest='file_list', default=[],
+                       help="Add the file or directory FILE to the list to be bundled", metavar='DIRECTORY' )
 
         # Upload the bundle as user
     parser.add_option( '-u', '--user', type='string', action='store', dest='user', default='',
@@ -145,6 +170,10 @@ def upload_from_options( parser ):
     # get the file tuples (local name, archive name) to bundle
     tuples = session.files.get_bundle_files(parser.values.file_list)
 
+    tartar = false
+    if parser.values.tartar == 'true':
+        tartar = true
+
     tasks.upload_files( bundle_name=parser.values.bundle_name,
                         instrument_name=parser.values.instrument,
                         proposal=parser.values.proposal,
@@ -153,7 +182,8 @@ def upload_from_options( parser ):
                         groups=parser.groups,
                         server=parser.values.server,
                         user=parser.values.user,
-                        password=parser.values.password)
+                        password=parser.values.password,
+                        tartar=tartar)
 
 
 def main():
