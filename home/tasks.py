@@ -73,7 +73,8 @@ def upload_files(bundle_name='',
                  groups=None,
                  server='',
                  user='',
-                 password=''):
+                 password='',
+                 tartar = false):
     """
     task created on a separate Celery process to bundle and upload in the background
     status and errors are pushed by celery to the main server through RabbitMQ
@@ -102,6 +103,26 @@ def upload_files(bundle_name='',
            bundle_size=bundle_size)
 
     task_state("PROGRESS", "Completed Bundling")
+
+    if tartar:
+        # create the file tuple list of 1 file
+        dir = os.path.dirname(bundle_name)
+        fname = os.path.basename(bundle_name)
+
+        file_tuples=[]
+        file_tuples.append((bundle_name, fname))
+
+        bundle_size = os.path.getsize(bundle_name)
+
+                    # dual extension indicates tartar
+        bundle_name += '.tar'
+
+        bundle(bundle_name=bundle_name,
+               instrument_name=instrument_name,
+               proposal=proposal,
+               file_list=file_tuples,
+               groups=groups,
+               bundle_size=bundle_size)
 
     task_state("PROGRESS", "Starting Upload")
 
