@@ -123,16 +123,23 @@ def add_options( parser ):
                        dest='file_list', default=[],
                        help="Add the file or directory FILE to the list to be bundled", metavar='DIRECTORY' )
 
-        # Upload the bundle as user
+    # Upload the bundle as user
     parser.add_option( '-u', '--user', type='string', action='store', dest='user', default='',
                        help="Upload as the username USER", metavar='USER' )
+
+    # Upload the bundle with password from file
+    parser.add_option( '-x', '--passwordfile', type='string', action='store', dest='passwordfile', default='',
+                       help="Read content of password file as password.", metavar='PWD_FILE' )
 
 
 def check_options( parser, bundle_name_optional=True ):
     """
     Performs custom option checks for this module given an OptionParser
     """
-    parser.values.password = getpass( "Enter Password:" )
+    if parser.values.passwordfile:
+        parser.values.password = open(parser.values.passwordfile, "r").read()
+    else:
+        parser.values.password = getpass( "Enter Password:" )
 
     if parser.values.tar_dir == 'NONE':
         parser.values.tar_dir = parser.values.work_dir
