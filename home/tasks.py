@@ -74,7 +74,7 @@ def upload_files(bundle_name='',
                  server='',
                  user='',
                  password='',
-                 tartar = false):
+                 tartar = False):
     """
     task created on a separate Celery process to bundle and upload in the background
     status and errors are pushed by celery to the main server through RabbitMQ
