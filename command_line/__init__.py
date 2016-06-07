@@ -98,7 +98,7 @@ def add_options( parser ):
                        help="Set the uploader's tar directory to DIR", metavar='DIR' )
 
     # Create a tar file with the bundler, then wrap that tar file in a second tar file for upload
-    parser.add_option( '-tt', '--tartar', type='string', action='store', dest='tartar', default='false',
+    parser.add_option( '-r', '--tartar', type='string', action='store', dest='tartar', default='False',
                        help="Upload the file list as a single tar file", metavar='TARTAR' )
 
     # Set the instrument to use
@@ -177,9 +177,9 @@ def upload_from_options( parser ):
     # get the file tuples (local name, archive name) to bundle
     tuples = session.files.get_bundle_files(parser.values.file_list)
 
-    tartar = false
-    if parser.values.tartar == 'true':
-        tartar = true
+    tartar = False
+    if parser.values.tartar == 'True':
+        tartar = True
 
     tasks.upload_files( bundle_name=parser.values.bundle_name,
                         instrument_name=parser.values.instrument,
