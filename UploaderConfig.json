@@ -3,7 +3,9 @@
     "instrument": "34075",
     "target": "E:\\tar",
     "timeout": "1",
-    "server": "test1.my.emsl.pnl.gov",
+    "server": "dev1.my.emsl.pnl.gov",
+    "mode": "analytical",
+    "use_celery": "False",
     "metadata": [
         [ "Tag", "Tag" ],
         [ "Tag1", "Taggy" ],
