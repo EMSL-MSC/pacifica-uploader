@@ -388,6 +388,9 @@ def upload_files(request):
     view for upload process spawn
     """
     try:
+        # use this flag to determine status of upload in incremental status
+        session.is_uploading = True
+
         reply = spin_off_upload(request)
 
         return reply
@@ -823,8 +826,15 @@ def incremental_status(request):
             state = 'CANCELLED'
             result = ''
             session.is_uploading = False
+
+            print state
         else:
-            if home.task_comm.USE_CELERY:
+            if not session.is_uploading:
+                state = 'CANCELLED'
+                result = ''
+                print state
+
+            elif home.task_comm.USE_CELERY:
                 if not session.bundle_process:
                     state = 'PENDING'
                     result = 'Spinning off background process'
