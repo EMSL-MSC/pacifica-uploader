@@ -177,6 +177,9 @@ def upload_from_options( parser ):
     # get the file tuples (local name, archive name) to bundle
     tuples = session.files.get_bundle_files(parser.values.file_list)
 
+    insty = 'Instrument.%s' % (parser.values.instrument)
+    parser.groups[insty] = parser.values.instrument
+
     tartar = False
     if parser.values.tartar == 'True':
         tartar = True
