@@ -230,17 +230,25 @@ class FileManager(object):
         """
         remove filepaths that are contained in other filepaths to preclude redundant files when bundling
         """
+        
         filtered = list(files)
 
         for test_path in files:
-            if os.path.isdir(test_path):
-                for i in xrange(len(filtered) - 1, -1, -1):
-                    fpath = filtered[i]
-                    if (self.accessible(fpath)):
-                        if test_path in fpath and test_path != fpath:
+            try:
+                # raise Exception ('test exception handling')
+
+                if os.path.isdir(test_path):
+                    for i in xrange(len(filtered) - 1, -1, -1):
+                        fpath = filtered[i]
+                        if (self.accessible(fpath)):
+                            if test_path in fpath and test_path != fpath:
+                                filtered.remove(fpath)
+                        else:
                             filtered.remove(fpath)
-                    else:
-                        filtered.remove(fpath)
+            except Exception as e:
+                # if there is any error, remove the test path from the filtered list
+                filtered.remove (test_path)
+
         return filtered
 
 

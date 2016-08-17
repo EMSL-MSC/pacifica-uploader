@@ -69,7 +69,7 @@ session = session_data.SessionState()
 configuration = instrument_server.InstrumentConfiguration()
 
 # development version
-version = '1.00'
+version = '1.00:01'
 
 def login_user_locally(request):
     """
@@ -579,27 +579,32 @@ def get_children(request):
 
         session.files.error_string = ''
 
-        if os.path.isdir(parent):
-            lazy_list = os.listdir(parent)
-            lazy_list.sort(key=lambda s: s.lower())
+        try:
+            # raise Exception ('test exception handling')
+            if os.path.isdir(parent):
+                lazy_list = os.listdir(parent)
+                lazy_list.sort(key=lambda s: s.lower())
 
-            # simple filter for hidden files in linux
-            # replace with configurable regex later
-            #regex  = re.compile('\.(.+?)')
-            filtered = [i for i in lazy_list if not i[0]=='.']
+                # simple filter for hidden files in linux
+                # replace with configurable regex later
+                #regex  = re.compile('\.(.+?)')
+                filtered = [i for i in lazy_list if not i[0]=='.']
 
-            # folders first
-            for item in filtered:
-                itempath = os.path.join(parent, item)
-                time = os.path.getmtime(itempath)
-                mod_time = datetime.datetime.fromtimestamp(time).strftime("%m/%d/%Y %I:%M%p")
+                # folders first
+                for item in filtered:
+                    itempath = os.path.join(parent, item)
+                    time = os.path.getmtime(itempath)
+                    mod_time = datetime.datetime.fromtimestamp(time).strftime("%m/%d/%Y %I:%M%p")
 
-                if session.files.accessible(itempath):
-                    if os.path.isfile(itempath):
-                        pathlist.append({"title": item + ' ' + '<span class="fineprint"> [Last Modified ' + mod_time + ']</span>', "key": itempath, "folder": False, "data":{"time":time}})
-                    elif os.path.isdir(itempath):
-                        pathlist.append({"title": item, "key": itempath, "folder": True, "lazy": True, "data":{"time":time}})
-
+                    if session.files.accessible(itempath):
+                        if os.path.isfile(itempath):
+                            pathlist.append({"title": item + ' ' + '<span class="fineprint"> [Last Modified ' + mod_time + ']</span>', "key": itempath, "folder": False, "data":{"time":time}})
+                        elif os.path.isdir(itempath):
+                            pathlist.append({"title": item, "key": itempath, "folder": True, "lazy": True, "data":{"time":time}})
+        except Exception as e:
+            # if there is any error
+            pathlist = []
+            pathlist.append({"title": "Error Loading Children", "key": parent, "folder": True})
 
         retval = json.dumps(pathlist)
 
