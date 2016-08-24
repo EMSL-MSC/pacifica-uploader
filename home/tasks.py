@@ -20,7 +20,7 @@ from home.task_comm import task_error, task_state
 
 CLEAN_TAR = True
 
-def clean_target_directory(target_dir='', server='', user='', password=''):
+def clean_target_directory(target_dir='', authorization=None):
     """
     deletes local files that have made it to the archive
     """
@@ -38,11 +38,7 @@ def clean_target_directory(target_dir='', server='', user='', password=''):
     #jobs = ['2001066', '2001067','2001068']
 
     # get jobs state from database
-    jobs_state = job_status(protocol="https",
-                            server=server,
-                            user=user,
-                            password=password,
-                            job_list=jobs)
+    jobs_state = job_status(authorization=authorization, job_list=jobs)
 
     # fake job state
     #jobs_state = '[{?20001066? : {?state_name?:?Received?, ?state?:?1"}},
@@ -71,9 +67,7 @@ def upload_files(bundle_name='',
                  file_list=None,
                  bundle_size=0,
                  groups=None,
-                 server='',
-                 user='',
-                 password='',
+                 authorization=None,
                  tartar = False):
     """
     task created on a separate Celery process to bundle and upload in the background
@@ -88,7 +82,7 @@ def upload_files(bundle_name='',
 
     #clean tar directory
     if CLEAN_TAR:
-        err_str = clean_target_directory(target_dir, server, user, password)
+        err_str = clean_target_directory(target_dir, authorization)
         if err_str:
             task_state('PROGRESS', err_str)
 
@@ -126,11 +120,7 @@ def upload_files(bundle_name='',
 
     task_state("PROGRESS", "Starting Upload")
 
-    res = upload(bundle_name=bundle_name,
-                 protocol="https",
-                 server=server,
-                 user=user,
-                 password=password)
+    res = upload(bundle_name=bundle_name, authorization=authorization)
 
     if res is None:
         task_state("FAILURE",  "Uploader dieded. We don't know why it did")

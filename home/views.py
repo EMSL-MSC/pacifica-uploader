@@ -34,9 +34,11 @@ import re
 import os
 
 #uploader
-from uploader import test_authorization
+# from uploader import test_authorization
 
 import home.task_comm
+
+import home.Authorization
 
 #session imports
 from django.contrib.auth.models import User
@@ -63,13 +65,16 @@ from home import instrument_server
 
 # Module level variables
 # session is user specific information
-session = session_data.SessionState()
+session = session_data.SessionState(None)
+
+#authorization class
+server_auth = None
 
 # server is instrument uploader specific information
 configuration = instrument_server.InstrumentConfiguration()
 
 # development version
-version = '1.00'
+version = '2.00'
 
 def login_user_locally(request):
     """
@@ -364,9 +369,7 @@ def spin_off_upload(request):
                                              file_list=tuples,
                                              bundle_size=session.files.bundle_size,
                                              groups=groups,
-                                             server=configuration.server_path,
-                                             user=session.user,
-                                             password=session.password)
+                                             authorization=server_auth)
         else: # run local in blocking mode
             tasks.upload_files(bundle_name=session.bundle_filepath,
                                              instrument_name=session.instrument,
@@ -374,9 +377,7 @@ def spin_off_upload(request):
                                              file_list=tuples,
                                              bundle_size=session.files.bundle_size,
                                              groups=groups,
-                                             server=configuration.server_path,
-                                             user=session.user,
-                                             password=session.password)
+                                             authorization=server_auth)
     except Exception, e:
         session.is_uploading = False
         return HttpResponseServerError(json.dumps(e.message), content_type="application/json")
@@ -458,31 +459,31 @@ def login(request):
     new_user = request.POST['username']
     new_password = request.POST['password']
 
-    # check to see if there is an existing user logged in
-    if (session.current_user):
-        # if the session is timed out, logout the current user
-        if session.is_timed_out():
-            logout(request);
-        else:
-            # if the current user is still logged in and this is not that user, throw an error
-            if (session.current_user.is_authenticated()):
-                if new_user != session.user:
-                    return login_error(request, 'User %s is currently logged in' % session.user_full_name)
+    global session
+    if session:
+        # check to see if there is an existing user logged in
+        if (session.current_user):
+            # if the session is timed out, logout the current user
+            if session.is_timed_out():
+                logout(request);
+            else:
+                # if the current user is still logged in and this is not that user, throw an error
+                if (session.current_user.is_authenticated()):
+                    if new_user != session.user:
+                        return login_error(request, 'User %s is currently logged in' % session.user_full_name)
 
-    # after login you lose your session context
-    session.cleanup_session()
-
-    #even if this is the current user, we still need to re-authenticate them
-    session.user = new_user
-    session.password = new_password
-
-    # test to see if the user authorizes against EUS
-    err_str = test_authorization(protocol="https",
-                                 server=configuration.server_path,
-                                 user=session.user,
-                                 password=session.password)
+    # test to see if the user authorizes
+    global server_auth
+    server_auth = home.Authorization.Authorization(server=configuration.server_path,
+                                 user=new_user,
+                                 password=new_password)
+    err_str = server_auth.test_authorization()
     if err_str:
         return login_error(request, err_str)
+
+    
+    # after login you lose your session context
+    session = session_data.SessionState(server_auth)
 
     # this loads the user information and sets a local reference to the 
     # configuration for the session object
@@ -499,20 +500,18 @@ def login(request):
     if not request.user.is_authenticated():
         return login_error(request, 'Problem with local authentication')
 
+    try:
+        tasks.clean_target_directory(configuration.target_dir, server_auth)
+    except:
+        return login_error(request, "failed to clear tar directory")
+
     # ok, passed all EUS and local authorization tests, valid user data is loaded
     # keep a copy of the user so we can keep other users from stepping on them if they are still
     # logged in
     session.current_user = request.user
     session.is_logged_in = True
+    session.password = new_password
     session.touch()
-
-    try:
-        tasks.clean_target_directory(configuration.target_dir,
-                                     configuration.server_path,
-                                     session.current_user,
-                                     session.password)
-    except:
-        return login_error(request, "failed to clear tar directory")
 
     return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
