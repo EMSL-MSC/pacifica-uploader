@@ -11,12 +11,12 @@ import os
 import datetime
 import time
 
-from uploader import get_info
-
 from home import file_tools
 from home.file_tools import FileManager
 from home.instrument_server import MetaData
 from home.instrument_server import InstrumentConfiguration
+from home.Authorization import Authorization
+from home.QueryMetadata import QueryMetadata
 
 class SessionState(object):
     """
@@ -64,6 +64,15 @@ class SessionState(object):
     bundle_process = None
 
     bundle_filepath = ''
+
+    def __init__(self, server_auth):
+        """
+        constructor for session_data class
+        """
+        # authorization object contains a curl session that has been validated
+        self.authorization = server_auth
+        self.query = QueryMetadata(server_auth)
+
 
     def touch(self):
         self.last_touched_time = time.time()
@@ -381,11 +390,7 @@ class SessionState(object):
             return 'Unable to copy metadata'
 
         # get the user's info from EUS
-        info = get_info(protocol='https',
-                        server=self.config.server_path,
-                        user=self.user,
-                        password=self.password,
-                        info_type='userinfo')
+        info = self.query.get_info(self.authorization, info_type='userinfo')
 
         #with open ('aslipton.json', 'r') as myfile:
         #    info=myfile.read()
@@ -424,11 +429,8 @@ class SessionState(object):
         json_list = []
 
         # get the user's info from EUS
-        info = get_info(protocol='https',
-                        server=self.config.server_path,
-                        user=self.user,
-                        password=self.password,
-                        info_type='proposalinfo/' + proposal_id)
+        info = self.query.get_info(self.authorization,
+                              info_type='proposalinfo/' + proposal_id)
 
         try:
             info = json.loads(info)
