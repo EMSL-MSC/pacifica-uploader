@@ -511,20 +511,22 @@ window.onbeforeunload = function (event) {
                 window.open(errtext, '_self');
             });
 
-            var posting = $.post("/propInstruments/", prop,
-            function (data) {
-                $("#instrument").empty();
-                $("#instrument").val('')
-                $('#instrument').select2('data', null);
-                $("#instrument").select2({
-                    allowClear: true,
-                    data: data
-                });
-            })
-            .fail(function (xhr, textStatus, errorThrown) {
-                errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
-                window.open(errtext, '_self');
-            });
+            // commenting this out until we figure out wtf we are doing for analytical 
+            // selection priorities (dfh 8.26.16)
+            //var posting = $.post("/propInstruments/", prop,
+            //function (data) {
+            //    $("#instrument").empty();
+            //    $("#instrument").val('')
+            //    $('#instrument').select2('data', null);
+            //    $("#instrument").select2({
+            //        allowClear: true,
+            //        data: data
+            //    });
+            //})
+            //.fail(function (xhr, textStatus, errorThrown) {
+            //    errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
+            //    window.open(errtext, '_self');
+            //});
 
             var tree = $("#tree").fancytree("getTree");
             var selected = tree.getSelectedNodes(stopOnParents = true);
