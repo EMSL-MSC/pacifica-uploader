@@ -203,6 +203,7 @@ def job_status(protocol='https',
 
     data = json.dumps(job_list)
     curl.setopt(pycurl.POSTFIELDS, data)
+    curl.setopt(pycurl.POSTREDIR, curl.REDIR_POST_ALL )
 
     curl.perform()
 
