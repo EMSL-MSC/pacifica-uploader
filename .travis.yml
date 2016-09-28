@@ -5,3 +5,4 @@ install: "pip install -r requirements.txt"
 script:
  - bash -xe pylint-everything.sh
  - coverage run --include='ingest*' ingest_unit_tests.py -v
+ - codeclimate-test-reporter
