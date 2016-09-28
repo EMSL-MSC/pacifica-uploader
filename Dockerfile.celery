@@ -1,4 +1,4 @@
-from myemslcontroller
+from pacifica/uploader
 
 USER 1
 WORKDIR /app
