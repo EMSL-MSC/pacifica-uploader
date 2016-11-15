@@ -74,7 +74,7 @@ server_auth = None
 configuration = instrument_server.InstrumentConfiguration()
 
 # development version
-version = '2.00'
+version = '2.01'
 
 def login_user_locally(request):
     """
@@ -166,16 +166,6 @@ def populate_upload_page(request):
     request.session.modified = True
     age = request.session.get_expiry_age()
 
-    #request.session.set_expiry(10)
-
-    #age = request.session.get_expiry_age()
-
-
-    # if not logged in
-    if session.password == '':
-        # call login error with no error message
-        return login_error(request, '')
-
     root_dir = session.files.data_dir
 
     if not root_dir or root_dir == '':
@@ -193,14 +183,7 @@ def populate_upload_page(request):
 
     # Render list page with the documents and the form
     return render_to_response('home/uploader.html',
-                              {'instrument': session.concatenated_instrument(),
-                               'instrumentList': session.instrument_list,
-                               'proposalList': session.proposal_list,
-                               'user_list': session.proposal_users,
-                               'proposal':session.proposal_friendly,
-                               'proposal_user':session.proposal_user,
-                               'proposal_users':session.proposal_users,
-                               'data_root':session.files.data_dir,
+                              {'data_root':session.files.data_dir,
                                'metaList':session.meta_list,
                                'user':session.user_full_name},
                               context_instance=RequestContext(request))
@@ -233,20 +216,6 @@ def set_data_root(request):
     except Exception, e:
         return HttpResponseServerError(json.dumps(e.message), content_type="application/json")
 
-def set_instrument(request):
-    """
-    explicitly set the data root
-    """
-    try:
-        instrument = request.POST.get("instrument")
-
-        session.deconcatenated_instrument (instrument)
-
-        return HttpResponse(json.dumps("success"), content_type="application/json")
-
-    except Exception, e:
-        return HttpResponseServerError(json.dumps(e.message), content_type="application/json")
-
 def show_status(request, message):
     """
     show the status of the existing upload task
@@ -254,11 +223,9 @@ def show_status(request, message):
     session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
 
     return render_to_response('home/status.html',
-                              {'instrument':session.concatenated_instrument(),
-                               'instrumentList': session.instrument_list,
+                              {
                                'status': message,
-                               'proposal':session.proposal_friendly,
-                               'metaList':session. meta_list,
+                               'metaList':session.meta_list,
                                'current_time': session.current_time,
                                'bundle_size': session.files.bundle_size_str,
                                'free_size': configuration.free_size_str,
@@ -272,15 +239,11 @@ def show_status_insert(request, message):
     session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
 
     return render_to_response('home/status_insert.html',
-                              {'instrument':session.concatenated_instrument(),
-                               'instrumentList': session.instrument_list,
-                               'status': message,
-                               'proposal':session.proposal_friendly,
+                              {'status': message,
                                'metaList':session. meta_list,
                                'current_time': session.current_time,
                                'bundle_size': session.files.bundle_size_str,
-                               'free_size': configuration.free_size_str,
-                               'user': session.user_full_name},
+                               'free_size': configuration.free_size_str},
                               context_instance=RequestContext(request))
 
 
@@ -288,7 +251,6 @@ def post_upload_metadata(request):
     """
     populates the upload metadata from the upload form
     """
-    
 
     data = request.POST.get('form')
     try:

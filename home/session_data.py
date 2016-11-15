@@ -70,7 +70,6 @@ class SessionState(object):
         constructor for session_data class
         """
         # authorization object contains a curl session that has been validated
-        self.authorization = server_auth
         self.query = QueryMetadata(server_auth)
 
 
@@ -118,13 +117,7 @@ class SessionState(object):
         this needs to be done on an individual session base so that we can have
         user specific metadata settings
         """
-        self.meta_list = []
-        for meta in self.config.meta_list:
-            meta_entry = MetaData()
-            meta_entry.name = meta.name
-            meta_entry.label = meta.label
-            meta_entry.value = ''
-            self.meta_list.append(meta_entry)
+        self.meta_list = list(self.config.meta_list)
 
     def set_session_root(self, filepath):
         self.files.data_dir = filepath
@@ -157,27 +150,11 @@ class SessionState(object):
             return 'User is not valid for this instrument'
 
         try:
-            valid_instrument = False
-            for inst_id, inst_block in instruments.iteritems():
-                if not inst_id:
-                    continue
-                if not inst_block:
-                    continue
-                inst_name = inst_block.get('instrument_name')
-                if not inst_name:
-                    inst_name = 'unnamed'
-
-                instrument_short_name = inst_block.get('name_short')
-                if not instrument_short_name:
-                    instrument_short_name = 'no short name'
-
-                if self.instrument == inst_id:
-                    self.instrument_friendly = inst_name
-                    self.instrument_short_name = instrument_short_name
-                    self.instrument_list = []
-                    self.instrument_list.append(self.concatenated_instrument)
-                    valid_instrument = True
-                    break
+            self.instrument_friendly = 'friendly'
+            self.instrument_short_name = 'short'
+            self.instrument_list = []
+            self.instrument_list.append(self.concatenated_instrument)
+            valid_instrument = True
 
             if not valid_instrument:
                 return 'User is not valid for this instrument'
@@ -392,8 +369,6 @@ class SessionState(object):
         # get the user's info from EUS
         info = self.query.get_info(self.authorization, info_type='userinfo')
 
-        #with open ('aslipton.json', 'r') as myfile:
-        #    info=myfile.read()
         try:
             info = json.loads(info)
         except Exception:

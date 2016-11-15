@@ -18,10 +18,11 @@ class MetaData(object):
     """
     structure used to pass upload metadata back and forth to the upload page
     """
-
-    label = ''
+    objid = 'TransactionKeyValue'
+    title = ''
     value = ''
-    name = ''
+    type = 'enter'
+    dependency = []
 
     def __init__(self):
         pass
@@ -59,10 +60,6 @@ class InstrumentConfiguration(object):
 
                 configuration = read_config_file()
 
-                self.instrument = configuration['instrument']
-                if self.instrument == '':
-                    return 'Configuration: Missing instrument'
-
                 self.target_dir = configuration['target']
                 if self.target_dir == '':
                     return 'Configuration: Missing target directory'
@@ -78,10 +75,6 @@ class InstrumentConfiguration(object):
                 if self.timeout == '':
                     return 'Configuration: Missing timeout'
 
-                self.mode = configuration['mode']
-                if self.mode == '':
-                    return 'Configuration: Missing mode'
-
                 try:
                     use_celery = configuration['use_celery']
                     if self.mode == '':
@@ -90,8 +83,6 @@ class InstrumentConfiguration(object):
                         task_comm.USE_CELERY = (use_celery == 'True')
                 except:
                     task_comm.USE_CELERY = True
-
-                
 
                 root_dir = os.path.normpath(configuration['dataRoot'])
                 if root_dir == '':
@@ -110,10 +101,19 @@ class InstrumentConfiguration(object):
                     self.meta_list = []
                     for meta in configuration['metadata']:
                         meta_entry = MetaData()
-                        meta_entry.name = meta[0]
-                        meta_entry.label = meta[1]
-                        meta_entry.value = ''
+                        if 'objid' in meta:
+                            meta_entry.objid = meta['objid']
+                        if 'title' in meta:
+                            meta_entry.objid = meta['title']
+                        if 'type' in meta:
+                            meta_entry.objid = meta['type']
+                        if 'dependency' in meta:
+                            meta_entry.objid = meta['dependency']
+                        if 'value' in meta:
+                            meta_entry.objid = meta['value']
+
                         self.meta_list.append(meta_entry)
+
                 except KeyError:
                     return 'Configuration: missing metadata'
             else:
