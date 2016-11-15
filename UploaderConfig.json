@@ -1,12 +1,65 @@
 {
     "dataRoot": "S:\\7_Representative_Data",
-    "instrument": "34075",
     "target": "E:\\tar",
     "timeout": "1",
-    "server": "dev1.my.emsl.pnl.gov",
-    "mode": "analytical",
+    "server": "dev2.my.emsl.pnl.gov",
     "use_celery": "False",
+
+    "logon_info": {
+        "table": "users",
+        "metaID": "logon",
+        "displayType": "logged_on",
+        "queryFields": [ "first_name", "last_name" ],
+        "diplayFormat": "%s %s"
+    },
+
     "metadata": [
-        [ "Tag", "Tag" ],
-        [ "Tag1", "Taggy" ],
-        [ "Tag2", "Taggier" ] ] }
+        {
+            "table": "instruments",
+            "metaID": "instrumentByID",
+            "displayType": "static",
+            "value": "37654",
+            "queryDependency": { "_id": "instrumentByID" },
+            "queryFields": ["_id",  "name_short", "display_name" ],
+            "diplayFormat": "%s %s %s"
+        },
+        {
+            "table": "proposals",
+            "metaID": "ProposalByInstrument",
+            "displayTitle": "Proposal",
+            "displayType": "select",
+            "queryDependency": { "instrument_id": "instrumentByID" },
+            "queryFields": [ "id", "title" ],
+            "diplayFormat": "%s %s"
+        },
+        {
+            "table": "users",
+            "metaID": "UserByProposal",
+            "displayTitle": "EMSL User",
+            "displayType": "select",
+            "value": "48273",
+            "queryDependency": { "proposal_id": "UserByProposal" },
+            "queryFields": [ "first_name", "last_name" ],
+            "diplayFormat": "%s %s"
+        },
+        {
+            "table": "transactionKeyValue",
+            "metaID": "tag1",
+            "displayTitle": "Tag",
+            "displayType": "enter"
+        },
+        {
+            "table": "transactionKeyValue",
+            "metaID": "tag2",
+            "displayTitle": "Taggy",
+            "displayType": "enter"
+        },
+        {
+            "table": "transactionKeyValue",
+            "metaID": "tag3",
+            "displayTitle": "Tagier",
+            "displayType": "enter"
+        }
+    ]
+
+        }
