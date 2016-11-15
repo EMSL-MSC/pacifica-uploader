@@ -1,0 +1,63 @@
+{
+    "dataRoot": "S:\\7_Representative_Data",
+    "target": "E:\\tar",
+    "timeout": "1",
+    "server": "dev2.my.emsl.pnl.gov",
+    "use_celery": "False",
+
+    "logon_info": {
+        "ORMobjid": "Users",
+        "metaID":  "logon",
+        "displayType": "logged_on",
+        "queryFields": [ "first_name", "last_name" ],
+        "diplayFormat": "%s %s"
+    },
+
+    "metadata": [
+        {
+            "ORMobjid": "Instruments",
+            "metaID":  "instrumentByUser",
+            "displayType": "static",
+            "value": "34075",
+            "queryDependency": [ "id", "name_short", "display_name" ],
+            "diplayFormat": "%s %s %s"
+        },
+        {
+            "ORMobjid": "Proposals",
+            "metaID":  "ProposalByInstrument",
+            "displayTitle": "Proposal",
+            "displayType": "select",
+            "queryDependency": [ "Instrument" ],
+            "queryFields": [ "id", "title" ],
+            "diplayFormat": "%s %s"
+        },
+        {
+            "ORMobjid": "Users", 
+            "metaID":  "UserByProposal",
+            "displayTitle": "EMSL User",
+            "displayType": "select",
+            "queryDependency": [ "Proposal" ],
+            "queryFields": [ "first_name", "last_name" ],
+            "diplayFormat": "%s %s"
+        },
+        {
+            "ORMobjid": "TransactionKeyValue",
+            "metaID":  "tag1",
+            "displayTitle": "Tag",
+            "displayType": "enter"
+        },
+        {
+            "ORMobjid": "TransactionKeyValue",
+            "metaID":  "tag2",
+            "displayTitle": "Taggy",
+            "displayType": "enter"
+        },
+        {
+            "ORMobjid": "TransactionKeyValue",
+            "metaID":  "tag3",
+            "displayTitle": "Tagier",
+            "displayType": "enter"
+        }
+    ]
+
+        }
