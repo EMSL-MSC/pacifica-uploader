@@ -14,7 +14,7 @@ RUN apt-get update && \
       expect && \
     apt-get clean all
 RUN pip install \
-    django==1.7.7 \
+    django<2 \
     celery \
     psutil
 RUN mkdir /app
