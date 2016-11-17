@@ -14,8 +14,8 @@ RUN apt-get update && \
       expect && \
     apt-get clean all
 RUN pip install \
-    'django<2' \
-    celery \
+    'django<1.8' \
+    'celery<4' \
     psutil
 RUN mkdir /app
 ADD . /app
