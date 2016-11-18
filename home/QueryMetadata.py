@@ -11,8 +11,10 @@ class MetaData(object):
     structure used to pass upload metadata back and forth to the upload page
     """
     id = "id"
-    table = 'TransactionKeyValue'
+    table = ''
+    destinationTable = ''
     title = ''
+    key = ''
     value = ''
     type = 'enter'
     dependency = {}
@@ -46,17 +48,17 @@ class QueryMetadata(object):
         builds a json query structure
         """
 
-        x = """
-        {
-            "user": "d3e889",
-            "columns": [ "name_short", "diplay_name" ],
-            "from": "instruments",
-            "where" : { "_id": "37654" }
-        }
-        """
+        #query = """
+        #{
+        #    "user": "d3e889",
+        #    "columns": [ "name_short", "diplay_name" ],
+        #    "from": "instruments",
+        #    "where" : { "_id": "37654" }
+        #}
+        #"""
         
         query = {}
-        query["user"] = self.user        
+        query["user"] = self.user
         query["columns"] = meta.columns
         query["from"] = meta.table
 
@@ -96,6 +98,9 @@ class QueryMetadata(object):
                 if 'table' in meta:
                     meta_entry.table = meta['table']
 
+                if 'destinationTable' in meta:
+                    meta_entry.table = meta['destinationTable']
+
                 if 'metaID' in meta:
                     meta_entry.id = meta['metaID']
 
@@ -110,6 +115,9 @@ class QueryMetadata(object):
 
                 if 'diplayFormat' in meta:
                     meta_entry.format = meta['diplayFormat']
+
+                if 'key' in meta:
+                    meta_entry.table = meta['key']
 
                 if 'value' in meta:
                     meta_entry.value = meta['value']

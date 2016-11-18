@@ -5,18 +5,11 @@
     "server": "dev2.my.emsl.pnl.gov",
     "use_celery": "False",
 
-    "logon_info": {
-        "table": "users",
-        "metaID": "logon",
-        "displayType": "logged_on",
-        "queryFields": [ "first_name", "last_name" ],
-        "diplayFormat": "%s %s"
-    },
-
     "metadata": [
 		{
 			"table": "users",
 			"metaID": "logon",
+			"destinationTable": "Transaction.submitter",
 			"value": "D3E889",
 			"displayType": "logged_on",
 			"queryFields": [ "first_name", "last_name" ],
@@ -26,6 +19,7 @@
         {
             "table": "instruments",
             "metaID": "instrumentByID",
+			"destinationTable": "Transaction.instrument",
             "displayType": "static",
             "value": "34002",
             "queryDependency": { "_id": "instrumentByID" },
@@ -35,6 +29,8 @@
         {
             "table": "proposals",
             "metaID": "ProposalByInstrument",
+            "value": "34002",
+			"destinationTable": "Transaction.proposal",
             "displayTitle": "Proposal",
             "displayType": "select",
             "queryDependency": { "instrument_id": "instrumentByID" },
@@ -43,29 +39,37 @@
         },
         {
             "table": "users",
-            "metaID": "UserByProposal",
+            "metaID": "EmslUserOfRecord",
+			"destinationTable": "TransactionKeyValue",
             "displayTitle": "EMSL User",
             "displayType": "select",
-            "value": "48273",
-            "queryDependency": { "proposal_id": "UserByProposal" },
+			"key": "User of Record",
+			"value": "34002",
+            "queryDependency": { "proposal_id": "EmslUserOfRecord" },
             "queryFields": [ "first_name", "last_name" ],
             "diplayFormat": "%s %s"
         },
-        {
-            "table": "transactionKeyValue",
+        {            
+			"destinationTable": "TransactionKeyValue",
             "metaID": "tag1",
+			"key": "Tag",			
+            "value": "dummy",
             "displayTitle": "Tag",
             "displayType": "enter"
         },
-        {
-            "table": "transactionKeyValue",
+        {           
+			"destinationTable": "TransactionKeyValue",
             "metaID": "tag2",
+			"key": "Taggy",
+            "value": "dummy2",
             "displayTitle": "Taggy",
             "displayType": "enter"
         },
-        {
-            "table": "transactionKeyValue",
+        {            
+			"destinationTable": "TransactionKeyValue",
             "metaID": "tag3",
+			"key": "Tagier",
+            "value": "dummy3",
             "displayTitle": "Tagier",
             "displayType": "enter"
         }
