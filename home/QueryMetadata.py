@@ -79,6 +79,30 @@ class QueryMetadata(object):
 
         return retVal
 
+    def create_meta_upload(self, meta):
+        """
+        creates an object that ultimately the metadata server will be able to 
+        use to store the value of this metadata field
+        """
+        meta_obj = {}
+        meta_obj['destinationTable'] = meta.destinationTable        
+        meta_obj['key'] = meta.key
+        meta_obj['value'] = meta.value
+
+        return meta_obj
+
+    def create_meta_upload_list(self):
+        """
+        creates list of objects that ultimately the metadata server will be able to 
+        use to store the value of this metadata field
+        """
+        upload_list = []
+
+        for meta in self.meta_list:
+            upload_list.append(create_meta_upload(meta))
+
+        return upload_list
+
     def load_query(self, meta):
         """
         """
