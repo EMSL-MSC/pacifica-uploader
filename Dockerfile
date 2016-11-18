@@ -14,7 +14,7 @@ RUN apt-get update && \
       expect && \
     apt-get clean all
 RUN pip install \
-    'django<1.8' \
+    'django==1.7.7' \
     'celery<4' \
     psutil
 RUN mkdir /app
