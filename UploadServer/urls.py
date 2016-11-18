@@ -25,7 +25,7 @@ urlpatterns = patterns('',
                        url(r'^getState/', 'home.views.get_state', name='getState'),
                        url(r'^propUser/', 'home.views.get_proposal_users', name='propUser'),
                        url(r'^propInstruments/', 'home.views.get_proposal_instruments', name='propInstruments'),
-                       url(r'^setInstrument/', 'home.views.set_instrument', name='setInstrument'),
+                       #url(r'^setInstrument/', 'home.views.set_instrument', name='setInstrument'),
                        url(r'^cookie/', 'home.views.cookie_test', name='cookie'),
                        (r'^login/$', 'home.views.login'),
                        url(r'^logout/$', 'home.views.logout'),)

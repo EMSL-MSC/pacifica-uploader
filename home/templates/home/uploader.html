@@ -23,21 +23,13 @@
                 <form method="post" enctype="multipart/form-data">
 	                {% csrf_token %}
 
-                    <fieldset style="min-height:170px;">
-                        <legend>Metadata</legend>
-                        <div class="full_width_block">
-                            <label for="instrument">Instrument</label><br>
-                            <select name="instrument" id="instrument" class="main_page_selector">
-                                {% for inst in instrumentList %}
-                                    {% if instrument == inst %}
-                                        <option selected="selected" value="{{inst}}">{{inst}}</option>
-                                    {% else %}
-                                        <option value="{{inst}}">{{inst}}</option>
-                                    {% endif %}
-                                {% endfor %}
+                        {% for meta in metaList %}
+                                <li>
+                                   <label for="{{meta.name}}" style="display:block;">{{meta.label}}</label>
+                                   <input type="text" id="{{meta.name}}" style="width:80%;border-width:1px;" name="{{meta.name}}" value = "{{meta.value}}">
+                                </li>
+                        {% endfor %}
 
-                            </select>
-                        </div>
                         <div class="full_width_block" style="margin-top:1em;">
                             <label for="proposal">Proposal</label><br>
                             <select name="proposal" id="proposal" class="main_page_selector">
@@ -51,18 +43,7 @@
                             </select>
                         </div>
 
-                        <div class="full_width_block" style="margin-top:1em;">
-                            <label for="proposal_user">EMSL User</label><br>
-                            <select id="proposal_user" name="proposal_user" class="main_page_selector">
-                            {% for user in proposal_users %}
-                                {% if proposal_user == user %}
-                                <option selected value="{{user}}">{{user}}</option>
-                                {% else %}
-                                <option value="{{user}}">{{user}}</option>
-                                {% endif %}
-                            {% endfor %}
-                            </select>
-                        </div>
+
 
                         <div class="full_width_block" style="margin-top:1em;">
                             <ul>

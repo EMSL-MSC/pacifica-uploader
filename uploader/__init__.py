@@ -19,6 +19,10 @@ import bundler
 from getpass import getpass
 from StringIO import StringIO
 
+import requests
+
+from home.Authorization import Authorization
+
 import json
 
 from uploader.PycurlSession import PycurlSession
@@ -105,94 +109,92 @@ def pycurl_session(protocol='https',
 
     return retval
 
-def get_info(protocol='https',
-             server='dev2.my.emsl.pnl.gov',
-             user='',
-             password=':',
-             info_type='userinfo'):
+#def xxxget_info(protocol='https',
+#             server='dev2.my.emsl.pnl.gov',
+#             user='',
+#             password=':',
+#             info_type='userinfo'):
+
+#    """
+#    gets the user info from the EUS database mirror on the backend server
+#    """
+
+#    session = pycurl_session(protocol, server, user, password)
+
+#    curl = session.curl
+
+#    pyurl = session.url + '/myemsl/' + info_type
+#    curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
+#    odata = StringIO()
+#    curl.setopt(pycurl.WRITEFUNCTION, odata.write)
+
+#    curl.perform()
+
+#    # Verify that authentication was successful
+#    curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
+#    if curl_http_code / 100 == 4:
+#        return False
+#    else:
+#        odata.seek(0)
+#        reply = odata.read()
+#        # print reply
+#        return reply
+
+
+#def xxxtest_authorization(protocol='https',
+#                       server='',
+#                       user='',
+#                       password=':'):
+
+#    """
+#    Validates the user as a MyEMSL user
+#    """
+#    try:
+#        session = pycurl_session(protocol, server, user, password)
+
+#        curl = session.curl
+
+#        pyurl = session.url + "/myemsl/testauth"
+#        curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
+#        odata = StringIO()
+#        curl.setopt(pycurl.WRITEFUNCTION, odata.write)
+
+#        curl.perform()
+
+#        # Verify that authentication was successful
+#        curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
+#        if curl_http_code / 100 == 4:
+#            return 'User or Password is incorrect'
+#        else:
+#            odata.seek(0)
+#            reply = odata.read()
+#            print reply
+#            if "ok" in reply:
+#                return None
+#    except pycurl.error:
+#        return curl.errstr()
+#    except:
+#        return "Unknown error during authorization"
+
+def job_status(authorization=None, job_list=[]):
 
     """
-    gets the user info from the EUS database mirror on the backend server
+    checks the status of existing job
     """
 
-    session = pycurl_session(protocol, server, user, password)
+    curl = authorization.get_auth_token()
 
-    curl = session.curl
+    #session = pycurl_session(protocol, server, user, password)
 
-    pyurl = session.url + '/myemsl/' + info_type
-    curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
-    odata = StringIO()
-    curl.setopt(pycurl.WRITEFUNCTION, odata.write)
+    #curl = session.curl
 
-    curl.perform()
+    ## cookie!!!
+    #pyurl = session.url + "/myemsl/testauth"
+    #curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
+    #odata = StringIO()
+    #curl.setopt(pycurl.WRITEFUNCTION, odata.write)
 
-    # Verify that authentication was successful
-    curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
-    if curl_http_code / 100 == 4:
-        return False
-    else:
-        odata.seek(0)
-        reply = odata.read()
-        # print reply
-        return reply
-
-
-def test_authorization(protocol='https',
-                       server='',
-                       user='',
-                       password=':'):
-
-    """
-    Validates the user as a MyEMSL user
-    """
-    try:
-        session = pycurl_session(protocol, server, user, password)
-
-        curl = session.curl
-
-        pyurl = session.url + "/myemsl/testauth"
-        curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
-        odata = StringIO()
-        curl.setopt(pycurl.WRITEFUNCTION, odata.write)
-
-        curl.perform()
-
-        # Verify that authentication was successful
-        curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
-        if curl_http_code / 100 == 4:
-            return 'User or Password is incorrect'
-        else:
-            odata.seek(0)
-            reply = odata.read()
-            print reply
-            if "ok" in reply:
-                return None
-    except pycurl.error:
-        return curl.errstr()
-    except:
-        return "Unknown error during authorization"
-
-def job_status(protocol='https',
-               server='',
-               user='',
-               password=':',
-               job_list=[]):
-
-    """
-    Validates the user as a MyEMSL user
-    """
-
-    session = pycurl_session(protocol, server, user, password)
-
-    curl = session.curl
-
-    # cookie!!!
-    pyurl = session.url + "/myemsl/testauth"
-    curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
-    odata = StringIO()
-    curl.setopt(pycurl.WRITEFUNCTION, odata.write)
-
-    curl.perform()
+    #curl.perform()
 
     pyurl = session.url + '/myemsl/status/index.php/status/job_status'
     curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
@@ -241,195 +243,24 @@ def progress(_download_t, _download_d, upload_t, upload_d):
         except Exception, e:
             raise task_error("Error during callback: " + e.message)
 
-def upload(bundle_name='',
-           protocol='https',
-           server='',
-           user='',
-           password=''):
+def upload(bundle_name='', authorization=None):
     """
     Uploads a bundle of files via cURL to a specified server
 
     :Parameters:
         bundle_name
             The name of the bundle file to upload.
-        protocol
-            The communication protocol to use for the upload
-        server
-            The server to which the bundle should be uploaded
-        user
-            The user name on the destination server to use for the upload
-        password
-            The password to use for the selected user on the destination server
-    @note This function assumes a bundle has been created already and is ready to upload
     """
     status = None
 
     bundle_path = os.path.abspath(bundle_name)
-    if not os.path.exists(bundle_path):
-        raise task_error("The target bundle does not exist:\n    %s" % bundle_path)
 
-    # @todo: get cURL to use protocol as a guide for authentication type
-    url = '%s://%s' % (protocol, server)
+    files = {'file': (open(bundle_path, 'rb'), 'application/octet-stream')}
+    f = open(bundle_path, 'rb')
+    headers = {'content-type': 'application/octet-stream'}
+    url = 'http://127.0.0.1:8066/upload'
 
-    print >> sys.stderr, 'Server URL: %s' % url
-    print >> sys.stderr, 'File: %s' % bundle_path
-    print >> sys.stderr, 'User: %s' % user
-
-    server = ''
-    location = ''
-
-    #gets a session to be used for the entire upload
-    session = pycurl_session(protocol, server, user, password)
-
-    curl = session.curl
-    odata = StringIO()
-    curl.setopt(pycurl.WRITEFUNCTION, odata.write)
-
-    #**************************************************
-    # Pre-allocate with cURL
-    task_state('UPLOAD', 'Performing cURL preallocation *status*')
-
-    try:
-        # Set the URL for the curl query.
-        pyurl = url + "/myemsl/cgi-bin/preallocate"
-        curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
-
-        curl.perform()
-        curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
-        if curl_http_code / 100 == 4:
-            raise task_error("Authentication failed with code %i" % curl_http_code)
-        else:
-            odata.seek(0)
-            print odata.read()
-
-        print "code"
-        print curl_http_code
-
-        if curl_http_code == 503:
-            odata.seek(0)
-            raise task_error(odata.read(), outage=True)
-
-        # Make sure that cURL was able to get server and location data
-        try:
-            server = re.search(r'Server: ([\w\.-]*)', odata.getvalue()).group(1)
-            location = re.search(r'Location: ([\w\./-@]*)', odata.getvalue()).group(1)
-        except:
-            odata.seek(0)
-            raise task_error("Error on server:  " + odata.read(), outage=True)
-
-        if server == '' or location == '':
-            raise task_error("Got invalid server and/or location information from server")
-
-    except pycurl.error:
-        raise task_error("cURL operations failed for preallocation:\n    %s" % curl.errstr())
-
-    except Exception, e:
-        raise task_error("Error during preallocation: " + e.message)
-
-
-    #*********************************************************************
-
-    #************************************************************************
-    #Uploading
-
-    # Set the URL with the server data fetched via cURL
-    url = '%s://%s' % (protocol, server)
-
-    print >> sys.stderr, 'Fetched Server: %s' % server
-    print >> sys.stderr, 'Fetched Location: %s' % location
-    print >> sys.stderr, 'New Server URL: %s' % url
-
-    # Upload bundle with cURL
-    task_state('UPLOAD', 'Peforming cURL upload of bundle of %s' % bundle_path)
-
-    try:
-        # Set the URL for the curl query.
-        pyurl = url + location
-        curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
-
-        curl.setopt(pycurl.PUT, 1)
-        curl.setopt(pycurl.UPLOAD, 1)
-
-        # Set the input callback function to read from the bundle file
-        bundlefd = open(bundle_path, 'rb')
-        curl.setopt(pycurl.READFUNCTION, bundlefd.read)
-
-        size = os.lstat(bundle_path)[stat.ST_SIZE]
-        curl.setopt(pycurl.INFILESIZE_LARGE, size)
-
-        TrackPercent.percent = 0
-        curl.setopt(pycurl.NOPROGRESS, 0)
-        curl.setopt(pycurl.PROGRESSFUNCTION, progress)
-        curl.perform()
-
-        curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
-        if curl_http_code == 503:
-            odata.seek(0)
-            raise task_error(odata.read(), outage=True)
-
-    except pycurl.error:
-        raise task_error("cURL operations failed during upload: %s" % curl.errstr())
-
-    except IOError:
-        raise task_error("Couldn't read from bundle file")
-
-    #************************************************************************
-
-    #************************************************************************
-    # Finalize the upload
-    task_state('UPLOAD', 'Peforming cURL finalization of upload')
-
-    try:
-        #turn off upload
-        curl.setopt(pycurl.PUT, 0)
-        curl.setopt(pycurl.UPLOAD, 0)
-
-        # Set the URL for the curl query.
-        pyurl = url + "/myemsl/cgi-bin/finish" + location
-        curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
-
-        print 'calling ' + pyurl
-
-        curl.perform()
-
-        curl_http_code = curl.getinfo(pycurl.HTTP_CODE)
-        if curl_http_code == 503:
-            odata.seek(0)
-            raise task_error(odata.read(), outage=True)
-
-        print "curl_http_code " + str(curl_http_code)
-
-        print  odata.getvalue()
-
-        if re.search(r'Error', odata.getvalue()) is not None:
-            raise task_error(odata.getvalue())
-
-        if re.search(r'Accepted', odata.getvalue()) == None:
-            raise task_error("Upload was not accepted")
-
-        status = re.search(r'Status: (.*)', odata.getvalue()).group(1)
-        print "status " + status
-
-    except pycurl.error:
-        raise task_error("cURL operations failed for finalization:\n    %s" % curl.errstr())
-    except Exception, err:
-        raise task_error('finalization error:  ' + pyurl + ':  ' + err.message)
-        #raise task_error("Unknown error during finalization:\n")
-
-    try:
-        # Set the URL for the curl query.
-        task_state('UPLOAD', 'Logging out')
-        pyurl = url + "/myemsl/logout"
-        curl.setopt(pycurl.URL, pyurl.encode('utf-8'))
-
-        curl.perform()
-
-    except pycurl.error:
-        raise task_error("cURL operations failed for logout:\n    %s" % curl.errstr())
-    except:
-        raise task_error("Unknown error on logout:\n    %s" % curl.errstr())
-
-    #************************************************************************
+    r = requests.post(url, headers=headers, data=f)
 
     return status
 

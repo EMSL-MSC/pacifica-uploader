@@ -533,22 +533,22 @@ window.onbeforeunload = function (event) {
 
         });
 
-        $('#instrument').change(function () {
+        //$('#instrument').change(function () {
 
-            resetTimeout();
+        //    resetTimeout();
 
-            i = $("#instrument").val();
-            instStr = { instrument: i };
+        //    i = $("#instrument").val();
+        //    instStr = { instrument: i };
 
 
-            var posting = $.post("/setInstrument/", instStr,
-            function (data) {
-            })
-            .fail(function (xhr, textStatus, errorThrown) {
-                errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
-                window.open(errtext, '_self');
-            });
-        });
+        //    var posting = $.post("/setInstrument/", instStr,
+        //    function (data) {
+        //    })
+        //    .fail(function (xhr, textStatus, errorThrown) {
+        //        errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
+        //        window.open(errtext, '_self');
+        //    });
+        //});
 
     });
 
