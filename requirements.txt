@@ -1,1 +1,4 @@
-django<2
+django<1.9
+psutil
+celery<4
+pycurl
