@@ -3,7 +3,7 @@ services:
   uploadserver:
     build:
       context: .
-    image: pacifica/uploader:local
+    image: pacifica/uploader:1.0.2
 
   uploadamqp:
     image: rabbitmq:latest
@@ -13,7 +13,7 @@ services:
       context: .
       dockerfile: Dockerfile.django
     volumes:
-      - //C/srv:/srv
+      - /srv:/srv
     links:
      - uploadamqp
     environment:
@@ -27,10 +27,9 @@ services:
       context: .
       dockerfile: Dockerfile.celery
     volumes:
-      - //C/srv:/srv
+      - /srv:/srv
     links:
      - uploadamqp
-    command: --broker=amqp://guest@uploadamqp:5672/
     environment:
       AMQP_PORT_5672_TCP_ADDR: uploadamqp
       AMQP_PORT_5672_TCP_PORT: 5672
