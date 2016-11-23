@@ -3,7 +3,7 @@ services:
   uploadserver:
     build:
       context: .
-    image: pacifica/uploader:1.0.2
+    image: pacifica/uploader:1.0.3
 
   uploadamqp:
     image: rabbitmq:latest
