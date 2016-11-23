@@ -1,0 +1,36 @@
+version: '2'
+services:
+  uploadserver:
+    build:
+      context: .
+    image: pacifica/uploader:local
+
+  uploadamqp:
+    image: rabbitmq:latest
+
+  uploaddjango:
+    build:
+      context: .
+      dockerfile: Dockerfile.django
+    volumes:
+      - //C/srv:/srv
+    links:
+     - uploadamqp
+    environment:
+      AMQP_PORT_5672_TCP_ADDR: uploadamqp
+      AMQP_PORT_5672_TCP_PORT: 5672
+    ports:
+     - 8000:8000
+
+  uploadcelery:
+    build:
+      context: .
+      dockerfile: Dockerfile.celery
+    volumes:
+      - //C/srv:/srv
+    links:
+     - uploadamqp
+    command: --broker=amqp://guest@uploadamqp:5672/
+    environment:
+      AMQP_PORT_5672_TCP_ADDR: uploadamqp
+      AMQP_PORT_5672_TCP_PORT: 5672

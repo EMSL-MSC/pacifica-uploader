@@ -3,7 +3,8 @@ MAINTAINER david.brown@pnnl.gov
 
 RUN apt-get update && apt-get -y install expect && apt-get clean all
 RUN rm -f /usr/src/app/home/UploaderConfig.json /usr/src/app/UploaderConfig.json && ln -sf /srv/UploaderConfig.json /usr/src/app/UploaderConfig.json
-ENV DJANGO_SETTINGS_MODULE UploadServer.settings_production
+ENV PYTHONPATH /usr/src/app
+RUN cat UploadServer/settings_production.py >> UploadServer/settings.py
 RUN python manage.py migrate
 RUN chmod +x ./setup-superuser
 RUN ./setup-superuser
