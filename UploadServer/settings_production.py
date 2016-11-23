@@ -1,11 +1,11 @@
-from settings import *
+import os
 
-DEBUG = True
+DEBUG = False
 
 if not 'AMQP_PORT_5672_TCP_ADDR' in os.environ:
   os.environ['AMQP_PORT_5672_TCP_ADDR'] = 'localhost'
   os.environ['AMQP_PORT_5672_TCP_PORT'] = '5672'
-BROKER_URL = 'amqp://guest:guest@'+os.environ['AMQP_PORT_5672_TCP_ADDR']+':'+os.environ['AMQP_PORT_5672_TCP_PORT']+'//'
+BROKER_URL = 'amqp://guest@'+os.environ['AMQP_PORT_5672_TCP_ADDR']+':'+os.environ['AMQP_PORT_5672_TCP_PORT']+'//'
 
 TEMPLATE_DEBUG = False
 TEMPLATE_DIRS = (
