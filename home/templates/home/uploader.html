@@ -14,7 +14,12 @@
             <div id="header_container">
                 <h1 class="underline">MyEMSL File Upload</h1>
                 <div id="login_id_container">
-                    <p><em>{{user}}</em></p>
+                     {% for meta in metaList %}
+                          {% if meta.type == 'logged_on'  %}
+                               <p><em>{{meta.value}}</em></p>
+                          {% endif %}
+                     {% endfor %}
+                    
                     <p class="smallprint"><a href="/logout">Not You? Click here to Logout</a></p>
                 </div>
             </div>
@@ -23,35 +28,27 @@
                 <form method="post" enctype="multipart/form-data">
 	                {% csrf_token %}
 
-                        {% for meta in metaList %}
-                                <li>
-                                   <label for="{{meta.name}}" style="display:block;">{{meta.label}}</label>
-                                   <input type="text" id="{{meta.name}}" style="width:80%;border-width:1px;" name="{{meta.name}}" value = "{{meta.value}}">
-                                </li>
-                        {% endfor %}
-
                         <div class="full_width_block" style="margin-top:1em;">
                             <label for="proposal">Proposal</label><br>
                             <select name="proposal" id="proposal" class="main_page_selector">
-                            {% for prop in proposalList %}
-                                {% if proposal == prop %}
-                                    <option selected="selected" value="{{prop}}">{{prop}}</option>
-                                {% else %}
-                                    <option value="{{prop}}">{{prop}}</option>
+                            {% for meta in metaList %}
+                                {% if meta.type == 'select'  %}
+                                    <label for="{{meta.metaID}}" style="display:block;">{{meta.displayTitle}}</label>
+                                    <select id="{{meta.metaID}}" name="{{meta.metaID}}" class="main_page_selector"> 
                                 {% endif %}
                             {% endfor %}
                             </select>
                         </div>
 
-
-
                         <div class="full_width_block" style="margin-top:1em;">
                             <ul>
                             {% for meta in metaList %}
-                                <li>
-                                   <label for="{{meta.name}}" style="display:block;">{{meta.label}}</label>
-                                   <input type="text" id="{{meta.name}}" style="width:80%;border-width:1px;" name="{{meta.name}}" value = "{{meta.value}}">
-                                </li>
+                                {% if meta.type == 'enter'  %}
+                                    <li>
+                                       <label for="{{meta.metaID}}" style="display:block;">{{meta.displayTitle}}</label>
+                                       <input type="text" id="{{meta.metaID}}" style="width:80%;border-width:1px;" name="{{meta.metaID}}" value = "{{meta.value}}">
+                                    </li>                                
+                                {% endif %}
                             {% endfor %}
                             </ul>
                         </div>
