@@ -2,7 +2,7 @@
     "dataRoot": "S:\\7_Representative_Data",
     "target": "E:\\tar",
     "timeout": "1",
-    "server": "dev2.my.emsl.pnl.gov",
+    "server": "http://dmlb2000.emsl.pnl.gov:8181",
     "use_celery": "False",
 
     "metadata": [
@@ -12,6 +12,7 @@
 			"destinationTable": "Transaction.submitter",
 			"value": "D3E889",
 			"displayType": "logged_on",
+			"displayTitle": "Currently Logged On",
 			"queryFields": [ "first_name", "last_name" ],
 			"queryDependency": { "network_id": "logon" },
 			"diplayFormat": "%s %s"
@@ -21,6 +22,7 @@
             "metaID": "instrumentByID",
 			"destinationTable": "Transaction.instrument",
             "displayType": "static",
+			"displayTitle": "Instrument",
             "value": "34002",
             "queryDependency": { "_id": "instrumentByID" },
             "queryFields": ["_id",  "name_short", "display_name" ],
