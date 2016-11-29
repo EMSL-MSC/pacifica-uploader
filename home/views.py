@@ -33,12 +33,7 @@ import re
 #operating system
 import os
 
-#uploader
-# from uploader import test_authorization
-
 import home.task_comm
-
-import home.Authorization
 
 #session imports
 from django.contrib.auth.models import User
@@ -62,16 +57,16 @@ import subprocess
 from home import session_data
 from home import file_tools
 from home import instrument_server
+from home import QueryMetadata
 
 # Module level variables
 # session is user specific information
-session = session_data.SessionState(None)
-
-#authorization class
-server_auth = None
+session = session_data.SessionState()
 
 # server is instrument uploader specific information
-configuration = instrument_server.InstrumentConfiguration()
+configuration = instrument_server.UploaderConfiguration()
+
+metadata = None
 
 # development version
 version = '2.01'
@@ -156,6 +151,10 @@ def populate_upload_page(request):
     """
     formats the main uploader page
     """
+    # if not logged in
+    if session.password == '':
+        # call login error with no error message
+        return login_error(request, '')
 
     if session.is_timed_out():
         return logout(request)
@@ -184,7 +183,7 @@ def populate_upload_page(request):
     # Render list page with the documents and the form
     return render_to_response('home/uploader.html',
                               {'data_root':session.files.data_dir,
-                               'metaList':session.meta_list,
+                               'metaList':metadata.meta_list,
                                'user':session.user_full_name},
                               context_instance=RequestContext(request))
 
@@ -430,31 +429,22 @@ def login(request):
                 logout(request);
             else:
                 # if the current user is still logged in and this is not that user, throw an error
-                if (session.current_user.is_authenticated()):
-                    if new_user != session.user:
-                        return login_error(request, 'User %s is currently logged in' % session.user_full_name)
+                if new_user != session.user:
+                    return login_error(request, 'User %s is currently logged in' % session.user_full_name)
 
-    # test to see if the user authorizes
-    global server_auth
-    server_auth = home.Authorization.Authorization(server=configuration.server_path,
-                                 user=new_user,
-                                 password=new_password)
-    err_str = server_auth.test_authorization()
-    if err_str:
-        return login_error(request, err_str)
-
-    
     # after login you lose your session context
-    session = session_data.SessionState(server_auth)
+    session = session_data.SessionState()
+    session.config = configuration
 
-    # this loads the user information and sets a local reference to the 
-    # configuration for the session object
-    err_str = session.populate_user_info(configuration)
-    if err_str:
-        return login_error(request, err_str)
+    # initialize the data dir for the session to the configured default
+    session.files.data_dir = session.config.data_dir
 
-    # if the user passes EUS authentication then log them in locally for our session
-    err_str = login_user_locally(request)    
+    # loads the metadata structure from the config file
+    global metadata
+    metadata = QueryMetadata.QueryMetadata(configuration.server_path, new_user)
+
+    # log them in locally for our session
+    err_str = login_user_locally(request)
     if err_str:
         return login_error(request, err_str)
 
@@ -462,10 +452,10 @@ def login(request):
     if not request.user.is_authenticated():
         return login_error(request, 'Problem with local authentication')
 
-    try:
-        tasks.clean_target_directory(configuration.target_dir, server_auth)
-    except:
-        return login_error(request, "failed to clear tar directory")
+    #try:
+    #    tasks.clean_target_directory(configuration.target_dir)
+    #except:
+    #    return login_error(request, "failed to clear tar directory")
 
     # ok, passed all EUS and local authorization tests, valid user data is loaded
     # keep a copy of the user so we can keep other users from stepping on them if they are still
