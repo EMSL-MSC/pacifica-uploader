@@ -14,21 +14,8 @@ from home import file_tools
 
 from home import task_comm
 
-class MetaData(object):
-    """
-    structure used to pass upload metadata back and forth to the upload page
-    """
-    objid = 'TransactionKeyValue'
-    title = ''
-    value = ''
-    type = 'enter'
-    dependency = []
 
-    def __init__(self):
-        pass
-
-
-class InstrumentConfiguration(object):
+class UploaderConfiguration(object):
     """
     meta data about for a session
     """
@@ -42,10 +29,6 @@ class InstrumentConfiguration(object):
     target_dir = ''
     data_dir = ''
     timeout = 30
-    mode = 'instrument'
-
-    # meta data values
-    meta_list = []
 
     # free disk space
     free_space = 0
@@ -77,10 +60,7 @@ class InstrumentConfiguration(object):
 
                 try:
                     use_celery = configuration['use_celery']
-                    if self.mode == '':
-                        task_comm.USE_CELERY = True
-                    else:
-                        task_comm.USE_CELERY = (use_celery == 'True')
+                    task_comm.USE_CELERY = (use_celery == 'True')
                 except:
                     task_comm.USE_CELERY = True
 
@@ -96,26 +76,6 @@ class InstrumentConfiguration(object):
 
                 self.data_dir = root_dir
 
-                # create a list of metadata entries to pass to the list upload page
-                try:
-                    self.meta_list = []
-                    for meta in configuration['metadata']:
-                        meta_entry = MetaData()
-                        if 'objid' in meta:
-                            meta_entry.objid = meta['objid']
-                        if 'title' in meta:
-                            meta_entry.objid = meta['title']
-                        if 'type' in meta:
-                            meta_entry.objid = meta['type']
-                        if 'dependency' in meta:
-                            meta_entry.objid = meta['dependency']
-                        if 'value' in meta:
-                            meta_entry.objid = meta['value']
-
-                        self.meta_list.append(meta_entry)
-
-                except KeyError:
-                    return 'Configuration: missing metadata'
             else:
                 return ''
         except Exception, err:
@@ -141,16 +101,8 @@ def read_config_file():
     read the configuration file
     """
     config_file = 'UploaderConfig.json'
-    if not os.path.isfile(config_file):
-        write_default_config(config_file)
 
-    return read_config(config_file)
-
-def read_config(filename):
-    """
-    read the configuration file
-    """
-    with open(filename, 'r') as config:
+    with open(config_file, 'r') as config:
         configuration = json.load(config)
 
     return configuration
