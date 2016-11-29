@@ -13,7 +13,7 @@ class MetaData(object):
     id = "id"
     table = ''
     destinationTable = ''
-    title = ''
+    displayTitle = ''
     key = ''
     value = ''
     type = 'enter'
@@ -85,8 +85,9 @@ class QueryMetadata(object):
         use to store the value of this metadata field
         """
         meta_obj = {}
-        meta_obj['destinationTable'] = meta.destinationTable        
-        meta_obj['key'] = meta.key
+        meta_obj['destinationTable'] = meta.destinationTable
+        if meta.key != "":
+            meta_obj['key'] = meta.key
         meta_obj['value'] = meta.value
 
         return meta_obj
@@ -99,7 +100,7 @@ class QueryMetadata(object):
         upload_list = []
 
         for meta in self.meta_list:
-            upload_list.append(create_meta_upload(meta))
+            upload_list.append(self.create_meta_upload(meta))
 
         return upload_list
 
@@ -123,13 +124,16 @@ class QueryMetadata(object):
                     meta_entry.table = meta['table']
 
                 if 'destinationTable' in meta:
-                    meta_entry.table = meta['destinationTable']
+                    meta_entry.destinationTable = meta['destinationTable']
 
                 if 'metaID' in meta:
                     meta_entry.id = meta['metaID']
 
                 if 'displayType' in meta:
                     meta_entry.type = meta['displayType']
+                    
+                if 'displayTitle' in meta:
+                    meta_entry.displayTitle = meta['displayTitle']
                     
                 if 'queryDependency' in meta:
                     meta_entry.dependency = meta['queryDependency']
@@ -141,7 +145,7 @@ class QueryMetadata(object):
                     meta_entry.format = meta['diplayFormat']
 
                 if 'key' in meta:
-                    meta_entry.table = meta['key']
+                    meta_entry.key = meta['key']
 
                 if 'value' in meta:
                     meta_entry.value = meta['value']

@@ -20,13 +20,15 @@ from home.task_comm import task_error, task_state
 
 CLEAN_TAR = True
 
-def clean_target_directory(target_dir='', authorization=None):
+def clean_target_directory(target_dir=''):
     """
     deletes local files that have made it to the archive
     """
 
     # remove old files that were not uploaded
     tar_man.remove_orphans(target_dir)
+
+    return
 
     # get job list from file
     jobs = tar_man.job_list(target_dir)
@@ -38,7 +40,7 @@ def clean_target_directory(target_dir='', authorization=None):
     #jobs = ['2001066', '2001067','2001068']
 
     # get jobs state from database
-    jobs_state = job_status(authorization=authorization, job_list=jobs)
+    jobs_state = job_status(job_list=jobs)
 
     # fake job state
     #jobs_state = '[{?20001066? : {?state_name?:?Received?, ?state?:?1"}},
