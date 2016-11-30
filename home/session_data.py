@@ -106,15 +106,15 @@ class SessionState(object):
             return True
         return self.files.bundle_size < self.config.free_space
 
-    def get_archive_tree(self):
+    def get_archive_tree(self, meta):
         """
         returns a nested structure that can be used to populate fancytree
         currently empty
         """
         nodes = [
-                'Proposal ' + self.proposal_id,
-                self.instrument_short_name]
-                 #datetime.datetime.now().strftime("%Y.%m.%d")
+                'Proposal placeholder',
+                'instrument placeholder']
+
 
         tree = []
         children = tree

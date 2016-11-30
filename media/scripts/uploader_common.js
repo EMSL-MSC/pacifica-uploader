@@ -166,7 +166,6 @@ window.onbeforeunload = function (event) {
         });
 
         $('select').select2({width:'resolve'});
-        //$('#instrument').prop('disabled', true);
 
         function loadError(e, data) {
             var error = data.error;
@@ -488,67 +487,30 @@ window.onbeforeunload = function (event) {
             
         });
 
-        $('#proposal').change(function () {
+        $('select').on("change", function (event) {
+            var el = $(event.target)
 
-            resetTimeout();
+            // the element id that maps to a metadata object
+            var selected_id = el.prop('id')
 
-            // get selected proposal
-            var p = $("#proposal").val();
-            prop = { proposal: p };
+            // id and selected key value of each form element
+            var frm = $("form").serializeFormJSON();
+            frm['selected_id'] = selected_id;
 
-            var posting = $.post("/propUser/", prop,
-            function (data) {
-                $("#proposal_user").empty();
-                $("#proposal_user").val('')
-                $('#proposal_user').select2('data', null);
-                $("#proposal_user").select2({
-                    allowClear: true,
-                    data: data
-                });
+            thingy = JSON.stringify(frm);
+
+            // populate session data before showing the status page
+            $.post("/selectChanged/", thingy,
+                function (data) {
+
             })
             .fail(function (xhr, textStatus, errorThrown) {
                 errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
                 window.open(errtext, '_self');
             });
 
-            var posting = $.post("/propInstruments/", prop,
-            function (data) {
-                $("#instrument").empty();
-                $("#instrument").val('')
-                $('#instrument').select2('data', null);
-                $("#instrument").select2({
-                    allowClear: true,
-                    data: data
-                });
-            })
-            .fail(function (xhr, textStatus, errorThrown) {
-                errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
-                window.open(errtext, '_self');
-            });
-
-            var tree = $("#tree").fancytree("getTree");
-            var selected = tree.getSelectedNodes(stopOnParents = true);
-
-            loadUploadTree(selected);
 
         });
-
-        //$('#instrument').change(function () {
-
-        //    resetTimeout();
-
-        //    i = $("#instrument").val();
-        //    instStr = { instrument: i };
-
-
-        //    var posting = $.post("/setInstrument/", instStr,
-        //    function (data) {
-        //    })
-        //    .fail(function (xhr, textStatus, errorThrown) {
-        //        errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
-        //        window.open(errtext, '_self');
-        //    });
-        //});
 
     });
 

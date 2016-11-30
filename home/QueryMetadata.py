@@ -23,6 +23,11 @@ class MetaData(object):
     
     choose_list = []
 
+    select_list = []
+    select_list.append ( {"key":"34001", "display" :"invalid1"})
+    select_list.append ( {"key":"34002", "display" :"valid"})
+    select_list.append ( {"key":"34003", "display" :"invalid3"})
+
     def __init__(self):
         pass
 
@@ -186,6 +191,23 @@ class QueryMetadata(object):
         except Exception, e:
             print e
             return []
+
+    def post_upload_metadata(self, form):
+        """
+        populates the upload metadata from the upload form
+        """
+        for meta in self.meta_list:
+            try:
+                value = form[meta.id]
+                if value:
+                    meta.value = value
+            except KeyError:
+                pass
+
+    def query (self, form):
+        self.post_upload_metadata(form)
+        return None 
+
 
 def read_config():
     """

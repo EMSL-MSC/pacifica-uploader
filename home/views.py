@@ -250,20 +250,11 @@ def post_upload_metadata(request):
     """
     populates the upload metadata from the upload form
     """
-
     data = request.POST.get('form')
     try:
         form = json.loads(data)
 
-        # get the meta data values from the post
-        for meta in session.meta_list:
-            value = form[meta.name]
-            if value:
-                meta.value = value
-
-        # get the selected proposal string from the post as it may not have been set in a previous post
-        session.load_proposal(form['proposal'])
-        session.load_proposal_user(form['proposal_user'])
+        metadata.post_upload_metadata(form)
 
         session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
 
@@ -457,7 +448,6 @@ def login(request):
     #except:
     #    return login_error(request, "failed to clear tar directory")
 
-    # ok, passed all EUS and local authorization tests, valid user data is loaded
     # keep a copy of the user so we can keep other users from stepping on them if they are still
     # logged in
     session.current_user = request.user
@@ -483,32 +473,19 @@ def logout(request):
 
     return HttpResponseRedirect(reverse('home.views.login'))
 
-def get_proposal_users(request):
+def select_changed(request):
     """
-    get the proposal users associated with a proposal
-    """
-
-    # reset timeout
-    session.touch()
-
-    prop = request.POST.get("proposal")
-    session.load_proposal(prop)
-    users = session.populate_proposal_users(session.proposal_id)
-    retval = json.dumps(users)
-
-    return HttpResponse(retval, content_type="application/json")
-
-def get_proposal_instruments(request):
-    """
-    get the proposal users associated with a proposal
+    get the updated metadata on a select field change
     """
 
     # reset timeout
     session.touch()
 
-    prop = request.POST.get("proposal")
-    instruments = session.populate_proposal_instruments(session.proposal_id)
-    retval = json.dumps(instruments)
+    form = json.loads(request._body)
+
+    updates = metadata.query(form)
+
+    retval = json.dumps(updates)
 
     return HttpResponse(retval, content_type="application/json")
 
@@ -663,24 +640,8 @@ def get_bundle(request):
     try:
         session.files.error_string = ''
 
-        tree, lastnode = session.get_archive_tree()
+        tree, lastnode = session.get_archive_tree(metadata)
         session.files.bundle_size = 0
-
-        # if no archive path
-        #tree = []
-        #children = tree
-        #lastnode = {}
-        #archive_path = ''
-
-        #node = {"title": "Upload",
-        #        "key": 1,
-        #        "folder": True,
-        #        "expanded": True,
-        #        "children": [],
-        #        "data":""}
-        #children.append(node)
-        #children = node['children']
-        #lastnode = node
 
         pathstring = request.POST.get("packet")
 
@@ -697,25 +658,12 @@ def get_bundle(request):
         # this actually should be done already by getting parent nodes
         filtered = session.files.filter_selected_list(paths)
 
-        # spec was changed to not remove the common path.  
-        # leaving the code in until the new requirements are vetted
-
-        #common_path = os.path.commonprefix(filtered)
-
-        # get the root directory
-        #path = paths[0]
-        #common_path = path[:path.index(os.sep)] if os.sep in path else path
-
         common_path = session.files.data_dir
-
-        #get rid of dangling prefixes
-        #common_path, tail = os.path.split(common_path)
-        #common_path = os.path.join(common_path, '')
 
         # add a final separator
         common_path = os.path.join(common_path, '')
 
-        ## used later to modify arc names
+        # used later to modify arc names
         session.files.common_path = common_path
 
         for itempath in paths:
@@ -726,11 +674,6 @@ def get_bundle(request):
             clipped_path = itempath.replace(common_path, '')
             subdirs = []
             make_tree(lastnode, subdirs, clipped_path, item, itempath)
-
-        # this is gone because we no longer use a place holder as the
-        # top node in the tree 
-        # proposal is always there
-        # tree = tree[0]["children"]
 
         return return_bundle(tree, session.files.error_string)
 
