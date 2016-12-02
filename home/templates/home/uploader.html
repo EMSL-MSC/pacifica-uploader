@@ -28,32 +28,37 @@
                 <form method="post" enctype="multipart/form-data">
 	                {% csrf_token %}
 
-                        <div class="full_width_block" style="margin-top:1em;">
-                            <label for="proposal">Proposal</label><br>
-                            <select name="proposal" id="proposal" class="main_page_selector">
+                    <fieldset style="min-height:170px;">
+                        <legend>Metadata</legend>
+
                             {% for meta in metaList %}
                                 {% if meta.type == 'select'  %}
-                                    <label for="{{meta.metaID}}" style="display:block;">{{meta.displayTitle}}</label>
-                                    <select id="{{meta.metaID}}" name="{{meta.metaID}}" class="main_page_selector"> 
+                                    <div class="full_width_block">
+                                        <label for="{{meta.id}}" style="display:block;">{{meta.displayTitle}}</label>
+                                        <select id="{{meta.id}}" name="{{meta.id}}" class="main_page_selector"> 
+                                            <option selected="selected" value="34002">thing1</option>
+                                            {% for sel in meta.select_list %}
+                                                <option value="{{sel.key}}">{{sel.display}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
                                 {% endif %}
                             {% endfor %}
-                            </select>
-                        </div>
 
                         <div class="full_width_block" style="margin-top:1em;">
                             <ul>
                             {% for meta in metaList %}
                                 {% if meta.type == 'enter'  %}
                                     <li>
-                                       <label for="{{meta.metaID}}" style="display:block;">{{meta.displayTitle}}</label>
-                                       <input type="text" id="{{meta.metaID}}" style="width:80%;border-width:1px;" name="{{meta.metaID}}" value = "{{meta.value}}">
+                                       <label for="{{meta.id}}" style="display:block;">{{meta.displayTitle}}</label>
+                                       <input type="text" id="{{meta.id}}" style="width:80%;border-width:1px;" name="{{meta.id}}" value = "{{meta.value}}">
                                     </li>                                
                                 {% endif %}
                             {% endfor %}
                             </ul>
                         </div>
-
                     </fieldset>
+
                     <fieldset style="margin-top:1em;padding: 1em;">
                         <legend>Files to be Uploaded to the EMSL Archive</legend>
                         <div class="full_width_block">
