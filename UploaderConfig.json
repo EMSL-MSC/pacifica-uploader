@@ -10,7 +10,7 @@
 			"table": "users",
 			"metaID": "logon",
 			"destinationTable": "Transaction.submitter",
-			"value": "D3E889",
+			"value": "d3e889",
 			"displayType": "logged_on",
 			"displayTitle": "Currently Logged On",
 			"queryFields": [ "first_name", "last_name" ],
