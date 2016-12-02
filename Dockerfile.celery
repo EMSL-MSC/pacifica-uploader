@@ -1,5 +1,4 @@
-from myemslcontroller
+from pacifica/uploader:1.0.3
 
 USER 1
-WORKDIR /app
 ENTRYPOINT ["celery", "-A", "UploadServer", "worker", "--loglevel=info"]

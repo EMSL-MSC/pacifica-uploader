@@ -12,12 +12,12 @@ import os
 
 from celery import Celery
 
-from django.conf import settings
-
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'UploadServer.settings')
 
-app = Celery('UploadServer', backend='amqp', broker='amqp://')
+from django.conf import settings  # noqa
+
+app = Celery('UploadServer')
 
 # Using a string here means the worker will not have to
 # pickle the object when using Windows.
