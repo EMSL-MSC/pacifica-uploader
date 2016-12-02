@@ -192,7 +192,7 @@ class QueryMetadata(object):
             print e
             return[]
 
-    def create_upload_metadata(self, form):
+    def populate_metadata_from_form(self, form):
         """
         populates the upload metadata from the upload form
         """
@@ -203,24 +203,19 @@ class QueryMetadata(object):
                     meta.value = value
             except KeyError:
                 pass
+        
 
-    def post_upload_metadata(self, form):
+    def post_upload_metadata(self, meta_list):
         """
-        populates the upload metadata from the upload form
+        upload metadata to server
         """
-        for meta in self.meta_list:
-            try:
-                value = form[meta.id]
-                if value:
-                    meta.value = value
-            except KeyError:
-                pass
+        meta_str = json.dumps(meta_list)
 
         try:
             headers = {'content-type': 'application/json'}
             url = self.host + '/ingest'
 
-            r = requests.post(url, headers=headers, data=query)
+            r = requests.put(url, headers=headers, data=meta_str)
 
             l = json.loads(r.content)
 

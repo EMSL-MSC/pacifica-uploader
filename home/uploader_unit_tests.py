@@ -15,7 +15,7 @@ class IndexServerUnitTests(unittest.TestCase):
     index server unit and integration tests
     """
 
-    def test_create_meta_upload_list(self):
+    def test_meta_upload_list(self):
         """
         
         """
@@ -30,13 +30,26 @@ class IndexServerUnitTests(unittest.TestCase):
 
         print l
 
-        t = {"destinationTable": "Transaction._id", "value": 48909809}
+        t = {"destinationTable": "Transactions._id", "value": 48909809}
 
         l.append (t)
 
+        t = {
+                    'destinationTable': 'Files',
+                    '_id': 34, 'name': 'foo.txt', 'subdir': 'a/b/',
+                    'ctime': 'Tue Nov 29 14:09:05 PST 2016',
+                    'mtime': 'Tue Nov 29 14:09:05 PST 2016',
+                    'size': 128, 'mimetype': 'text/plain'
+             }
+
+        l.append (t)
+
+
         blob = json.dumps(l)
 
-        x = QueryMetadata('http://dmlb2000.emsl.pnl.gov:8121')
+        x = QueryMetadata('http://dmlb2000.emsl.pnl.gov:8121', 'd3e889')
+
+        x.post_upload_metadata(l)
 
         print blob
 
