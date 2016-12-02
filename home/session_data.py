@@ -396,6 +396,11 @@ class SessionState(object):
 
         # print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
 
+        #f = open('dfh.json','wt')
+        #f.write(json.dumps(info))
+        #f.close()
+
+
         first_name = info['first_name']
         if not first_name:
             return 'Unable to parse user name'
@@ -434,8 +439,6 @@ class SessionState(object):
             info = json.loads(info)
         except Exception:
             return 'Unable to parse proposal user information'
-
-        # print json.dumps(info, sort_keys=True, indent=4, separators=(',', ': '))
 
         members = info['members']
         # is this an error?
