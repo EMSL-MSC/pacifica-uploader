@@ -45,7 +45,7 @@ class QueryMetadata(object):
         constructor for Query class
         """
         self.host = host
-        self.user = user.upper()
+        self.user = user
         self.load_meta()
 
     def build_query (self, meta):
@@ -80,7 +80,7 @@ class QueryMetadata(object):
 
         query["where"] = where_clause
 
-        retVal = json.dumps (query)
+        retVal = json.dumps (query, sort_keys = True, indent=4)
 
         return retVal
 
@@ -108,10 +108,6 @@ class QueryMetadata(object):
             upload_list.append(self.create_meta_upload(meta))
 
         return upload_list
-
-    def load_query(self, meta):
-        """
-        """
 
     def load_meta(self):
         """
@@ -162,6 +158,7 @@ class QueryMetadata(object):
 
         return ''
 
+
     def initial_population(self):
         """
         assumption that the base seed is in the first element
@@ -177,6 +174,9 @@ class QueryMetadata(object):
             gets a list of items based on the json query structure
         """
 
+        r=""
+
+
         try:
 
             headers = {'content-type': 'application/json'}
@@ -190,7 +190,19 @@ class QueryMetadata(object):
 
         except Exception, e:
             print e
-            return []
+            return[]
+
+    def create_upload_metadata(self, form):
+        """
+        populates the upload metadata from the upload form
+        """
+        for meta in self.meta_list:
+            try:
+                value = form[meta.id]
+                if value:
+                    meta.value = value
+            except KeyError:
+                pass
 
     def post_upload_metadata(self, form):
         """
@@ -203,6 +215,20 @@ class QueryMetadata(object):
                     meta.value = value
             except KeyError:
                 pass
+
+        try:
+            headers = {'content-type': 'application/json'}
+            url = self.host + '/ingest'
+
+            r = requests.post(url, headers=headers, data=query)
+
+            l = json.loads(r.content)
+
+            return l
+
+        except Exception, e:
+            print e
+            return[]
 
     def query (self, form):
         self.post_upload_metadata(form)
