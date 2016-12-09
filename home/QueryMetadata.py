@@ -10,23 +10,30 @@ class MetaData(object):
     """
     structure used to pass upload metadata back and forth to the upload page
     """
-    id = "id"
-    table = ''
-    destinationTable = ''
-    displayTitle = ''
-    key = ''
-    value = ''
-    type = 'enter'
-    dependency = {}
+    # unique ID form this meta node
+    meta_id = "id"
+    # table from which the selection values are drawn
+    source_table = ''
+    # table to which the selection will be stored
+    destination_table = ''
+    # columns that will be pulled from the table
     columns = []
-    format = "%s"
-    
-    choose_list = []
-
-    select_list = []
-    select_list.append ( {"key":"34001", "display" :"invalid1"})
-    select_list.append ( {"key":"34002", "display" :"valid"})
-    select_list.append ( {"key":"34003", "display" :"invalid3"})
+    # returned field that will be used as the actual value to be returned to the uploader
+    value_field = ''
+    # used for key/value pairs
+    key = ''
+    # selected value
+    value = ''
+    # meta nodes that must be populated to build the query for this node
+    query_dependencies = {}
+    # title of field in the browser client
+    display_title = ''
+    # format of the displayed data
+    display_format = "%s"
+    # flag that indicates whether this node has been initialized
+    initialized = False
+    # actually a dictionary, but holds a list to populate a dropdown
+    selection_list = {}
 
     def __init__(self):
         pass
@@ -65,17 +72,17 @@ class QueryMetadata(object):
         query = {}
         query["user"] = self.user
         query["columns"] = meta.columns
-        query["from"] = meta.table
+        query["from"] = meta.source_table
 
         where_clause = {}
         # loop over the dependency list
-        for key, value in meta.dependency.iteritems():
-            # value is the where we are getting the actual value from the populated meta
-            # key is the field , for instance "_id"
-            
+        for column, meta_id in meta.query_dependencies.iteritems():
+            # meta_id is the where we are getting the actual value from the populated meta
+            # column is the field , for instance "_id"
+
             for check_obj in self.meta_list:
-                if value == check_obj.id:
-                    where_clause[key] = check_obj.value;
+                if meta_id == check_obj.meta_id:
+                    where_clause[column] = check_obj.value;
                     break
 
         query["where"] = where_clause
@@ -90,7 +97,7 @@ class QueryMetadata(object):
         use to store the value of this metadata field
         """
         meta_obj = {}
-        meta_obj['destinationTable'] = meta.destinationTable
+        meta_obj['destinationTable'] = meta.destination_table
         if meta.key != "":
             meta_obj['key'] = meta.key
         meta_obj['value'] = meta.value
@@ -122,28 +129,31 @@ class QueryMetadata(object):
                 meta_entry = MetaData()
 
                 if 'table' in meta:
-                    meta_entry.table = meta['table']
+                    meta_entry.source_table = meta['table']
 
                 if 'destinationTable' in meta:
-                    meta_entry.destinationTable = meta['destinationTable']
+                    meta_entry.destination_table = meta['destinationTable']
 
                 if 'metaID' in meta:
-                    meta_entry.id = meta['metaID']
+                    meta_entry.meta_id = meta['metaID']
 
                 if 'displayType' in meta:
-                    meta_entry.type = meta['displayType']
+                    meta_entry.display_type = meta['displayType']
                     
                 if 'displayTitle' in meta:
-                    meta_entry.displayTitle = meta['displayTitle']
+                    meta_entry.display_title = meta['displayTitle']
                     
                 if 'queryDependency' in meta:
-                    meta_entry.dependency = meta['queryDependency']
+                    meta_entry.query_dependencies = meta['queryDependency']
+
+                if 'valueField' in meta:
+                    meta_entry.value_field = meta['valueField']
 
                 if 'queryFields' in meta:
                     meta_entry.columns = meta['queryFields']
 
                 if 'diplayFormat' in meta:
-                    meta_entry.format = meta['diplayFormat']
+                    meta_entry.display_format = meta['diplayFormat']
 
                 if 'key' in meta:
                     meta_entry.key = meta['key']
@@ -159,24 +169,154 @@ class QueryMetadata(object):
         return ''
 
 
-    def initial_population(self):
+    def get_node(self, id):
         """
-        assumption that the base seed is in the first element
+        returns a meta node based on it's unique id
         """
         for meta in self.meta_list:
+            if id == meta.meta_id:
+               return meta
+
+        return None
+
+    def build_selection_list(self,meta, query_results):
+        """
+        builds a json structure that can be used by the browser client
+        to populate a dropdown list 
+
+        format:
+            selection_list = {'meta_id':'thingy', 
+                      'selection_list':[
+                          {"id":"34001", "text" :"invalid1"},
+                          {"id":"34002", "text" :"valid"},
+                          {"id":"34003", "text" :"invalid3"}
+                          ]}
+        """
+        
+        meta.selection_list = {'meta_id': meta.meta_id}
+
+        # build the list of choices
+        choices = []
+        for result in query_results:
+            # result is a hash of column identifiers and values
+            # first get the key field if any
+            try:
+                key = result[meta.value_field]
+            except Exception:
+                key = ''
+
+            ## pull the columns out of the hash in the order that they were 
+            ## in the config file
+            #item_list = []
+            #for column in meta.columns:
+            #    item_list.append(result[column])
+
+            try:
+                # format the display value
+                display = meta.display_format % result
+            except Exception, e:
+                print e
+
+
+             # put in format to be used by select2
+            choices.append({"id":key, "text" :display})
+
+        meta.selection_list['selection_list'] = choices
+
+    def update_parents(self, meta):
+        """
+        recursively updates meta nodes until the base node is updatad
+        """
+
+        if meta.initialized:
+             return
+
+        for query_field, meta_id in meta.query_dependencies.iteritems():
+            dependency = self.get_node(meta_id);
+            
+            # ignore self referential nodes
+            if meta_id != dependency.meta_id:
+                if not depenency.initialized:
+                    self.update_parents(dependency)
+
+        # once the dependencies are filled we can create the query and populate the list
+        query = self.build_query(meta)
+
+        query_result = self.get_list(query)
+
+        self.build_selection_list(meta, query_result)
+
+
+    def initial_population(self):
+        """
+        populate all the lists from the policy server for the first time
+        """
+        init_fields = []
+
+        for meta in self.meta_list:
             # if this is a user entered field it doesn't need to be filled
-            if meta.type != "enter":
-                self.build_query(meta)
+            if meta.display_type != "enter":
+                self.update_parents(meta)
+                if any(meta.selection_list):
+                    init_fields.append(meta.selection_list)
+
+        return init_fields
+
+    def populate_dependencies(self, form):
+        """
+        
+        """
+        update_fields = []
+
+        # get the node that changed
+        selected_id = form['selected_id']
+        meta = self.get_node(selected_id)
+
+        # fill in the current data from the form
+        self.populate_metadata_from_form(form)
+
+        self.update_children(meta, update_fields)
+
+        return update_fields
+
+    def find_children(self, meta_id):
+        """
+        find a list of nodes that contain this id in their dependency list
+        """
+        children = []
+
+        for meta in self.meta_list:
+            # if this is a user entered field it doesn't need to be filled
+            if meta.display_type != "enter":
+                ids = list(meta.query_dependencies.values())
+                if meta_id in ids:
+                    # cut off self-referential infinite loop
+                    if meta_id != meta.meta_id:
+                        children.append(meta)
+
+        return children
+
+
+    def update_children(self, meta, update_fields):
+
+        children = self.find_children(meta.meta_id)
+
+        for child in children:
+            query = self.build_query(child)
+            query_result = self.get_list(query)
+            self.build_selection_list(child, query_result)
+            if any(child.selection_list):
+                update_fields.append(child.selection_list)
+            
+            self.update_children( child, update_fields)
+
+
 
 
     def get_list(self, query):
         """
             gets a list of items based on the json query structure
         """
-
-        r=""
-
-
         try:
 
             headers = {'content-type': 'application/json'}
@@ -198,12 +338,12 @@ class QueryMetadata(object):
         """
         for meta in self.meta_list:
             try:
-                value = form[meta.id]
+                value = form[meta.meta_id]
                 if value:
                     meta.value = value
             except KeyError:
                 pass
-        
+
 
     def post_upload_metadata(self, meta_list):
         """
