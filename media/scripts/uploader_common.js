@@ -487,30 +487,30 @@ window.onbeforeunload = function (event) {
             
         });
 
-        $('select').on("change", function (event) {
-            var el = $(event.target)
+        //$('select').on("change", function (event) {
+        //    var el = $(event.target)
 
-            // the element id that maps to a metadata object
-            var selected_id = el.prop('id')
+        //    // the element id that maps to a metadata object
+        //    var selected_id = el.prop('id')
 
-            // id and selected key value of each form element
-            var frm = $("form").serializeFormJSON();
-            frm['selected_id'] = selected_id;
+        //    // id and selected key value of each form element
+        //    var frm = $("form").serializeFormJSON();
+        //    frm['selected_id'] = selected_id;
 
-            thingy = JSON.stringify(frm);
+        //    thingy = JSON.stringify(frm);
 
-            // populate session data before showing the status page
-            $.post("/selectChanged/", thingy,
-                function (data) {
+        //    // populate session data before showing the status page
+        //    $.post("/selectChanged/", thingy,
+        //        function (data) {
 
-            })
-            .fail(function (xhr, textStatus, errorThrown) {
-                errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
-                window.open(errtext, '_self');
-            });
+        //    })
+        //    .fail(function (xhr, textStatus, errorThrown) {
+        //        errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
+        //        window.open(errtext, '_self');
+        //    });
 
 
-        });
+        //});
 
     });
 

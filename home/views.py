@@ -473,6 +473,13 @@ def logout(request):
 
     return HttpResponseRedirect(reverse('home.views.login'))
 
+def initialize_fields(request):
+    updates = metadata.initial_population()
+
+    retval = json.dumps(updates)
+
+    return HttpResponse(retval, content_type="application/json")
+
 def select_changed(request):
     """
     get the updated metadata on a select field change
@@ -483,7 +490,7 @@ def select_changed(request):
 
     form = json.loads(request._body)
 
-    updates = metadata.query(form)
+    updates = metadata.populate_dependencies(form)
 
     retval = json.dumps(updates)
 
