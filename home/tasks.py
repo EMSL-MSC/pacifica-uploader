@@ -64,12 +64,9 @@ def ping():
 #tag to show this def as a celery task
 @shared_task
 def upload_files(bundle_name='',
-                 instrument_name='',
-                 proposal='',
                  file_list=None,
                  bundle_size=0,
-                 groups=None,
-                 authorization=None,
+                 meta_list=None,
                  tartar = False):
     """
     task created on a separate Celery process to bundle and upload in the background
@@ -82,20 +79,18 @@ def upload_files(bundle_name='',
 
         task_state("PROGRESS", "Cleaning previous uploads")
 
-    #clean tar directory
-    if CLEAN_TAR:
-        err_str = clean_target_directory(target_dir, authorization)
-        if err_str:
-            task_state('PROGRESS', err_str)
+    ##clean tar directory
+    #if CLEAN_TAR:
+    #    err_str = clean_target_directory(target_dir)
+    #    if err_str:
+    #        task_state('PROGRESS', err_str)
 
     # initial state pushed through celery
     task_state("PROGRESS", "Starting Bundle/Upload Process")
 
     bundle(bundle_name=bundle_name,
-           instrument_name=instrument_name,
-           proposal=proposal,
            file_list=file_list,
-           groups=groups,
+           meta_list= meta_list,
            bundle_size=bundle_size)
 
     task_state("PROGRESS", "Completed Bundling")
@@ -114,15 +109,13 @@ def upload_files(bundle_name='',
         bundle_name += '.tar'
 
         bundle(bundle_name=bundle_name,
-               instrument_name=instrument_name,
-               proposal=proposal,
                file_list=file_tuples,
-               groups=groups,
+               meta_list= meta_list,
                bundle_size=bundle_size)
 
     task_state("PROGRESS", "Starting Upload")
 
-    res = upload(bundle_name=bundle_name, authorization=authorization)
+    res = upload(bundle_name=bundle_name)
 
     if res is None:
         task_state("FAILURE",  "Uploader dieded. We don't know why it did")

@@ -254,10 +254,11 @@ def post_upload_metadata(request):
     try:
         form = json.loads(data)
 
-        metadata.post_upload_metadata(form)
+        metadata.populate_metadata_from_form(form)
 
         session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
 
+        
         return HttpResponse(json.dumps("success"), content_type="application/json")
 
     except Exception, e:
@@ -298,38 +299,24 @@ def spin_off_upload(request):
     try:
         tuples = session.files.get_bundle_files(files)
 
-        # create the groups dictionary
-        #{"groups":[{"name":"FOO1", "type":"Tag"}]}
-        groups = {}
-        for meta in session.meta_list:
-            groups[meta.name] = meta.value
-
-        insty = 'Instrument.%s' % (session.instrument)
-        groups[insty] = session.instrument_friendly
-        groups["EMSL User"] = session.proposal_user
-
         session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
 
         session.bundle_filepath = os.path.join(configuration.target_dir, session.current_time + ".tar")
+
+        meta_list = metadata.create_meta_upload_list()
 
         # spin this off as a background process and load the status page
         if home.task_comm.USE_CELERY:
             session.bundle_process = \
                     tasks.upload_files.delay(bundle_name=session.bundle_filepath,
-                                             instrument_name=session.instrument,
-                                             proposal=session.proposal_id,
                                              file_list=tuples,
                                              bundle_size=session.files.bundle_size,
-                                             groups=groups,
-                                             authorization=server_auth)
+                                             meta_list=meta_list)
         else: # run local in blocking mode
             tasks.upload_files(bundle_name=session.bundle_filepath,
-                                             instrument_name=session.instrument,
-                                             proposal=session.proposal_id,
                                              file_list=tuples,
                                              bundle_size=session.files.bundle_size,
-                                             groups=groups,
-                                             authorization=server_auth)
+                                             meta_list=meta_list)
     except Exception, e:
         session.is_uploading = False
         return HttpResponseServerError(json.dumps(e.message), content_type="application/json")

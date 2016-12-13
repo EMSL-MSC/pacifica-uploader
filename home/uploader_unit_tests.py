@@ -32,7 +32,7 @@ class IndexServerUnitTests(unittest.TestCase):
 
         server_url = 'http://dmlb2000.emsl.pnl.gov'
         port = '8051'
-        transaction_id = get_unique_id(server_url, port, '1', 'upload_mode')
+        transaction_id = get_unique_id(server_url, port, '1', 'transaction')
         print transaction_id
 
         t = {"destinationTable": "Transactions._id", "value": transaction_id}

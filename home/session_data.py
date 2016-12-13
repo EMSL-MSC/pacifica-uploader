@@ -79,9 +79,6 @@ class SessionState(object):
         """
         resets a session to a clean state
         """
-        self.proposal_id = None
-        self.proposal_list = []
-        self.proposal_users = []
         self.user = ''
         self.password = ''
         self.user_full_name = ''
