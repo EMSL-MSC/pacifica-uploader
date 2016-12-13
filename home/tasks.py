@@ -63,7 +63,8 @@ def ping():
 
 #tag to show this def as a celery task
 @shared_task
-def upload_files(bundle_name='',
+def upload_files(ingest_server = '',
+                 bundle_name='',
                  file_list=None,
                  bundle_size=0,
                  meta_list=None,
@@ -115,7 +116,7 @@ def upload_files(bundle_name='',
 
     task_state("PROGRESS", "Starting Upload")
 
-    res = upload(bundle_name=bundle_name)
+    res = upload(bundle_name=bundle_name, ingest_server = ingest_server)
 
     if res is None:
         task_state("FAILURE",  "Uploader dieded. We don't know why it did")

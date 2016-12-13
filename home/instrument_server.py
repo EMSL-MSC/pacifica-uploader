@@ -24,8 +24,9 @@ class UploaderConfiguration(object):
     initialized = False
 
     instrument = ''
-
-    server_path = ''
+    
+    policy_server = ''
+    ingest_server = ''
     target_dir = ''
     data_dir = ''
     timeout = 30
@@ -49,10 +50,14 @@ class UploaderConfiguration(object):
 
                 if not os.path.isdir(self.target_dir):
                     return 'Configuration: target directory unmounted'
+                
+                self.policy_server = configuration['policyServer']
+                if self.policy_server == '':
+                    return 'Configuration: Missing policy server path'
 
-                self.server_path = configuration['server']
-                if self.server_path == '':
-                    return 'Configuration: Missing server path'
+                self.ingest_server = configuration['ingestServer']
+                if self.ingest_server == '':
+                    return 'Configuration: Missing ingest server path'
 
                 self.timeout = int(configuration['timeout'])
                 if self.timeout == '':

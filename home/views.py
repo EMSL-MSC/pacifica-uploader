@@ -308,12 +308,14 @@ def spin_off_upload(request):
         # spin this off as a background process and load the status page
         if home.task_comm.USE_CELERY:
             session.bundle_process = \
-                    tasks.upload_files.delay(bundle_name=session.bundle_filepath,
+                    tasks.upload_files.delay(ingest_server=configuration.ingest_server,
+                                             bundle_name=session.bundle_filepath,
                                              file_list=tuples,
                                              bundle_size=session.files.bundle_size,
                                              meta_list=meta_list)
-        else: # run local in blocking mode
-            tasks.upload_files(bundle_name=session.bundle_filepath,
+        else: # run local
+            tasks.upload_files(ingest_server=configuration.ingest_server,
+                                             bundle_name=session.bundle_filepath,
                                              file_list=tuples,
                                              bundle_size=session.files.bundle_size,
                                              meta_list=meta_list)
@@ -419,7 +421,7 @@ def login(request):
 
     # loads the metadata structure from the config file
     global metadata
-    metadata = QueryMetadata.QueryMetadata(configuration.server_path, new_user)
+    metadata = QueryMetadata.QueryMetadata(configuration.policy_server, new_user)
 
     # log them in locally for our session
     err_str = login_user_locally(request)
@@ -752,7 +754,7 @@ def incremental_status(request):
                     session.is_uploading = False
 
                     result = "https://%s/myemsl/status/index.php/status/view/j/%s" \
-                             % (configuration.server_path, job_id)
+                             % (configuration.policy_server, job_id)
 
         # create json structure
         retval = json.dumps({'state':state, 'result':result})
