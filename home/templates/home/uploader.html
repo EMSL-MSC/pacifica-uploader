@@ -7,6 +7,7 @@
         <link rel="stylesheet" href="{{ MEDIA_URL }}stylesheets/upload_style.css">
         <link rel="stylesheet" href="{{ MEDIA_URL }}stylesheets/file_directory_styling.css">
         <script src="{{ MEDIA_URL }}scripts/uploader_common.js" type="text/javascript"></script>
+        <script src="{{ MEDIA_URL }}scripts/load_fields.js" type="text/javascript"></script>
     </head>
     <body>
         <div class="page_content">
@@ -15,10 +16,11 @@
                 <h1 class="underline">MyEMSL File Upload</h1>
                 <div id="login_id_container">
                      {% for meta in metaList %}
-                          {% if meta.type == 'logged_on'  %}
-                               <p><em>{{meta.value}}</em></p>
+                          {% if meta.display_type == 'logged_on'  %}
+                               <p><em><span id="{{meta.meta_id}}"></span></em></p>
                           {% endif %}
                      {% endfor %}
+
                     
                     <p class="smallprint"><a href="/logout">Not You? Click here to Logout</a></p>
                 </div>
@@ -32,14 +34,14 @@
                         <legend>Metadata</legend>
 
                             {% for meta in metaList %}
-                                {% if meta.type == 'select'  %}
+                                {% if meta.display_type == 'select'  %}
                                     <div class="full_width_block">
-                                        <label for="{{meta.id}}" style="display:block;">{{meta.displayTitle}}</label>
-                                        <select id="{{meta.id}}" name="{{meta.id}}" class="main_page_selector"> 
-                                            <option selected="selected" value="34002">thing1</option>
-                                            {% for sel in meta.select_list %}
+                                        <label for="{{meta.meta_id}}" style="display:block;">{{meta.display_title}}</label>
+                                        <select id="{{meta.meta_id}}" name="{{meta.meta_id}}" class="main_page_selector"> 
+                                            {#<option selected="selected" value="34002">thing1</option>#}
+                                            {#{% for sel in meta.select_list %}
                                                 <option value="{{sel.key}}">{{sel.display}}</option>
-                                            {% endfor %}
+                                            {% endfor %}#}
                                         </select>
                                     </div>
                                 {% endif %}
@@ -48,10 +50,10 @@
                         <div class="full_width_block" style="margin-top:1em;">
                             <ul>
                             {% for meta in metaList %}
-                                {% if meta.type == 'enter'  %}
+                                {% if meta.display_type == 'enter'  %}
                                     <li>
-                                       <label for="{{meta.id}}" style="display:block;">{{meta.displayTitle}}</label>
-                                       <input type="text" id="{{meta.id}}" style="width:80%;border-width:1px;" name="{{meta.id}}" value = "{{meta.value}}">
+                                       <label for="{{meta.meta_id}}" style="display:block;">{{meta.display_title}}</label>
+                                       <input type="text" id="{{meta.meta_id}}" style="width:80%;border-width:1px;" name="{{meta.meta_id}}" value = "{{meta.value}}">
                                     </li>                                
                                 {% endif %}
                             {% endfor %}
