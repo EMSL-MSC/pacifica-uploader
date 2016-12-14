@@ -511,6 +511,7 @@ window.onbeforeunload = function (event) {
 
 
         //});
+        initializeFields();
 
     });
 

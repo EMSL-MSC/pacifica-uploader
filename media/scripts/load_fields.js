@@ -2,6 +2,7 @@
     var respondToSelect = true;
 
     $(document).ready(function () {
+
         // Function code here.
         $('select').on("change", function (event) {
             var el = $(event.target)
@@ -25,8 +26,6 @@
                 window.open(errtext, '_self');
             });
         });
-
-        initializeFields();
 
     });
 
