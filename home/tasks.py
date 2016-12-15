@@ -16,6 +16,8 @@ from home import tar_man
 
 import os
 
+import json
+
 from home.task_comm import task_error, task_state
 
 CLEAN_TAR = True
@@ -116,25 +118,26 @@ def upload_files(ingest_server = '',
 
     task_state("PROGRESS", "Starting Upload")
 
-    res = upload(bundle_name=bundle_name, ingest_server = ingest_server)
+    result = upload(bundle_name=bundle_name, ingest_server = ingest_server)
 
-    if res is None:
-        task_state("FAILURE",  "Uploader dieded. We don't know why it did")
+    if not result:
+        task_state('FAILURE',  "Uploader dieded. We don't know why it did")
 
-    print >> sys.stderr, "upload completed"
+    try:
+        status = json.loads(result)
+    except Exception, e:
+        task_state('FAILURE', e.message)
+        return 'Upload Failed'
 
-    task_state("PROGRESS", "Completing Upload Process")
+    if status['state'] != 'OK':
+        task_state('FAILURE', result)
+        return 'Upload Failed'
 
-    if "http" in res:
+    try:
         print "rename"
-        job_id = tar_man.parse_job(res)
-        print job_id
-        tar_man.rename_tar_file(target_dir, bundle_name, job_id)
-
-        print >> sys.stderr, "Status Page: {0}".format(res)
-        task_state('SUCCESS', res)
-
-        return res
-    else:
-        task_state("FAILURE", "No URL")
-        return "Upload Failed"
+        tar_man.rename_tar_file(target_dir, bundle_name, status['job_id'])
+        task_state('SUCCESS', result)
+        return result
+    except Exception, e:
+        task_state('FAILURE', 'Unable to rename ' + bundle_name)
+        return 'Rename Failed'
