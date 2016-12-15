@@ -205,12 +205,6 @@ class QueryMetadata(object):
             except Exception:
                 key = ''
 
-            ## pull the columns out of the hash in the order that they were 
-            ## in the config file
-            #item_list = []
-            #for column in meta.columns:
-            #    item_list.append(result[column])
-
             try:
                 # format the display value
                 display = meta.display_format % result
@@ -220,6 +214,12 @@ class QueryMetadata(object):
 
              # put in format to be used by select2
             choices.append({"id":key, "text" :display})
+
+        try:
+            first = choices[0]
+            meta.value = first['id']
+        except:
+            pass
 
         meta.selection_list['selection_list'] = choices
 
@@ -343,31 +343,6 @@ class QueryMetadata(object):
                     meta.value = value
             except KeyError:
                 pass
-
-
-    def post_upload_metadata(self, meta_list):
-        """
-        upload metadata to server
-        """
-        meta_str = json.dumps(meta_list)
-
-        try:
-            headers = {'content-type': 'application/json'}
-            url = self.host + '/ingest'
-
-            r = requests.put(url, headers=headers, data=meta_str)
-
-            l = json.loads(r.content)
-
-            return l
-
-        except Exception, e:
-            print e
-            return[]
-
-    def query (self, form):
-        self.post_upload_metadata(form)
-        return None 
 
 
 def read_config():
