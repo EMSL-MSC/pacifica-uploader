@@ -20,23 +20,11 @@ def job_list(directory):
 
     return jobs
 
-def parse_job(url):
-    """
-    parse job id from status url, ex:
-    https://dev2.my.emsl.pnl.gov/myemsl/cgi-bin/status/2000796
-    """
-    joblist = url.split('/')
-    job_id = joblist[-1]
-    if job_id:
-        return job_id
-    else:
-        return ''
-
 def remove_tar_file(directory, job_id):
     """
     remove a tar file from the tar directory based on job id
     """
-    fname = job_id + '_uploaded.tar'
+    fname = str(job_id) + '_uploaded.tar'
 
     full_path = os.path.join(directory, fname)
 
@@ -48,7 +36,7 @@ def rename_tar_file(directory, old_name, job_id):
     """
     rename tar files with a job id so that we can start tracking status in the archive
     """
-    new_name = job_id + '_uploaded.tar'
+    new_name = str(job_id) + '_uploaded.tar'
     new_name = os.path.join(directory, new_name)
 
     print old_name
