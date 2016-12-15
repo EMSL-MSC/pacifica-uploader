@@ -26,7 +26,7 @@ urlpatterns = patterns('',
                        url(r'^initializeFields/', 'home.views.initialize_fields', name='initializeFields'),
                        url(r'^selectChanged/', 'home.views.select_changed', name='selectChanged'),
                        url(r'^cookie/', 'home.views.cookie_test', name='cookie'),
-                       (r'^login/$', 'home.views.login'),
+                       url(r'^login/$', 'home.views.login'),
                        url(r'^logout/$', 'home.views.logout'),)
 
 urlpatterns += patterns('', (r'^media/(?P<path>.*)$', \
