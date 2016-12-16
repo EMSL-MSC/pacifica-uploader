@@ -64,7 +64,7 @@ def progress(_download_t, _download_d, upload_t, upload_d):
         except Exception, e:
             raise task_error("Error during callback: " + e.message)
 
-def upload(bundle_name=''):
+def upload(bundle_name='', ingest_server = ''):
     """
     Uploads a bundle of files via cURL to a specified server
 
@@ -79,11 +79,11 @@ def upload(bundle_name=''):
     files = {'file': (open(bundle_path, 'rb'), 'application/octet-stream')}
     f = open(bundle_path, 'rb')
     headers = {'content-type': 'application/octet-stream'}
-    url = 'http://127.0.0.1:8066/upload'
+    url =  ingest_server + '/upload'
 
-    r = requests.post(url, headers=headers, data=f)
+    status = requests.post(url, headers=headers, data=f)
 
-    return status
+    return status.content
 
 
 def main():
