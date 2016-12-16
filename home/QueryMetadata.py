@@ -47,28 +47,26 @@ class QueryMetadata(object):
     user = ''
     meta_list = []
 
-    def __init__(self, host, user):
+    def __init__(self, host, networkID):
         """
         constructor for Query class
         """
         self.host = host
-        self.user = user
         self.load_meta()
+
+        self.initialize_user(networkID)
 
     def build_query (self, meta):
         """
-        builds a json query structure
+        builds a json query structure:
+        {
+            "user": "d3e889",
+            "columns": [ "name_short", "diplay_name" ],
+            "from": "instruments",
+            "where" : { "_id": "37654" }
+        }
         """
 
-        #query = """
-        #{
-        #    "user": "d3e889",
-        #    "columns": [ "name_short", "diplay_name" ],
-        #    "from": "instruments",
-        #    "where" : { "_id": "37654" }
-        #}
-        #"""
-        
         query = {}
         query["user"] = self.user
         query["columns"] = meta.columns
@@ -115,6 +113,20 @@ class QueryMetadata(object):
             upload_list.append(self.create_meta_upload(meta))
 
         return upload_list
+
+    def initialize_user(self, networkID):
+        """
+        initializes the login node with the network ID so that
+        it can be converted to the user id on meta init.
+        we are assuming all uploaders with have a login
+        """
+        try:
+            meta = self.get_node('logon')
+            meta.value = networkID
+
+            return True
+        except Exception, e:
+            return False
 
     def load_meta(self):
         """
@@ -215,11 +227,11 @@ class QueryMetadata(object):
              # put in format to be used by select2
             choices.append({"id":key, "text" :display})
 
-        try:
+        # special case for logon, need to initialize user
+        if meta.meta_id == 'logon':
             first = choices[0]
             meta.value = first['id']
-        except:
-            pass
+            self.user = first['id']
 
         meta.selection_list['selection_list'] = choices
 
