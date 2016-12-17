@@ -224,7 +224,7 @@ def show_status(request, message):
     return render_to_response('home/status.html',
                               {
                                'status': message,
-                               'metaList':session.meta_list,
+                               'metaList':metadata.meta_list,
                                'current_time': session.current_time,
                                'bundle_size': session.files.bundle_size_str,
                                'free_size': configuration.free_size_str,
@@ -239,7 +239,7 @@ def show_status_insert(request, message):
 
     return render_to_response('home/status_insert.html',
                               {'status': message,
-                               'metaList':session. meta_list,
+                               'metaList':metadata. meta_list,
                                'current_time': session.current_time,
                                'bundle_size': session.files.bundle_size_str,
                                'free_size': configuration.free_size_str},
@@ -257,8 +257,6 @@ def post_upload_metadata(request):
         metadata.populate_metadata_from_form(form)
 
         session.current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
-
-        
         return HttpResponse(json.dumps("success"), content_type="application/json")
 
     except Exception, e:
@@ -707,8 +705,6 @@ def incremental_status(request):
     session.touch()
 
     try:
-        #raise Exception('thrpppppt')
-
         if request.POST:
             if session.bundle_process:
                 session.bundle_process.revoke(terminate=True)
@@ -742,19 +738,13 @@ def incremental_status(request):
             else:
                 state, result = home.task_comm.get_state()
 
-            if result is not None:
-                if "http" in result:
-                    state = 'DONE'
-                    result = result.strip('"')
-                    job_id = result
-                    job_id = tar_man.parse_job(result)
+            if state == 'DONE':
+                d = json.loads(result)
+                job_id = d['job_id']
 
-                    #if we have successfully uploaded, cleanup the lists
-                    session.cleanup_upload()
-                    session.is_uploading = False
-
-                    result = "https://%s/myemsl/status/index.php/status/view/j/%s" \
-                             % (configuration.policy_server, job_id)
+                #if we have successfully uploaded, cleanup the lists
+                session.cleanup_upload()
+                session.is_uploading = False
 
         # create json structure
         retval = json.dumps({'state':state, 'result':result})
