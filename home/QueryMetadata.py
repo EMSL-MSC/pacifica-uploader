@@ -123,6 +123,7 @@ class QueryMetadata(object):
         try:
             meta = self.get_node('logon')
             meta.value = networkID
+            self.user = -1
 
             return True
         except Exception, e:
@@ -191,7 +192,7 @@ class QueryMetadata(object):
 
         return None
 
-    def build_selection_list(self,meta, query_results):
+    def build_selection_list(self,meta, query_result):
         """
         builds a json structure that can be used by the browser client
         to populate a dropdown list 
@@ -209,7 +210,7 @@ class QueryMetadata(object):
 
         # build the list of choices
         choices = []
-        for result in query_results:
+        for result in query_result:
             # result is a hash of column identifiers and values
             # first get the key field if any
             try:
@@ -338,7 +339,14 @@ class QueryMetadata(object):
 
             l = json.loads(r.content)
 
-            return l
+            #check for error
+            try:
+                status = l['status']
+                print (status)
+                return []
+            except Exception, e:
+                print e.message
+                return l
 
         except Exception, e:
             print e
