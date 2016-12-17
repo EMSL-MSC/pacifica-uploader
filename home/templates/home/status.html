@@ -72,12 +72,6 @@
                                 <dd>{{current_time}}</dd>
                             <dt>Current Status:</dt>
                                 <dd><span id="currState">Unknown</span></dd>
-                            <dt>User:</dt>
-                                <dd>{{user}}</dd>
-                            <dt>Instrument:</dt>
-                                <dd>{{instrument}}</dd>
-                            <dt>Proposal Name:</dt>
-                                <dd>{{proposal}}</dd>
                             <dt>Bundle Size:</dt>
                                 <dd>{{bundle_size}}</dd>
                             <dt>Available Free Space:</dt>
@@ -89,7 +83,7 @@
                     <legend>Metadata Tags</legend>
                     <dl>
                         {% for meta in metaList %}
-                        <dt>{{meta.label}}</dt>
+                        <dt>{{meta.display_title}}</dt>
                            <dd>{{meta.value}}</dd> 
                         {% endfor %}
                     </dl>
