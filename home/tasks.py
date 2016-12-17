@@ -136,7 +136,7 @@ def upload_files(ingest_server = '',
     try:
         print "rename"
         tar_man.rename_tar_file(target_dir, bundle_name, status['job_id'])
-        task_state('SUCCESS', result)
+        task_state('DONE', result)
         return result
     except Exception, e:
         task_state('FAILURE', 'Unable to rename ' + bundle_name)
