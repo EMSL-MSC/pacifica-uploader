@@ -481,37 +481,33 @@ window.onbeforeunload = function (event) {
                             alert(jqXHR.responseText);
                         });
                 });
-
-            
-
-            
         });
 
-        //$('select').on("change", function (event) {
-        //    var el = $(event.target)
 
-        //    // the element id that maps to a metadata object
-        //    var selected_id = el.prop('id')
+        $('select').on("change", function (event) {
+            var el = $(event.target)
 
-        //    // id and selected key value of each form element
-        //    var frm = $("form").serializeFormJSON();
-        //    frm['selected_id'] = selected_id;
+            // the element id that maps to a metadata object
+            var selected_id = el.prop('id')
 
-        //    thingy = JSON.stringify(frm);
+            // id and selected key value of each form element
+            var frm = $("form").serializeFormJSON();
+            frm['selected_id'] = selected_id;
 
-        //    // populate session data before showing the status page
-        //    $.post("/selectChanged/", thingy,
-        //        function (data) {
+            thingy = JSON.stringify(frm);
 
-        //    })
-        //    .fail(function (xhr, textStatus, errorThrown) {
-        //        errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
-        //        window.open(errtext, '_self');
-        //    });
+            // populate session data before showing the status page
+            $.post("/selectChanged/", thingy,
+                function (data) {
+                    updateFields(data);
+                })
+            .fail(function (xhr, textStatus, errorThrown) {
+                errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
+                window.open(errtext, '_self');
+            });
+        });
+        initializeFields()
 
-
-        //});
-        initializeFields();
 
     });
 

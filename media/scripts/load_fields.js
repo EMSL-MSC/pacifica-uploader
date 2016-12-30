@@ -1,33 +1,11 @@
 ﻿
     var respondToSelect = true;
 
-    $(document).ready(function () {
+    //$(document).ready(function () {
 
-        // Function code here.
-        $('select').on("change", function (event) {
-            var el = $(event.target)
+    //    // Function code here.
 
-            // the element id that maps to a metadata object
-            var selected_id = el.prop('id')
-
-            // id and selected key value of each form element
-            var frm = $("form").serializeFormJSON();
-            frm['selected_id'] = selected_id;
-
-            thingy = JSON.stringify(frm);
-
-            // populate session data before showing the status page
-            $.post("/selectChanged/", thingy,
-                function (data) {
-                    updateFields(data);
-                })
-            .fail(function (xhr, textStatus, errorThrown) {
-                errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
-                window.open(errtext, '_self');
-            });
-        });
-
-    });
+    //});
 
     function initializeFields() {
 
