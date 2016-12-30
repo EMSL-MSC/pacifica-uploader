@@ -2,42 +2,46 @@
     "dataRoot": "S:\\7_Representative_Data",
     "target": "E:\\tar",
     "timeout": "1",
-    "server": "http://dmlb2000.emsl.pnl.gov:8181",
+    "policyServer": "http://dmlb2000.emsl.pnl.gov:8181",
+	"ingestServer": "http://127.0.0.1:8066",
     "use_celery": "False",
 
     "metadata": [
 		{
 			"table": "users",
 			"metaID": "logon",
-			"destinationTable": "Transaction.submitter",
+			"destinationTable": "Transactions.submitter",
 			"value": "d3e889",
 			"displayType": "logged_on",
-			"displayTitle": "Currently Logged On",
-			"queryFields": [ "first_name", "last_name" ],
+			"displayTitle": "Currently Logged On",			
+			"valueField": "_id",
+            "queryFields": [ "first_name", "last_name", "_id"],
 			"queryDependency": { "network_id": "logon" },
-			"diplayFormat": "%s %s"
+			"diplayFormat": "%(first_name)s %(last_name)s"
 		},
         {
             "table": "instruments",
             "metaID": "instrumentByID",
-			"destinationTable": "Transaction.instrument",
-            "displayType": "static",
+			"destinationTable": "Transactions.instrument",
+            "displayType": "select",
 			"displayTitle": "Instrument",
             "value": "34002",
+			"valueField": "_id",
             "queryDependency": { "_id": "instrumentByID" },
             "queryFields": ["_id",  "name_short", "display_name" ],
-            "diplayFormat": "%s %s %s"
+			"diplayFormat": "%(_id)s %(name_short)s - %(display_name)s"
         },
         {
             "table": "proposals",
             "metaID": "ProposalByInstrument",
             "value": "34002",
-			"destinationTable": "Transaction.proposal",
+			"destinationTable": "Transactions.proposal",
             "displayTitle": "Proposal",
             "displayType": "select",
             "queryDependency": { "instrument_id": "instrumentByID" },
+			"valueField": "_id",
             "queryFields": [ "_id", "title" ],
-            "diplayFormat": "%s %s"
+			"diplayFormat": "%(_id)s %(title)s"
         },
         {
             "table": "users",
@@ -47,9 +51,10 @@
             "displayType": "select",
 			"key": "User of Record",
 			"value": "34002",
-            "queryDependency": { "proposal_id": "EmslUserOfRecord" },
-            "queryFields": [ "first_name", "last_name" ],
-            "diplayFormat": "%s %s"
+            "queryDependency": { "proposal_id": "ProposalByInstrument" },
+			"valueField": "_id",
+            "queryFields": [ "first_name", "last_name", "_id"],
+			"diplayFormat": "%(first_name)s %(last_name)s"
         },
         {            
 			"destinationTable": "TransactionKeyValue",

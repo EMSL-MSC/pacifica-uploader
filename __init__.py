@@ -133,7 +133,7 @@ def upload_from_options( parser ):
     session.files.common_path = common_path
 
     # build archive path
-    configuration = instrument_server.InstrumentConfiguration()
+    configuration = instrument_server.UploaderConfiguration()
     configuration.instrument_short_name = parser.values.instrument
     session.proposal_id = parser.values.proposal
     session.config = configuration

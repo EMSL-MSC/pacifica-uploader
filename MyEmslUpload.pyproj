@@ -23,7 +23,7 @@
     <ProjectGuid>df27394f-b873-49e1-bce6-b03b40acfe78</ProjectGuid>
     <ProjectHome>.</ProjectHome>
     <ProjectTypeGuids>{5F0BE9CA-D677-4A4D-8806-6076C0FAAD37};{349c5851-65df-11da-9384-00065b846f21};{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
-    <StartupFile>home\uploader_unit_tests.py</StartupFile>
+    <StartupFile>manage.py</StartupFile>
     <SearchPath>.</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <LaunchProvider>Django launcher</LaunchProvider>
@@ -68,7 +68,6 @@
     <Compile Include="home\views.py" />
     <Compile Include="home\__init__.py" />
     <Compile Include="manage.py" />
-    <Compile Include="uploader\PycurlSession.py" />
     <Compile Include="uploader\__init__.py" />
     <Compile Include="UploadServer\celery.py" />
     <Compile Include="UploadServer\settings.py" />
@@ -253,6 +252,7 @@
     <Content Include="media\scripts\select2\select2.full.min.js" />
     <Content Include="media\scripts\select2\select2.js" />
     <Content Include="media\scripts\select2\select2.min.js" />
+    <Content Include="media\scripts\load_fields.js" />
     <Content Include="media\scripts\uploader_common.js" />
     <Content Include="media\stylesheets\alpha-default-normal-12.css" />
     <Content Include="media\stylesheets\alpha-reset.css" />
