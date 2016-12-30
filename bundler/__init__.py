@@ -21,7 +21,9 @@ import os.path
 import hashlib
 import tarfile
 import tempfile
-from optparse import OptionParser
+import json
+
+import traceback
 
 from home.task_comm import task_error, task_state
 
@@ -31,96 +33,24 @@ class FileBundler():
     specific formats/libraries shall be defined
     """
 
-    def __init__(self, bundle_path,
-                 proposal_id='',
-                 instrument_name='',
-                 instrument_id='',
-                 groups=None):
+    def __init__(self, bundle_path):
         """
         Initializes a Bundler
 
         :Parameters:
             bundle_path
                 The path to the target bundle file
-            proposal_ID
-                An optional string describing the proposal associated with this bundle
-            instrument_name
-                The name of the instrument that produced the data packaged in the bundle
-            groups
-                The type:name groups
         """
-        if groups == None:
-            groups = {}
-        self.groups = groups
         self.bundle_path = os.path.abspath(bundle_path)
         (self.bundle_dir, self.bundle_name) = os.path.split(self.bundle_path)
 
-        self.proposal_id = proposal_id
-        self.instrument_name = instrument_name
-        self.instrument_id = instrument_id
-        self.hash_dict = {}
+        self.file_meta = {}
 
         self.percent_complete = 0
         self.running_size = 0
         self.last_percent = 0
         self.bundle_size = 0
 
-    def bundle_metadata(self):
-        """
-        Bundle in the metadata for the bundled files
-        """
-        # version 1.2.0 pushes the data to a "data" directory while the
-        # metadata.txt file lives in the root.  This keeps us from collisions with users
-        # having their own versions of metadata.txt
-        metadata = '{"version":"1.2.0","eusInfo":{'
-
-        need_comma = False
-        if self.proposal_id != '':
-            metadata += '"proposalID":"%s"' % self.proposal_id
-            need_comma = True
-
-        if self.instrument_name != '':
-            if self.proposal_id != '':
-                metadata += ', '
-            metadata += '"instrumentName":"%s"' % self.instrument_name
-            need_comma = True
-            if self.instrument_id != '':
-                metadata += ', "instrumentId":"%s"' % self.instrument_id
-        if len(self.groups) > 0:
-            if need_comma:
-                metadata += ', '
-            metadata += '"groups":['
-            another_need_comma = False
-            for (g_type, name) in self.groups.iteritems():
-                if another_need_comma:
-                    metadata += ', '
-                metadata += "{\"name\":\"%s\", \"type\":\"%s\"}" % (name, g_type)
-                another_need_comma = True
-            metadata += ']'
-            need_comma = True
-        metadata += '},"file":[\n'
-
-        # Add metadata for each file
-        for (file_arcname, file_hash) in self.hash_dict.items():
-            # prepend the file paths and destination filepaths with the data directory to keep from
-            # metadata collisions with user files
-            modified_name = os.path.join('data', file_arcname)
-            (file_dir, file_name) = os.path.split(modified_name)
-
-            # linuxfy the directory
-            file_dir = file_dir.replace('\\', '/')
-
-            metadata += '{"sha1Hash":"%s","fileName":"%s", "destinationDirectory":"%s"},\n' \
-                % (file_hash, file_name, file_dir)
-
-        # Strip the trailing comma off of the end and close the string
-        metadata = metadata[:-2] + "]}"
-
-        print >> sys.stderr, "Preparing Metadata:\n"
-
-        # print >> sys.stderr, "Preparing Metadata:\n%s" % metadata
-
-        self._bundle_metadata(metadata)
 
     def hash_file(self, file_path, file_arcname):
         """
@@ -181,34 +111,29 @@ class FileBundler():
         # print 'hash:  ' + file_hash
         file_in.close()
 
+        modified_name = os.path.join('data', file_arcname)
+        (file_dir, file_name) = os.path.split(modified_name)
+
+         # linuxfy the directory
+        file_dir = file_dir.replace('\\', '/')
+
+        info = {}
+        info['size'] = os.path.getsize(file_path)
+        info['mimetype'] = "text/plain"
+        info['name'] = file_name
+        info['mtime'] = int(os.path.getmtime(file_path))
+        info['destinationTable'] = 'Files'
+        info['ctime']  = int(os.path.getctime(file_path))
+        info['subdir'] = file_dir
+        info['hashsum'] = file_hash
+
         #todo make sure errors bubble up without crashing
-        if file_arcname in self.hash_dict:
-            if hash != self.hash_dict[file_arcname]:
-                print file_arcname
-                task_error("Different file with the same arcname is already in the bundle")
-            return
-        self.hash_dict[file_arcname] = file_hash
+        if file_arcname in self.file_meta:
+            print file_arcname
+            task_error("Different file with the same arcname is already in the bundle")
+            return 
 
-    def _bundle_metadata(self, metadata):
-        """
-        A 'Pure Virtual' function that will perform metadata bundling in a child class
-        @param metadata: The metadata string to bundle
-        """
-        task_error("Can't bundle metadata with the base class")
-
-
-
-    def _bundle_file(self, file_paths):
-        """
-        A 'Pure Virtual' function that will perform file bundling in a child class
-
-        :Parameters:
-            file_name
-                The name of the file to bundle
-            file_arcname
-                An alternative name to use for the file inside of the bundle
-        """
-        task_error("Can't bundle a file with the base class")
+        return info
 
 
 
@@ -240,11 +165,7 @@ class TarBundler(FileBundler):
             bundle_path = 'bundle.tar'
 
         # Initialize the Base Bundler Class
-        FileBundler.__init__(self, bundle_path,
-                             proposal_id=proposal_ID,
-                             instrument_name=instrument_name,
-                             instrument_id=instrument_ID,
-                             groups=groups)
+        FileBundler.__init__(self, bundle_path)
 
         try:
             tarball = tarfile.TarFile(name=self.bundle_path, mode='w')
@@ -256,7 +177,7 @@ class TarBundler(FileBundler):
 
         print >> sys.stderr, "Successfully created tarfile bundle %s" % self.bundle_path
 
-    def bundle_file(self, file_paths, bundle_size=0):
+    def bundle_file(self, file_paths, bundle_size=0, meta_list = []):
         """
         Bundles files into a tarfile formatted bundle
 
@@ -286,7 +207,9 @@ class TarBundler(FileBundler):
                 # percent complete is reported only as read and hashed
                 # hopefully that being the slowest part and all we have
                 # access to for completion statistics
-                self.hash_file(file_path, file_arcname)
+                # file metadata is also built at this time
+                meta = self.hash_file(file_path, file_arcname)
+                meta_list.append(meta)
 
                 # for version 1.2, push files to a data/ directory
                 #to avoid collisions with metadata.txt in the root
@@ -307,23 +230,26 @@ class TarBundler(FileBundler):
 
         task_state('PROGRESS', meta_str)
 
-    def _bundle_metadata(self, metadata):
+    def bundle_metadata(self, metadata):
         """
         Bundles the metadata into a tarfile formatted bundle
 
         @param metadata: The metadata string to bundle
         """
-        #print >> sys.stderr, "Bundle meta!"
-        #print >> sys.stderr, metadata
 
         metadata_file = None
         try:
-            metadata_file = tempfile.TemporaryFile()
+            metadata_file = tempfile.NamedTemporaryFile(delete=False)
         except IOError:
             task_error("Can't create metadata file in working directory")
 
         metadata_file.write(metadata)
-        metadata_file.seek(0)
+        fname = metadata_file.name
+        metadata_file.close()
+
+        metadata_file = open(fname, mode='rb')
+
+        #metadata_file.seek(0)
 
         if self.empty_tar:
             tarball = tarfile.TarFile(name=self.bundle_path, mode='w')
@@ -331,54 +257,41 @@ class TarBundler(FileBundler):
         else:
             tarball = tarfile.TarFile(name=self.bundle_path, mode='a')
 
-        tar_info = tarfile.TarInfo("metadata.txt")
-        tar_info.size = len(metadata)
-        tar_info.mtime = time.time()
-        tarball.addfile(tar_info, metadata_file)
-        metadata_file.close()
-        tarball.close()
+        try:
+            tar_info = tarfile.TarInfo("metadata.txt")
+            tar_info.size = len(metadata)
+            tar_info.mtime = time.time()
+            tarball.addfile(tar_info, metadata_file)
+            metadata_file.close()
+            tarball.close()
+            os.remove(fname)
+        except Exception, e:
+            print e
+            traceback.print_exc(file=sys.stdout)
+            raise e
 
-def bundle(bundle_name='',
-           instrument_name='',
-           proposal='',
-           file_list=None,
-           groups=None,
-           bundle_size=0):
+def bundle(bundle_name='', file_list=None, bundle_size=0, meta_list=None):
     """
     Bundles a list of files into a single aggregated bundle file
 
     :Parameters:
         bundle_name
             The target bundle file in which to aggregate the file list
-        instrument_name
-            The name of the instrument that produced the data files that will be bundled
-        groups
-            The a hash of type/name groups to attach to
-        tarfile
-            If true, tarfile format is used to bundle.  Otherwise zipfile format is used
-        proposal
-            An optional proposal ID to attach to the bundle
         file_list
             The list of files to bundle
+        bundle_size
+            total size of the files to be bundled
+        meta_list
+            list of metadata items.  File metadata will be added to this list
     """
 
     # validate parameters
     if bundle_name == None or bundle_name == '':
         task_error("Missing bundle name")
 
-    if instrument_name == None or instrument_name == '':
-        task_error("Missing instrument name")
-
-    if proposal == None or proposal == '':
-        task_error("Missing proposal")
-
     if file_list == None or len(file_list) == 0:
         task_error("Missing file list")
 
-    if groups == None or groups == '':
-        task_error("Missing groups")
-
-    #print >> sys.stderr, "Start bundling %s" % bundle_name
 
     # Set up the bundle file
     bundle_path = os.path.abspath(bundle_name)
@@ -391,14 +304,12 @@ def bundle(bundle_name='',
     # which is being
     # sent in as the instrument name but is actually the instrument ID.  Fix
     # this.
-    bundler = TarBundler(bundle_path, proposal_ID=proposal,
-                         instrument_name=instrument_name,
-                         instrument_ID=instrument_name,
-                         groups=groups)
+    bundler = TarBundler(bundle_path)
 
-    bundler.bundle_file(file_list, bundle_size)
+    bundler.bundle_file(file_list, bundle_size, meta_list)
 
-    bundler.bundle_metadata()
+    meta_str = json.dumps(meta_list)
+    bundler.bundle_metadata(meta_str)
 
     #print >> sys.stderr, "Finished bundling"
     task_state('PROGRESS', "Bundling complete")
