@@ -22,6 +22,7 @@ import hashlib
 import tarfile
 import tempfile
 import json
+import mimetypes
 
 import traceback
 
@@ -119,7 +120,8 @@ class FileBundler():
 
         info = {}
         info['size'] = os.path.getsize(file_path)
-        info['mimetype'] = "text/plain"
+        mime_type, encoding = mimetypes.guess_type(file_path, strict=True)
+        info['mimetype'] = mime_type
         info['name'] = file_name
         info['mtime'] = int(os.path.getmtime(file_path))
         info['destinationTable'] = 'Files'
