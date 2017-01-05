@@ -170,7 +170,7 @@ class TarBundler(FileBundler):
         try:
             tarball = tarfile.TarFile(name=self.bundle_path, mode='w')
             tarball.close()
-        except:
+        except Exception:
             task_error("Couldn't create bundle tarball: %s" % self.bundle_path)
 
         self.empty_tar = True
@@ -217,7 +217,7 @@ class TarBundler(FileBundler):
                 tarball.add(file_path, arcname=modified_arc_name,
                             recursive=False)
 
-        except BundlerError, err:
+        except Exception, err:
             task_error("Failed to bundle file: %s" % (err.msg))
 
         tarball.close()

@@ -1,3 +1,7 @@
+
+# pylint: disable=broad-except
+# justification: argument with style
+
 """
 class to query the policy server and provide metadata to the browser
 """

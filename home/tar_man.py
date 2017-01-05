@@ -96,5 +96,5 @@ def clean_tar_directory(directory, jobs_state):
             except Exception:
                 remove_tar_file(directory, job)
 
-    except:
+    except Exception:
         return 'clean tar failed'

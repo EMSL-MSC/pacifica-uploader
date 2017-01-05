@@ -66,7 +66,7 @@ class UploaderConfiguration(object):
                 try:
                     use_celery = configuration['use_celery']
                     task_comm.USE_CELERY = (use_celery == 'True')
-                except:
+                except Exception:
                     task_comm.USE_CELERY = True
 
                 root_dir = os.path.normpath(configuration['dataRoot'])

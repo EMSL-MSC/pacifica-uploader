@@ -7,6 +7,10 @@
 # pylint: disable=too-many-return-statements
 # justification: argument with style
 
+# pylint: disable=broad-except
+# justification: argument with style
+
+
 """
 Django views, handle requests from the client side pages
 """
@@ -41,8 +45,6 @@ from django.contrib.auth.decorators import login_required
 
 # celery tasks
 from home import tasks
-from home import tar_man
-
 # for checking celery status
 from celery.result import AsyncResult
 
@@ -546,8 +548,8 @@ def get_children(request):
                     if os.path.isfile(itempath):
                         pathlist.append(
                             {'title': item + ' ' + '<span class="fineprint"> [Last Modified ' +
-                             mod_time + ']</span>', 'key': itempath,
-                            'folder': False, 'data': {'time': time}})
+                              mod_time + ']</span>', 'key': itempath,
+                             'folder': False, 'data': {'time': time}})
                     elif os.path.isdir(itempath):
                         pathlist.append(
                             {'title': item, 'key': itempath, 'folder': True,

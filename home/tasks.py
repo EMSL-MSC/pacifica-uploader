@@ -1,3 +1,7 @@
+
+# pylint: disable=broad-except
+# justification: argument with style
+
 """
 Celery tasks to be run in the background
 """
@@ -29,6 +33,7 @@ def clean_target_directory(target_dir=''):
 
     # remove old files that were not uploaded
     tar_man.remove_orphans(target_dir)
+
 
     # get job list from file
     jobs = tar_man.job_list(target_dir)
@@ -101,7 +106,6 @@ def upload_files(ingest_server='',
 
     if tartar:
         # create the file tuple list of 1 file
-        dir = os.path.dirname(bundle_name)
         fname = os.path.basename(bundle_name)
 
         file_tuples = []
