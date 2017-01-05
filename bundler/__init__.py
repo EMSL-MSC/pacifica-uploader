@@ -1,13 +1,13 @@
 #! /usr/bin/env python
 
-#pylint: disable=unused-argument
+# pylint: disable=unused-argument
 # justification: virtual class
 
-#pylint: disable=no-self-use
+# pylint: disable=no-self-use
 # justification: virtual class
 
-#pylint: disable=no-member
-#justification: because pylint is dumb
+# pylint: disable=no-member
+# justification: because pylint is dumb
 
 """
 A Bundler module that aggregates files into a single bundle
@@ -27,6 +27,7 @@ import mimetypes
 import traceback
 
 from home.task_comm import task_error, task_state
+
 
 class FileBundler():
     """
@@ -51,7 +52,6 @@ class FileBundler():
         self.running_size = 0
         self.last_percent = 0
         self.bundle_size = 0
-
 
     def hash_file(self, file_path, file_arcname):
         """
@@ -79,7 +79,6 @@ class FileBundler():
         file_mode = os.stat(file_path)[stat.ST_MODE]
         if not stat.S_ISDIR(file_mode) and not stat.S_ISREG(file_mode):
             task_error("Unknown file type for %s" % file_path)
-
 
         file_in = None
         try:
@@ -115,7 +114,7 @@ class FileBundler():
         modified_name = os.path.join('data', file_arcname)
         (file_dir, file_name) = os.path.split(modified_name)
 
-         # linuxfy the directory
+        # linuxfy the directory
         file_dir = file_dir.replace('\\', '/')
 
         info = {}
@@ -125,18 +124,18 @@ class FileBundler():
         info['name'] = file_name
         info['mtime'] = int(os.path.getmtime(file_path))
         info['destinationTable'] = 'Files'
-        info['ctime']  = int(os.path.getctime(file_path))
+        info['ctime'] = int(os.path.getctime(file_path))
         info['subdir'] = file_dir
         info['hashsum'] = file_hash
 
-        #todo make sure errors bubble up without crashing
+        # todo make sure errors bubble up without crashing
         if file_arcname in self.file_meta:
             print file_arcname
-            task_error("Different file with the same arcname is already in the bundle")
-            return 
+            task_error(
+                "Different file with the same arcname is already in the bundle")
+            return
 
         return info
-
 
 
 class TarBundler(FileBundler):
@@ -162,7 +161,6 @@ class TarBundler(FileBundler):
                 The name of the instrument that produced the data packaged in the bundle
         """
 
-
         if bundle_path == '' or bundle_path == None:
             bundle_path = 'bundle.tar'
 
@@ -179,7 +177,7 @@ class TarBundler(FileBundler):
 
         print >> sys.stderr, "Successfully created tarfile bundle %s" % self.bundle_path
 
-    def bundle_file(self, file_paths, bundle_size=0, meta_list = []):
+    def bundle_file(self, file_paths, bundle_size=0, meta_list=None):
         """
         Bundles files into a tarfile formatted bundle
 
@@ -214,9 +212,10 @@ class TarBundler(FileBundler):
                 meta_list.append(meta)
 
                 # for version 1.2, push files to a data/ directory
-                #to avoid collisions with metadata.txt in the root
+                # to avoid collisions with metadata.txt in the root
                 modified_arc_name = os.path.join('data', file_arcname)
-                tarball.add(file_path, arcname=modified_arc_name, recursive=False)
+                tarball.add(file_path, arcname=modified_arc_name,
+                            recursive=False)
 
         except BundlerError, err:
             task_error("Failed to bundle file: %s" % (err.msg))
@@ -227,7 +226,8 @@ class TarBundler(FileBundler):
         """
         update the task state with the progress of the bundle
         """
-        meta_str = "Bundling percent complete: " + str(int(self.percent_complete))
+        meta_str = "Bundling percent complete: " + \
+            str(int(self.percent_complete))
         print meta_str
 
         task_state('PROGRESS', meta_str)
@@ -251,7 +251,7 @@ class TarBundler(FileBundler):
 
         metadata_file = open(fname, mode='rb')
 
-        #metadata_file.seek(0)
+        # metadata_file.seek(0)
 
         if self.empty_tar:
             tarball = tarfile.TarFile(name=self.bundle_path, mode='w')
@@ -267,10 +267,11 @@ class TarBundler(FileBundler):
             metadata_file.close()
             tarball.close()
             os.remove(fname)
-        except Exception, e:
-            print e
+        except Exception, ex:
+            print ex
             traceback.print_exc(file=sys.stdout)
-            raise e
+            raise ex
+
 
 def bundle(bundle_name='', file_list=None, bundle_size=0, meta_list=None):
     """
@@ -294,7 +295,6 @@ def bundle(bundle_name='', file_list=None, bundle_size=0, meta_list=None):
     if file_list == None or len(file_list) == 0:
         task_error("Missing file list")
 
-
     # Set up the bundle file
     bundle_path = os.path.abspath(bundle_name)
     #print >> sys.stderr, "Bundle file set to %s" % bundle_path
@@ -315,6 +315,7 @@ def bundle(bundle_name='', file_list=None, bundle_size=0, meta_list=None):
 
     #print >> sys.stderr, "Finished bundling"
     task_state('PROGRESS', "Bundling complete")
+
 
 def main():
     """

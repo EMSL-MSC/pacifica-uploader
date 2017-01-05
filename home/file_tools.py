@@ -1,11 +1,13 @@
-#pylint: disable=unused-variable
-#justification: because I don't want to add extra code to parse a returned tuple
+# pylint: disable=unused-variable
+# justification: because I don't want to add extra code to parse a
+# returned tuple
 """
 tools to bundle, parse file structures, etc.
 """
 
 
 import os
+
 
 class FolderMeta(object):
     """
@@ -18,6 +20,7 @@ class FolderMeta(object):
 
     def __init__(self):
         pass
+
 
 class FileManager(object):
     """description of class"""
@@ -69,7 +72,7 @@ class FileManager(object):
 
         total_size = os.path.getsize(folder)
         for item in os.listdir(folder):
-            itempath = os.path.join(folder, item)            
+            itempath = os.path.join(folder, item)
             if self.accessible(itempath):
                 if os.path.isfile(itempath):
                     total_size += os.path.getsize(itempath)
@@ -108,7 +111,8 @@ class FileManager(object):
 
         meta.dir_count -= 1
         meta_str = 'folders {0} | files {1} | {2}'.\
-            format(str(meta.dir_count), str(meta.fileCount), size_string(meta.totalBytes))
+            format(str(meta.dir_count), str(meta.fileCount),
+                   size_string(meta.totalBytes))
 
         return meta_str
 
@@ -116,7 +120,7 @@ class FileManager(object):
         """
         build the archive path from the real path modified to conform to the archive structure
         """
-        #remove the common root
+        # remove the common root
         arc_path = os.path.relpath(path, self.common_path)
         # prepend the archive nodes
         arc_path = os.path.join(self.archive_path, arc_path)
@@ -144,7 +148,7 @@ class FileManager(object):
         for path in selected_list:
             if self.accessible(path):
                 if os.path.isfile(path):
-                        tuple_list.append((path, self.get_archive_path(path)))
+                    tuple_list.append((path, self.get_archive_path(path)))
                 elif os.path.isdir(path):
                     self.file_tuples_recursively(path, tuple_list)
 
@@ -159,7 +163,8 @@ class FileManager(object):
 
         meta.dir_count -= 1
         meta_str = 'folders {0} | files {1} | {2}'.\
-            format(str(meta.dir_count), str(meta.fileCount), size_string(meta.totalBytes))
+            format(str(meta.dir_count), str(meta.fileCount),
+                   size_string(meta.totalBytes))
 
         return meta_str
 
@@ -170,7 +175,7 @@ class FileManager(object):
         '''
         filtered = self.filter_selected_list(files)
 
-        #create a list of tuples (filepath, arcpath)
+        # create a list of tuples (filepath, arcpath)
         tuples = []
         self.file_tuples(filtered, tuples)
 
@@ -190,14 +195,14 @@ class FileManager(object):
             try:
                 # this doesn't work, at least in windows.  A file may be readable
                 # by _someone_ and this will return true, but fail on reading
-                #if os.access(path, os.R_OK):
+                # if os.access(path, os.R_OK):
                 #    size = os.path.getsize(path)
-                #else:
+                # else:
                 #    return false;
-                with open(path) as tempFile:
-                    tempFile.close()
-            except Exception as e:
-                print e
+                with open(path) as temp_file:
+                    temp_file.close()
+            except Exception as ex:
+                print ex
                 retval = False
 
         elif os.path.isdir(path):
@@ -211,7 +216,7 @@ class FileManager(object):
 
         if not retval:
             self.error_string = 'Unaccessible files were skipped'
-        
+
         return retval
 
     def get_size(self, start_path):
@@ -222,13 +227,14 @@ class FileManager(object):
         for dirpath, dirnames, filenames in os.walk(start_path):
             for filename in filenames:
                 filepath = os.path.join(dirpath, filename)
-                if (self.accessible(filepath)):
+                if self.accessible(filepath):
                     total_size += os.path.getsize(filepath)
         return total_size
 
     def filter_selected_list(self, files):
         """
-        remove filepaths that are contained in other filepaths to preclude redundant files when bundling
+        remove filepaths that are contained in other filepaths
+        to preclude redundant files when bundling
         """
         filtered = list(files)
 
@@ -236,7 +242,7 @@ class FileManager(object):
             if os.path.isdir(test_path):
                 for i in xrange(len(filtered) - 1, -1, -1):
                     fpath = filtered[i]
-                    if (self.accessible(fpath)):
+                    if self.accessible(fpath):
                         if test_path in fpath and test_path != fpath:
                             filtered.remove(fpath)
                     else:

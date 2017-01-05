@@ -5,14 +5,13 @@ Celery tasks to be run in the background
 
 from __future__ import absolute_import
 from celery import shared_task
-import sys
 
 from uploader import upload
 from uploader import job_status
 
 from bundler import bundle
 
-from home import tar_man 
+from home import tar_man
 
 import os
 
@@ -22,6 +21,7 @@ from home.task_comm import task_error, task_state
 
 CLEAN_TAR = True
 
+
 def clean_target_directory(target_dir=''):
     """
     deletes local files that have made it to the archive
@@ -29,8 +29,6 @@ def clean_target_directory(target_dir=''):
 
     # remove old files that were not uploaded
     tar_man.remove_orphans(target_dir)
-
-    return
 
     # get job list from file
     jobs = tar_man.job_list(target_dir)
@@ -45,7 +43,7 @@ def clean_target_directory(target_dir=''):
     jobs_state = job_status(job_list=jobs)
 
     # fake job state
-    #jobs_state = '[{?20001066? : {?state_name?:?Received?, ?state?:?1"}},
+    # jobs_state = '[{?20001066? : {?state_name?:?Received?, ?state?:?1"}},
     #            {?20001067? : {?state_name?:?Available?, ?state?:?5"}},
     #            {?20001068? : {?state_name?:?Available?, ?state?:?5"}}]'
     if jobs_state:
@@ -63,14 +61,16 @@ def ping():
     print "Pinged!"
     task_state('PING', "Background process is alive")
 
-#tag to show this def as a celery task
+# tag to show this def as a celery task
+
+
 @shared_task
-def upload_files(ingest_server = '',
+def upload_files(ingest_server='',
                  bundle_name='',
                  file_list=None,
                  bundle_size=0,
                  meta_list=None,
-                 tartar = False):
+                 tartar=False):
     """
     task created on a separate Celery process to bundle and upload in the background
     status and errors are pushed by celery to the main server through RabbitMQ
@@ -78,12 +78,13 @@ def upload_files(ingest_server = '',
 
     target_dir = os.path.dirname(bundle_name)
     if not os.path.isdir(target_dir):
-        current_task.update_state(state='ERROR', meta={'Status': 'Bundle directory does not exist'})
+        task_state('ERROR', 'Bundle directory does not exist')
+        return 'Upload Failed'
 
-        task_state("PROGRESS", "Cleaning previous uploads")
+    task_state("PROGRESS", "Cleaning previous uploads")
 
-    ##clean tar directory
-    #if CLEAN_TAR:
+    # clean tar directory
+    # if CLEAN_TAR:
     #    err_str = clean_target_directory(target_dir)
     #    if err_str:
     #        task_state('PROGRESS', err_str)
@@ -93,7 +94,7 @@ def upload_files(ingest_server = '',
 
     bundle(bundle_name=bundle_name,
            file_list=file_list,
-           meta_list= meta_list,
+           meta_list=meta_list,
            bundle_size=bundle_size)
 
     task_state("PROGRESS", "Completed Bundling")
@@ -103,30 +104,30 @@ def upload_files(ingest_server = '',
         dir = os.path.dirname(bundle_name)
         fname = os.path.basename(bundle_name)
 
-        file_tuples=[]
+        file_tuples = []
         file_tuples.append((bundle_name, fname))
 
         bundle_size = os.path.getsize(bundle_name)
 
-                    # dual extension indicates tartar
+        # dual extension indicates tartar
         bundle_name += '.tar'
 
         bundle(bundle_name=bundle_name,
                file_list=file_tuples,
-               meta_list= meta_list,
+               meta_list=meta_list,
                bundle_size=bundle_size)
 
     task_state("PROGRESS", "Starting Upload")
 
-    result = upload(bundle_name=bundle_name, ingest_server = ingest_server)
+    result = upload(bundle_name=bundle_name, ingest_server=ingest_server)
 
     if not result:
-        task_state('FAILURE',  "Uploader dieded. We don't know why it did")
+        task_state('FAILURE', "Uploader dieded. We don't know why it did")
 
     try:
         status = json.loads(result)
-    except Exception, e:
-        task_state('FAILURE', e.message)
+    except Exception, ex:
+        task_state('FAILURE', ex.message)
         return 'Upload Failed'
 
     if status['state'] != 'OK':
@@ -138,6 +139,6 @@ def upload_files(ingest_server = '',
         tar_man.rename_tar_file(target_dir, bundle_name, status['job_id'])
         task_state('DONE', result)
         return result
-    except Exception, e:
-        task_state('FAILURE', 'Unable to rename ' + bundle_name)
+    except Exception, ex:
+        task_state('FAILURE', ex.message +' Unable to rename ' + bundle_name)
         return 'Rename Failed'

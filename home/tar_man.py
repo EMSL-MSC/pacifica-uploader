@@ -6,6 +6,7 @@ import os
 import json
 import time
 
+
 def job_list(directory):
     """
     gets a list of jobs based on the files in the tar directory
@@ -20,6 +21,7 @@ def job_list(directory):
 
     return jobs
 
+
 def remove_tar_file(directory, job_id):
     """
     remove a tar file from the tar directory based on job id
@@ -31,6 +33,7 @@ def remove_tar_file(directory, job_id):
     # remove from directory
     if os.path.isfile(full_path):
         os.remove(full_path)
+
 
 def rename_tar_file(directory, old_name, job_id):
     """
@@ -44,6 +47,7 @@ def rename_tar_file(directory, old_name, job_id):
 
     if os.path.isfile(old_name):
         os.rename(old_name, new_name)
+
 
 def remove_orphans(directory):
     """
@@ -61,8 +65,9 @@ def remove_orphans(directory):
         if os.path.isfile(full_path):
             timestamp = os.path.getmtime(full_path)
             current = time.time()
-            if current - timestamp > 86400: # a day in seconds
+            if current - timestamp > 86400:  # a day in seconds
                 os.remove(full_path)
+
 
 def clean_tar_directory(directory, jobs_state):
     """
@@ -73,8 +78,8 @@ def clean_tar_directory(directory, jobs_state):
 
         jobs = job_list(directory)
 
-        #ex:
-        #jobs_state = '[{?20001066? : {?state_name?:?Received?, ?state?:?1"}},
+        # ex:
+        # jobs_state = '[{?20001066? : {?state_name?:?Received?, ?state?:?1"}},
         #               {?20001067? : {?state_name?:?Available?, ?state?:?5"}},
         #               {?20001068? : {?state_name?:?Available?, ?state?:?5"}}]'
 

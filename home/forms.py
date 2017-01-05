@@ -4,6 +4,7 @@
 
 from django import forms
 
+
 class DocumentForm(forms.Form):
     """
     Django boilerplate

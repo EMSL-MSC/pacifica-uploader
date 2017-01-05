@@ -1,20 +1,15 @@
-#pylint: disable=too-many-return-statements
+# pylint: disable=too-many-return-statements
 # justification: argument with style
 
 """
 maintains the state of a user session
 """
 
-import json
-import psutil
 import os
-import datetime
 import time
 
-from home import file_tools
 from home.file_tools import FileManager
-from home.instrument_server import UploaderConfiguration
-from home.QueryMetadata import QueryMetadata
+
 
 class SessionState(object):
     """
@@ -48,10 +43,15 @@ class SessionState(object):
         """
 
     def touch(self):
+        """
+        resets time out
+        """
         self.last_touched_time = time.time()
 
     def is_timed_out(self):
-
+        """
+        returns whether the session is timed out
+        """
         if self.is_uploading:
             return False
 
@@ -69,11 +69,16 @@ class SessionState(object):
             return False
 
     def set_session_root(self, filepath):
+        """
+        explicitly sets the root data dir
+        """
         self.files.data_dir = filepath
 
     def restore_session_root(self):
+        """
+        restores the original root data dir
+        """
         self.files.data_dir = self.config.data_dir
-
 
     def cleanup_session(self):
         """
@@ -106,13 +111,18 @@ class SessionState(object):
     def get_archive_tree(self, meta):
         """
         returns a nested structure that can be used to populate fancytree
-        currently empty
         """
+
+        #newlist = sorted(meta.meta_list, key=lambda x: x.directory_order)
+
+        #nodes = []
+        # for x in newlist:
+        #    if x.directory_value:
+        #        nodes.append(x.directory_value)
+
         nodes = [
-                'Proposal placeholder',
-                'instrument placeholder']
-
-
+            'Proposal placeholder',
+            'instrument placeholder']
         tree = []
         children = tree
         lastnode = {}
@@ -124,7 +134,7 @@ class SessionState(object):
                     "folder": True,
                     "expanded": True,
                     "children": [],
-                    "data":""}
+                    "data": ""}
             children.append(node)
             children = node['children']
             lastnode = node

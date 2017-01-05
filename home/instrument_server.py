@@ -1,4 +1,4 @@
-#pylint: disable=too-many-return-statements
+# pylint: disable=too-many-return-statements
 # justification: argument with style
 
 """
@@ -24,7 +24,7 @@ class UploaderConfiguration(object):
     initialized = False
 
     instrument = ''
-    
+
     policy_server = ''
     ingest_server = ''
     target_dir = ''
@@ -40,7 +40,7 @@ class UploaderConfiguration(object):
         if the system hasn't been initialized, do so
         """
         try:
-            if not self.initialized: # first time through, initialize
+            if not self.initialized:  # first time through, initialize
 
                 configuration = read_config_file()
 
@@ -50,7 +50,7 @@ class UploaderConfiguration(object):
 
                 if not os.path.isdir(self.target_dir):
                     return 'Configuration: target directory unmounted'
-                
+
                 self.policy_server = configuration['policyServer']
                 if self.policy_server == '':
                     return 'Configuration: Missing policy server path'
@@ -96,10 +96,11 @@ class UploaderConfiguration(object):
         # get the disk usage
         space = psutil.disk_usage(self.target_dir)
 
-        #give ourselves a cushion for other processes
+        # give ourselves a cushion for other processes
         self.free_space = int(.9 * space.free)
 
         self.free_size_str = file_tools.size_string(self.free_space)
+
 
 def read_config_file():
     """
@@ -111,21 +112,3 @@ def read_config_file():
         configuration = json.load(config)
 
     return configuration
-
-def write_default_config(filename):
-    """
-    write a default configuration file as a template
-    """
-    config_dict = {}
-    config_dict['target'] = '/srv/localdata'
-    config_dict['dataRoot '] = '/srv/home'
-    config_dict['timeout'] = '10'
-    config_dict['server'] = 'dev2.my.emsl.pnl.gov'
-    config_dict['instrument'] = '0a'
-    config_dict['mode'] = 'instrument'
-
-
-    config_dict['metadata'] = (('Tag', 'Tag'))
-
-    with open(filename, 'w') as config:
-        json.dump(configdict, config)

@@ -1,10 +1,11 @@
-from home.Authorization import Authorization
+"""
+class to query the policy server and provide metadata to the browser
+"""
 import json
-import pycurl
-from StringIO import StringIO
 import os
 
 import requests
+
 
 class MetaData(object):
     """
@@ -18,7 +19,8 @@ class MetaData(object):
     destination_table = ''
     # columns that will be pulled from the table
     columns = []
-    # returned field that will be used as the actual value to be returned to the uploader
+    # returned field that will be used as the actual value to be returned to
+    # the uploader
     value_field = ''
     # used for key/value pairs
     key = ''
@@ -30,13 +32,21 @@ class MetaData(object):
     display_title = ''
     # format of the displayed data
     display_format = "%s"
+
+    # format of the artificial directory name (if any) for searching the
+    # archive
+    directory_order = None
+
     # flag that indicates whether this node has been initialized
     initialized = False
-    # actually a dictionary, but holds a list to populate a dropdown
-    selection_list = {}
+
+    # a dictionary that holds the meta ID and a list to populate a dropdown
+    # the browser uses the ID to populate the correct field
+    browser_field_population = {}
 
     def __init__(self):
         pass
+
 
 class QueryMetadata(object):
     """
@@ -56,7 +66,7 @@ class QueryMetadata(object):
 
         self.initialize_user(networkID)
 
-    def build_query (self, meta):
+    def build_query(self, meta):
         """
         builds a json query structure:
         {
@@ -80,18 +90,18 @@ class QueryMetadata(object):
 
             for check_obj in self.meta_list:
                 if meta_id == check_obj.meta_id:
-                    where_clause[column] = check_obj.value;
+                    where_clause[column] = check_obj.value
                     break
 
         query["where"] = where_clause
 
-        retVal = json.dumps (query, sort_keys = True, indent=4)
+        ret_val = json.dumps(query, sort_keys=True, indent=4)
 
-        return retVal
+        return ret_val
 
     def create_meta_upload(self, meta):
         """
-        creates an object that ultimately the metadata server will be able to 
+        creates an object that ultimately the metadata server will be able to
         use to store the value of this metadata field
         """
         meta_obj = {}
@@ -104,7 +114,7 @@ class QueryMetadata(object):
 
     def create_meta_upload_list(self):
         """
-        creates list of objects that ultimately the metadata server will be able to 
+        creates list of objects that ultimately the metadata server will be able to
         use to store the value of this metadata field
         """
         upload_list = []
@@ -114,7 +124,7 @@ class QueryMetadata(object):
 
         return upload_list
 
-    def initialize_user(self, networkID):
+    def initialize_user(self, network_id):
         """
         initializes the login node with the network ID so that
         it can be converted to the user id on meta init.
@@ -122,15 +132,17 @@ class QueryMetadata(object):
         """
         try:
             meta = self.get_node('logon')
-            meta.value = networkID
+            meta.value = network_id
             self.user = -1
 
             return True
-        except Exception, e:
+        except Exception:
             return False
 
     def load_meta(self):
         """
+        puts the metadata into a format that can eventually be
+        read by the metadata archive
         """
         configuration = read_config()
 
@@ -152,10 +164,10 @@ class QueryMetadata(object):
 
                 if 'displayType' in meta:
                     meta_entry.display_type = meta['displayType']
-                    
+
                 if 'displayTitle' in meta:
                     meta_entry.display_title = meta['displayTitle']
-                    
+
                 if 'queryDependency' in meta:
                     meta_entry.query_dependencies = meta['queryDependency']
 
@@ -174,6 +186,9 @@ class QueryMetadata(object):
                 if 'value' in meta:
                     meta_entry.value = meta['value']
 
+                if 'directoryOrder' in meta:
+                    meta_entry.directory_order = meta['directoryOrder']
+
                 self.meta_list.append(meta_entry)
 
         except KeyError:
@@ -181,32 +196,31 @@ class QueryMetadata(object):
 
         return ''
 
-
-    def get_node(self, id):
+    def get_node(self, meta_id):
         """
         returns a meta node based on it's unique id
         """
         for meta in self.meta_list:
-            if id == meta.meta_id:
-               return meta
+            if meta_id == meta.meta_id:
+                return meta
 
         return None
 
-    def build_selection_list(self,meta, query_result):
+    def build_selection_list(self, meta, query_result):
         """
         builds a json structure that can be used by the browser client
-        to populate a dropdown list 
+        to populate a dropdown list
 
         format:
-            selection_list = {'meta_id':'thingy', 
+            field_population = {'meta_id':'thingy',
                       'selection_list':[
                           {"id":"34001", "text" :"invalid1"},
                           {"id":"34002", "text" :"valid"},
                           {"id":"34003", "text" :"invalid3"}
                           ]}
         """
-        
-        meta.selection_list = {'meta_id': meta.meta_id}
+
+        meta.browser_field_population['meta_id'] = meta.meta_id
 
         # build the list of choices
         choices = []
@@ -221,12 +235,12 @@ class QueryMetadata(object):
             try:
                 # format the display value
                 display = meta.display_format % result
-            except Exception, e:
-                print e
-
+            except Exception:
+                # skip it if it doesn't exist
+                pass
 
              # put in format to be used by select2
-            choices.append({"id":key, "text" :display})
+            choices.append({"id": key, "text": display})
 
         # special case for logon, need to initialize user
         if meta.meta_id == 'logon':
@@ -234,7 +248,7 @@ class QueryMetadata(object):
             meta.value = first['id']
             self.user = first['id']
 
-        meta.selection_list['selection_list'] = choices
+        meta.browser_field_population['selection_list'] = choices
 
     def update_parents(self, meta):
         """
@@ -242,23 +256,29 @@ class QueryMetadata(object):
         """
 
         if meta.initialized:
-             return
+            return
 
         for query_field, meta_id in meta.query_dependencies.iteritems():
-            dependency = self.get_node(meta_id);
-            
+            dependency = self.get_node(meta_id)
+
             # ignore self referential nodes
             if meta_id != dependency.meta_id:
-                if not depenency.initialized:
+                if not dependency.initialized:
                     self.update_parents(dependency)
 
-        # once the dependencies are filled we can create the query and populate the list
+        # once the dependencies are filled we can create the query and populate
+        # the list
         query = self.build_query(meta)
 
         query_result = self.get_list(query)
 
         self.build_selection_list(meta, query_result)
 
+        if meta.value == '':
+            if meta.browser_field_population:
+                sel_list = meta.browser_field_population['selection_list']
+                if sel_list:
+                    meta.value = sel_list[0]['id']
 
     def initial_population(self):
         """
@@ -270,14 +290,16 @@ class QueryMetadata(object):
             # if this is a user entered field it doesn't need to be filled
             if meta.display_type != "enter":
                 self.update_parents(meta)
-                if any(meta.selection_list):
-                    init_fields.append(meta.selection_list)
+                if any(meta.browser_field_population):
+                    init_fields.append(meta.browser_field_population)
 
         return init_fields
 
     def populate_dependencies(self, form):
         """
-        
+        when a selected field changes in the browser,
+        the modified for is sent here.  The changed item is
+        updated and all dependencies are updated.
         """
         update_fields = []
 
@@ -309,22 +331,21 @@ class QueryMetadata(object):
 
         return children
 
-
     def update_children(self, meta, update_fields):
-
+        """
+        queries the policy server to reload the selection options
+        for fields that are dependent on a modified field
+        """
         children = self.find_children(meta.meta_id)
 
         for child in children:
             query = self.build_query(child)
             query_result = self.get_list(query)
             self.build_selection_list(child, query_result)
-            if any(child.selection_list):
-                update_fields.append(child.selection_list)
-            
-            self.update_children( child, update_fields)
+            if any(child.browser_field_population):
+                update_fields.append(child.browser_field_population)
 
-
-
+            self.update_children(child, update_fields)
 
     def get_list(self, query):
         """
@@ -335,21 +356,21 @@ class QueryMetadata(object):
             headers = {'content-type': 'application/json'}
             url = self.host + '/uploader'
 
-            r = requests.post(url, headers=headers, data=query)
+            reply = requests.post(url, headers=headers, data=query)
 
-            l = json.loads(r.content)
+            data = json.loads(reply.content)
 
-            #check for error
+            # check for error
             try:
-                status = l['status']
-                print (status)
+                status = data['status']
+                print status
                 return []
-            except Exception, e:
-                print e.message
-                return l
+            except Exception, ex:
+                print ex.message
+                return data
 
-        except Exception, e:
-            print e
+        except Exception, ex:
+            print ex
             return[]
 
     def populate_metadata_from_form(self, form):

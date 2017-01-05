@@ -2,11 +2,11 @@
 """
 An Uploader module that uses PycURL to transfer data
 """
-#pylint: disable=no-member
-#justification: because pylint doesn't get pycurl
+# pylint: disable=no-member
+# justification: because pylint doesn't get pycurl
 
-#pylint: disable=unused-argument
-#justification: pycurl callback
+# pylint: disable=unused-argument
+# justification: pycurl callback
 
 import os
 import sys
@@ -30,16 +30,14 @@ from time import sleep
 from home.task_comm import task_error, task_state
 
 
-
-def job_status(authorization=None, job_list=[]):
-
+def job_status(authorization=None, job_list=None):
     """
     checks the status of existing job
+    tbd
     """
 
-    url = session.url + '/myemsl/status/index.php/status/job_status'
-
     return True
+
 
 class TrackPercent(object):
     """
@@ -47,6 +45,7 @@ class TrackPercent(object):
     used to track percent uploaded
     """
     percent = 0
+
 
 def progress(_download_t, _download_d, upload_t, upload_d):
     """
@@ -57,14 +56,16 @@ def progress(_download_t, _download_d, upload_t, upload_d):
             percent = 100.0 * float(upload_d) / float(upload_t)
 
             if percent - TrackPercent.percent > 5:
-                meta_dict={'Status': "upload percent complete: " + str(int(percent))}
+                meta_dict = {
+                    'Status': "upload percent complete: " + str(int(percent))}
                 task_state("PROGRESS", meta_dict)
                 TrackPercent.percent = percent
 
-        except Exception, e:
-            raise task_error("Error during callback: " + e.message)
+        except Exception, ex:
+            raise task_error('Error during callback: '+ ex.message)
 
-def upload(bundle_name='', ingest_server = ''):
+
+def upload(bundle_name='', ingest_server=''):
     """
     Uploads a bundle of files via cURL to a specified server
 
@@ -77,11 +78,11 @@ def upload(bundle_name='', ingest_server = ''):
     bundle_path = os.path.abspath(bundle_name)
 
     files = {'file': (open(bundle_path, 'rb'), 'application/octet-stream')}
-    f = open(bundle_path, 'rb')
+    bundle = open(bundle_path, 'rb')
     headers = {'content-type': 'application/octet-stream'}
-    url =  ingest_server + '/upload'
+    url = ingest_server + '/upload'
 
-    status = requests.post(url, headers=headers, data=f)
+    status = requests.post(url, headers=headers, data=bundle)
 
     return status.content
 
