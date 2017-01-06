@@ -58,6 +58,8 @@ window.onbeforeunload = function (event) {
     //logOut();
 };
 
+$(window).on("load", function () { initializeFields() });
+
     //**********************************************************************
 
     function FilterSingleBranch(clickedNode, parentNodes) {
@@ -506,8 +508,5 @@ window.onbeforeunload = function (event) {
                 window.open(errtext, '_self');
             });
         });
-        initializeFields()
-
-
     });
 

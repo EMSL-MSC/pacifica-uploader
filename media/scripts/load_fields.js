@@ -10,9 +10,11 @@
     function initializeFields() {
 
         // populate session data before showing the status page
+        var t = new Date()
         $.post("/initializeFields/", "{}",
             function (data) {
                 updateFields(data);
+                console.log("yay");
             })
         .fail(function (xhr, textStatus, errorThrown) {
             errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
