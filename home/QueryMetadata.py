@@ -160,8 +160,8 @@ class QueryMetadata(object):
 
                 meta_entry.browser_field_population = {}
 
-                if 'table' in meta:
-                    meta_entry.source_table = meta['table']
+                if 'sourceTable' in meta:
+                    meta_entry.source_table = meta['sourceTable']
 
                 if 'destinationTable' in meta:
                     meta_entry.destination_table = meta['destinationTable']
