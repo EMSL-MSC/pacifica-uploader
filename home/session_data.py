@@ -113,16 +113,14 @@ class SessionState(object):
         returns a nested structure that can be used to populate fancytree
         """
 
-        #newlist = sorted(meta.meta_list, key=lambda x: x.directory_order)
+        newlist = sorted(meta.meta_list, key=lambda x: x.directory_order)
 
-        #nodes = []
-        # for x in newlist:
-        #    if x.directory_value:
-        #        nodes.append(x.directory_value)
+        nodes = []
+        for node in newlist:
+            if node.directory_order is not None:
+                display = meta.get_display(node)
+                nodes.append(display)
 
-        nodes = [
-            'Proposal placeholder',
-            'instrument placeholder']
         tree = []
         children = tree
         lastnode = {}

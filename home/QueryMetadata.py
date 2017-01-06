@@ -31,7 +31,7 @@ class MetaData(object):
     # selected value
     value = ''
     # meta nodes that must be populated to build the query for this node
-    query_dependencies = {}
+    query_dependencies = None
     # title of field in the browser client
     display_title = ''
     # format of the displayed data
@@ -46,10 +46,11 @@ class MetaData(object):
 
     # a dictionary that holds the meta ID and a list to populate a dropdown
     # the browser uses the ID to populate the correct field
-    browser_field_population = {}
+    browser_field_population = None
 
     def __init__(self):
-        pass
+        browser_field_population = {}
+        query_dependencies = {}
 
 
 class QueryMetadata(object):
@@ -156,6 +157,8 @@ class QueryMetadata(object):
             for meta in configuration['metadata']:
 
                 meta_entry = MetaData()
+
+                meta_entry.browser_field_population = {}
 
                 if 'table' in meta:
                     meta_entry.source_table = meta['table']
@@ -265,7 +268,7 @@ class QueryMetadata(object):
         for query_field, meta_id in meta.query_dependencies.iteritems():
             dependency = self.get_node(meta_id)
 
-            # ignore self referential nodes
+            # ignore self referential nodes dfh
             if meta_id != dependency.meta_id:
                 if not dependency.initialized:
                     self.update_parents(dependency)
@@ -376,6 +379,21 @@ class QueryMetadata(object):
         except Exception, ex:
             print ex
             return[]
+
+    def get_display(self, meta):
+        """
+        gets the display value for a meta node
+        """
+        query = self.build_query(meta)
+        query_result = self.get_list(query)
+        self.build_selection_list(meta, query_result)
+        
+        selection_list = meta.browser_field_population['selection_list']
+        entry = selection_list[0]
+        display = entry['text']
+
+        return display
+
 
     def populate_metadata_from_form(self, form):
         """

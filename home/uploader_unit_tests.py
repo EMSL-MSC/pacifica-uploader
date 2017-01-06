@@ -66,6 +66,21 @@ class IndexServerUnitTests(unittest.TestCase):
 
     #    file.close()
 
+    def test_get_display(self):
+        """
+        test get_diplay
+        """
+        mdata = self.test_initialize()
+
+        node = mdata.get_node("instrumentDirectory")
+        display = mdata.get_display(node)
+        print display
+        
+        node = mdata.get_node("ProposalDirectory")
+        display = mdata.get_display(node)
+        print display
+
+
     # pylint: disable=broad-except
     def test_initialize(self):
         """
@@ -76,6 +91,8 @@ class IndexServerUnitTests(unittest.TestCase):
         mdata.load_meta()
 
         mdata.initial_population()
+
+        return mdata
 
     # pylint: disable=broad-except
     def test_query_meta(self):
