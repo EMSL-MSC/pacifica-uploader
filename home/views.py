@@ -167,7 +167,7 @@ def populate_upload_page(request):
     session.touch()
 
     request.session.modified = True
-    age = request.session.get_expiry_age()
+    # age = request.session.get_expiry_age()
 
     root_dir = session.files.data_dir
 

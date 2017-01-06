@@ -119,7 +119,7 @@ class FileBundler():
 
         info = {}
         info['size'] = os.path.getsize(file_path)
-        mime_type, encoding = mimetypes.guess_type(file_path, strict=True)
+        mime_type = mimetypes.guess_type(file_path, strict=True)[0]
         info['mimetype'] = mime_type
         info['name'] = file_name
         info['mtime'] = int(os.path.getmtime(file_path))

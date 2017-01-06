@@ -32,6 +32,8 @@ class MetaData(object):
     value = ''
     # meta nodes that must be populated to build the query for this node
     query_dependencies = None
+    # type of display (select, entry, etc.)
+    display_type = ''
     # title of field in the browser client
     display_title = ''
     # format of the displayed data
@@ -49,8 +51,7 @@ class MetaData(object):
     browser_field_population = None
 
     def __init__(self):
-        browser_field_population = {}
-        query_dependencies = {}
+        pass
 
 
 class QueryMetadata(object):
@@ -387,7 +388,7 @@ class QueryMetadata(object):
         query = self.build_query(meta)
         query_result = self.get_list(query)
         self.build_selection_list(meta, query_result)
-        
+
         selection_list = meta.browser_field_population['selection_list']
         entry = selection_list[0]
         display = entry['text']

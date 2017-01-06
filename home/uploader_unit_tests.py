@@ -75,7 +75,7 @@ class IndexServerUnitTests(unittest.TestCase):
         node = mdata.get_node("instrumentDirectory")
         display = mdata.get_display(node)
         print display
-        
+
         node = mdata.get_node("ProposalDirectory")
         display = mdata.get_display(node)
         print display
