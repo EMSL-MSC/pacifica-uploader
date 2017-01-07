@@ -11,8 +11,6 @@ from __future__ import absolute_import
 from celery import shared_task
 
 from uploader import upload
-from uploader import job_status
-
 from bundler import bundle
 
 from home import tar_man
@@ -21,10 +19,9 @@ import os
 
 import json
 
-from home.task_comm import task_error, task_state
+from home.task_comm import task_state
 
 CLEAN_TAR = True
-
 
 def clean_target_directory(target_dir=''):
     """
@@ -34,28 +31,22 @@ def clean_target_directory(target_dir=''):
     # remove old files that were not uploaded
     tar_man.remove_orphans(target_dir)
 
+    # needs to be rewritten
+    return 'unimplemented'
 
-    # get job list from file
-    jobs = tar_man.job_list(target_dir)
+    ## get job list from file
+    #jobs = tar_man.job_list(target_dir)
 
-    if not jobs:
-        return
+    #if not jobs:
+    #    return
+    ## get jobs state from database
+    #jobs_state = job_status(job_list=jobs)
 
-    # fake job list
-    #jobs = ['2001066', '2001067','2001068']
-
-    # get jobs state from database
-    jobs_state = job_status(job_list=jobs)
-
-    # fake job state
-    # jobs_state = '[{?20001066? : {?state_name?:?Received?, ?state?:?1"}},
-    #            {?20001067? : {?state_name?:?Available?, ?state?:?5"}},
-    #            {?20001068? : {?state_name?:?Available?, ?state?:?5"}}]'
-    if jobs_state:
-        err_str = tar_man.clean_tar_directory(target_dir, jobs_state)
-        return err_str
-    else:
-        return 'unable to fetch job status'
+    #if jobs_state:
+    #    err_str = tar_man.clean_tar_directory(target_dir, jobs_state)
+    #    return err_str
+    #else:
+    #    return 'unable to fetch job status'
 
 
 @shared_task

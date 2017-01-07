@@ -77,7 +77,7 @@ def upload(bundle_name='', ingest_server=''):
 
     bundle_path = os.path.abspath(bundle_name)
 
-    files = {'file': (open(bundle_path, 'rb'), 'application/octet-stream')}
+#    files = {'file': (open(bundle_path, 'rb'), 'application/octet-stream')}
     bundle = open(bundle_path, 'rb')
     headers = {'content-type': 'application/octet-stream'}
     url = ingest_server + '/upload'

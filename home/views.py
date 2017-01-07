@@ -10,7 +10,6 @@
 # pylint: disable=broad-except
 # justification: argument with style
 
-
 """
 Django views, handle requests from the client side pages
 """
@@ -175,7 +174,7 @@ def populate_upload_page(request):
         return login_error(request, 'Data share is not configured')
 
     try:
-        contents = os.listdir(root_dir)
+        os.listdir(root_dir)
     except Exception:
         return login_error(request, 'error accessing Data share')
 
@@ -480,7 +479,8 @@ def logout(request):
 
     return HttpResponseRedirect(reverse('home.views.login'))
 
-
+# pylint: disable=unused-argument
+# justification: django required
 def initialize_fields(request):
     """
     initializes the metadata fields
@@ -547,8 +547,9 @@ def get_children(request):
                 if session.files.accessible(itempath):
                     if os.path.isfile(itempath):
                         pathlist.append(
-                            {'title': item + ' ' + '<span class="fineprint"> [Last Modified ' +
-                              mod_time + ']</span>', 'key': itempath,
+                            {'title': item + ' ' +
+                             '<span class="fineprint"> [Last Modified ' + mod_time +
+                             ']</span>', 'key': itempath,
                              'folder': False, 'data': {'time': time}})
                     elif os.path.isdir(itempath):
                         pathlist.append(
@@ -717,7 +718,8 @@ def get_bundle(request):
     except Exception, e:
         return return_bundle(tree, 'get_bundle failed:  ' + e.message)
 
-
+# pylint: disable=unused-argument
+# justification: django required
 def get_state(request):
     """
     returns the status of the uploader

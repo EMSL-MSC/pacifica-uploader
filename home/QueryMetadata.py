@@ -1,7 +1,4 @@
 
-# pylint: disable=broad-except
-# justification: argument with style
-
 """
 class to query the policy server and provide metadata to the browser
 """
@@ -117,7 +114,6 @@ class QueryMetadata(object):
         meta_obj['value'] = meta.value
 
         return meta_obj
-
     def create_meta_upload_list(self):
         """
         creates list of objects that ultimately the metadata server will be able to
@@ -136,14 +132,9 @@ class QueryMetadata(object):
         it can be converted to the user id on meta init.
         we are assuming all uploaders with have a login
         """
-        try:
-            meta = self.get_node('logon')
-            meta.value = network_id
-            self.user = -1
-
-            return True
-        except Exception:
-            return False
+        meta = self.get_node('logon')
+        meta.value = network_id
+        self.user = -1
 
     def load_meta(self):
         """
@@ -237,15 +228,13 @@ class QueryMetadata(object):
             # first get the key field if any
             try:
                 key = result[meta.value_field]
-            except Exception:
+            except KeyError:
                 key = ''
 
-            try:
-                # format the display value
+            if meta.display_format != '':
                 display = meta.display_format % result
-            except Exception:
-                # skip it if it doesn't exist
-                pass
+            else:
+                display = ''
 
              # put in format to be used by select2
             choices.append({"id": key, "text": display})
@@ -359,27 +348,29 @@ class QueryMetadata(object):
         """
             gets a list of items based on the json query structure
         """
-        try:
+        #try:
 
-            headers = {'content-type': 'application/json'}
-            url = self.host + '/uploader'
+        headers = {'content-type': 'application/json'}
+        url = self.host + '/uploader'
 
-            reply = requests.post(url, headers=headers, data=query)
+        reply = requests.post(url, headers=headers, data=query)
 
-            data = json.loads(reply.content)
+        data = json.loads(reply.content)
 
-            # check for error
-            try:
-                status = data['status']
-                print status
-                return []
-            except Exception, ex:
-                print ex.message
-                return data
+        return data
 
-        except Exception, ex:
-            print ex
-            return[]
+        #    # check for error
+        #    try:
+        #        status = data['status']
+        #        print status
+        #        return []
+        #    except Exception, ex:
+        #        print ex.message
+        #        return data
+
+        #except Exception, ex:
+        #    print ex
+        #    return[]
 
     def get_display(self, meta):
         """
@@ -407,6 +398,19 @@ class QueryMetadata(object):
                     meta.value = value
             except KeyError:
                 pass
+
+def create_meta_upload(meta):
+    """
+    creates an object that ultimately the metadata server will be able to
+    use to store the value of this metadata field
+    """
+    meta_obj = {}
+    meta_obj['destinationTable'] = meta.destination_table
+    if meta.key != "":
+        meta_obj['key'] = meta.key
+    meta_obj['value'] = meta.value
+
+    return meta_obj
 
 
 def read_config():

@@ -3,12 +3,7 @@
 """
 
 import unittest
-import json
-
 from QueryMetadata import QueryMetadata
-
-import requests
-
 
 class IndexServerUnitTests(unittest.TestCase):
     """
@@ -103,50 +98,12 @@ class IndexServerUnitTests(unittest.TestCase):
 
         mdata.load_meta()
 
-        # query = """
-        #{
-        #    "user": "d3e889",
-        #    "columns": [ "first_name", "last_name" ],
-        #    "from": "users",
-        #    "where" : { "proposal_id": "48273" }
-        #}
-        #"""
-        #y = x.get_list(query)
-        # print y
-
-        file = open("query.txt", "w")
-
         for meta in mdata.meta_list:
             # if this is a user entered field it doesn't need to be filled
             if meta.display_type != "enter":
                 query = mdata.build_query(meta)
 
-                file.write(query)
-
-                data = mdata.get_list(query)
-
-                formatted = json.dumps(data, sort_keys=True, indent=4)
-
-                file.write(formatted)
-
-        file.close()
-
-
-#def get_unique_id(url, port, range, mode):
-#    """
-#    returns a unique id from the id server
-#    """
-#    query = url + ':' + port + '/getid?range=' + range + '&mode=' + mode
-
-#    headers = {'content-type': 'application/json'}
-
-#    r = requests.get(query)
-
-#    info = json.loads(r.content)
-
-#    job_id = info['startIndex']
-
-#    return job_id
+                mdata.get_list(query)
 
 
 if __name__ == '__main__':

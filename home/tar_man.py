@@ -3,7 +3,6 @@ manages the tar directory to keep it from overflowing
 """
 
 import os
-import json
 import time
 
 
@@ -69,32 +68,32 @@ def remove_orphans(directory):
                 os.remove(full_path)
 
 
-def clean_tar_directory(directory, jobs_state):
+def clean_tar_directory():
     """
     remove turds and jobs that have been archived
-    dfh to do: change to appropriate status level when we move to validation earlier
+    needs to be rewritten to meet requirements of new ingester dfh
     """
-    try:
+    #try:
 
-        jobs = job_list(directory)
+    #    jobs = job_list(directory)
 
-        # ex:
-        # jobs_state = '[{?20001066? : {?state_name?:?Received?, ?state?:?1"}},
-        #               {?20001067? : {?state_name?:?Available?, ?state?:?5"}},
-        #               {?20001068? : {?state_name?:?Available?, ?state?:?5"}}]'
+    #    # ex:
+    #    # jobs_state = '[{?20001066? : {?state_name?:?Received?, ?state?:?1"}},
+    #    #               {?20001067? : {?state_name?:?Available?, ?state?:?5"}},
+    #    #               {?20001068? : {?state_name?:?Available?, ?state?:?5"}}]'
 
-        info = json.loads(jobs_state)
+    #    info = json.loads(jobs_state)
 
-        for job in jobs:
-            try:
-                job_state = info[job]
-                if job_state is not None:
-                    state_index = job_state['state']
-                    val = int(state_index)
-                    if val > 4:
-                        remove_tar_file(directory, job)
-            except Exception:
-                remove_tar_file(directory, job)
+    #    for job in jobs:
+    #        try:
+    #            job_state = info[job]
+    #            if job_state is not None:
+    #                state_index = job_state['state']
+    #                val = int(state_index)
+    #                if val > 4:
+    #                    remove_tar_file(directory, job)
+    #        except Exception:
+    #            remove_tar_file(directory, job)
 
-    except Exception:
-        return 'clean tar failed'
+    #except Exception:
+    #    return 'clean tar failed'
