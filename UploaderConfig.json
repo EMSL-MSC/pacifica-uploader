@@ -8,7 +8,7 @@
 
     "metadata": [
 		{
-			"table": "users",
+			"sourceTable": "users",
 			"metaID": "logon",
 			"destinationTable": "Transactions.submitter",
 			"value": "d3e889",
@@ -20,7 +20,7 @@
 			"diplayFormat": "%(first_name)s %(last_name)s"
 		},
         {
-            "table": "instruments",
+            "sourceTable": "instruments",
             "metaID": "instrumentByID",
 			"destinationTable": "Transactions.instrument",
             "displayType": "select",
@@ -30,11 +30,21 @@
             "queryDependency": { "_id": "instrumentByID" },
             "queryFields": ["_id",  "name_short", "display_name" ],
 			"diplayFormat": "%(_id)s %(name_short)s - %(display_name)s"
-        },
+        },		
+		{
+            "sourceTable": "instruments",
+            "metaID": "instrumentDirectory",
+            "displayType": "directoryTree", 
+			"directoryOrder": 1,
+			"diplayFormat": "%(name_short)s",
+			"valueField": "_id",
+            "queryDependency": { "_id": "instrumentByID" },
+            "queryFields": ["_id", "name_short"]
+        },		
         {
-            "table": "proposals",
+            "sourceTable": "proposals",
             "metaID": "ProposalByInstrument",
-            "value": "34002",
+            "value": "",
 			"destinationTable": "Transactions.proposal",
             "displayTitle": "Proposal",
             "displayType": "select",
@@ -42,9 +52,20 @@
 			"valueField": "_id",
             "queryFields": [ "_id", "title" ],
 			"diplayFormat": "%(_id)s %(title)s"
+        },		
+        {
+            "sourceTable": "proposals",
+            "metaID": "ProposalDirectory",
+            "value": "",
+            "displayType": "directoryTree",
+			"diplayFormat": "Dave is a twit %(_id)s", 
+			"directoryOrder": 0,		
+            "queryDependency": { "_id": "ProposalByInstrument" },
+			"valueField": "_id",
+            "queryFields": [ "_id"]
         },
         {
-            "table": "users",
+            "sourceTable": "users",
             "metaID": "EmslUserOfRecord",
 			"destinationTable": "TransactionKeyValue",
             "displayTitle": "EMSL User",

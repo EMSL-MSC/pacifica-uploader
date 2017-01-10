@@ -80,15 +80,6 @@ def add_usage(parser):
     parser.set_usage(
         "usage: %prog [options] [-c DIR1 -f FILE1 -f FILE2 -c DIR2 -f FILE3]...")
 
-
-def _parser_add_group(option, opt, value, parser):
-    """
-    this is going away!
-    """
-    (type, name) = value.split('=', 1)
-    parser.groups[type] = name
-
-
 def add_options(parser):
     """
     Adds custom command line options for this module to an OptionParser
