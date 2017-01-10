@@ -1,4 +1,5 @@
-
+# pylint: disable=invalid-name
+# justification: django
 
 """
 URLs used by the Django server
