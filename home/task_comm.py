@@ -37,10 +37,10 @@ class TaskComm(object):
         either uses celery for messaging or
         updates the task state locally
         """
-        cls.set_state (t_state, t_msg)
+        cls.set_state(t_state, t_msg)
 
         if USE_CELERY:
-            # send message to the front end 
+            # send message to the front end
             current_task.update_state(state=t_state, meta={'Status': t_msg})
 
 

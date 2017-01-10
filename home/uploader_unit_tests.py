@@ -2,6 +2,10 @@
     index server unit and integration tests
 """
 
+# pylint: disable=no-self-use
+# justification: unit test requirement
+
+
 import unittest
 from QueryMetadata import QueryMetadata
 

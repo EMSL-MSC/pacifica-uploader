@@ -330,10 +330,10 @@ def spin_off_upload(request):
                                          meta_list=meta_list)
         else:  # run local
             success = tasks.upload_files(ingest_server=configuration.ingest_server,
-                               bundle_name=session.bundle_filepath,
-                               file_list=tuples,
-                               bundle_size=session.files.bundle_size,
-                               meta_list=meta_list)
+                                         bundle_name=session.bundle_filepath,
+                                         file_list=tuples,
+                                         bundle_size=session.files.bundle_size,
+                                         meta_list=meta_list)
             if not success:
                 return HttpResponse(json.dumps('failed'), content_type='application/json')
 
@@ -518,8 +518,6 @@ def select_changed(request):
 
     return HttpResponse(retval, content_type='application/json')
 
-# pylint: disable=Wrong continued indentation
-# justification: argument with style
 def get_children(request):
     """
     get the children of a parent directory, used for lazy loading
@@ -556,10 +554,11 @@ def get_children(request):
 
                 if session.files.accessible(itempath):
                     if os.path.isfile(itempath):
-                        pathlist.append(
-                            {'title': item + ' ' + '<span class="fineprint"> [Last Modified ' + 
-                              mod_time + ']</span>', 'key': itempath,
-                             'folder': False, 'data': {'time': time}})
+                        title = \
+                            ('%s <span class="fineprint"> [Last Modified %s ]</span>') % \
+                            (item, mod_time)
+                        pathlist.append({'title': title, 'key': itempath,
+                                         'folder': False, 'data': {'time': time}})
                     elif os.path.isdir(itempath):
                         pathlist.append(
                             {'title': item, 'key': itempath, 'folder': True,
