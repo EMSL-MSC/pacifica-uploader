@@ -26,7 +26,7 @@ import mimetypes
 
 import traceback
 
-from home.task_comm import task_error, task_state
+from home.task_comm import task_error, TaskComm
 
 
 class FileBundler():
@@ -230,7 +230,7 @@ class TarBundler(FileBundler):
             str(int(self.percent_complete))
         print meta_str
 
-        task_state('PROGRESS', meta_str)
+        TaskComm.task_state('PROGRESS', meta_str)
 
     def bundle_metadata(self, metadata):
         """
@@ -314,7 +314,7 @@ def bundle(bundle_name='', file_list=None, bundle_size=0, meta_list=None):
     bundler.bundle_metadata(meta_str)
 
     #print >> sys.stderr, "Finished bundling"
-    task_state('PROGRESS', "Bundling complete")
+    TaskComm.task_state('PROGRESS', "Bundling complete")
 
 
 def main():

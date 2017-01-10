@@ -34,7 +34,8 @@ import datetime
 # operating system
 import os
 
-import home.task_comm
+from home.task_comm import USE_CELERY
+from home.task_comm import TaskComm
 
 # session imports
 from django.contrib.auth.models import User
@@ -42,8 +43,6 @@ from django.contrib.auth import authenticate
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 
-# celery tasks
-from home import tasks
 # for checking celery status
 from celery.result import AsyncResult
 
@@ -52,6 +51,9 @@ from time import sleep
 
 # for restarting Celery
 import subprocess
+
+# celery tasks
+from home import tasks
 
 from home import session_data
 from home import file_tools
@@ -257,6 +259,10 @@ def post_upload_metadata(request):
     """
     populates the upload metadata from the upload form
     """
+    # do this here because the async call from the browser
+    # may call for a status before spin_off_upload is started
+    session.is_uploading = True
+
     data = request.POST.get('form')
     try:
         form = json.loads(data)
@@ -276,7 +282,7 @@ def spin_off_upload(request):
     """
 
     # initialize the task state
-    home.task_comm.set_state('', '')
+    TaskComm.set_state('', '')
 
     data = request.POST.get('files')
     try:
@@ -294,7 +300,7 @@ def spin_off_upload(request):
 
     session.is_uploading = True
 
-    if home.task_comm.USE_CELERY:
+    if USE_CELERY:
         # check to see if background celery process is alive
         # Wait 5 seconds
         session.celery_is_alive = ping_celery()
@@ -315,7 +321,7 @@ def spin_off_upload(request):
         meta_list = metadata.create_meta_upload_list()
 
         # spin this off as a background process and load the status page
-        if home.task_comm.USE_CELERY:
+        if USE_CELERY:
             session.bundle_process = \
                 tasks.upload_files.delay(ingest_server=configuration.ingest_server,
                                          bundle_name=session.bundle_filepath,
@@ -323,11 +329,14 @@ def spin_off_upload(request):
                                          bundle_size=session.files.bundle_size,
                                          meta_list=meta_list)
         else:  # run local
-            tasks.upload_files(ingest_server=configuration.ingest_server,
+            success = tasks.upload_files(ingest_server=configuration.ingest_server,
                                bundle_name=session.bundle_filepath,
                                file_list=tuples,
                                bundle_size=session.files.bundle_size,
                                meta_list=meta_list)
+            if not success:
+                return HttpResponse(json.dumps('failed'), content_type='application/json')
+
     except Exception, e:
         session.is_uploading = False
         return HttpResponseServerError(json.dumps(e.message), content_type='application/json')
@@ -509,7 +518,8 @@ def select_changed(request):
 
     return HttpResponse(retval, content_type='application/json')
 
-
+# pylint: disable=Wrong continued indentation
+# justification: argument with style
 def get_children(request):
     """
     get the children of a parent directory, used for lazy loading
@@ -547,9 +557,8 @@ def get_children(request):
                 if session.files.accessible(itempath):
                     if os.path.isfile(itempath):
                         pathlist.append(
-                            {'title': item + ' ' +
-                             '<span class="fineprint"> [Last Modified ' + mod_time +
-                             ']</span>', 'key': itempath,
+                            {'title': item + ' ' + '<span class="fineprint"> [Last Modified ' + 
+                              mod_time + ']</span>', 'key': itempath,
                              'folder': False, 'data': {'time': time}})
                     elif os.path.isdir(itempath):
                         pathlist.append(
@@ -767,7 +776,7 @@ def incremental_status(request):
                 result = ''
                 print state
 
-            elif home.task_comm.USE_CELERY:
+            elif USE_CELERY:
                 if not session.bundle_process:
                     state = 'PENDING'
                     result = 'Spinning off background process'
@@ -783,7 +792,7 @@ def incremental_status(request):
                     print result
 
             else:
-                state, result = home.task_comm.get_state()
+                state, result = TaskComm.get_state()
 
             if state == 'DONE':
                 d = json.loads(result)

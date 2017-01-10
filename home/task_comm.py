@@ -4,60 +4,48 @@ without the task knowing if celery is running
 """
 from celery import current_task
 
-USE_CELERY = True
+USE_CELERY = False
 
-global TASK_STATE
-global TASK_INFO
+class TaskComm(object):
+    """ hopefully static class """
 
+    state = {'TASK_STATE':'', 'TASK_INFO':''}
 
-def get_state():
-    """
-    reads the state of the currently running task
-    """
-    global TASK_STATE
-    if not TASK_STATE:
-        TASK_STATE = ''
+    @classmethod
+    def set_state(cls, state, info):
+        """
+        sets the state of the currently running task to
+        be read by the front end task
+        """
+        cls.state['TASK_STATE'] = state
+        cls.state['TASK_INFO'] = info
 
-    global TASK_INFO
-    if not TASK_INFO:
-        TASK_INFO = ''
+    @classmethod
+    def get_state(cls):
+        """
+        sets the state of the currently running task to
+        be read by the front end task
+        """
+        state = cls.state['TASK_STATE']
+        info = cls.state['TASK_INFO']
 
-    return (TASK_STATE, TASK_INFO)
+        return (state, info)
 
+    @classmethod
+    def task_state(cls, t_state, t_msg):
+        """
+        either uses celery for messaging or
+        updates the task state locally
+        """
+        cls.set_state (t_state, t_msg)
 
-def set_state(state, info):
-    """
-    sets the state of the currently running task to
-    be read by the front end task
-    """
-    global TASK_STATE
-    TASK_STATE = state
-
-    global TASK_INFO
-    TASK_INFO = info
-
-    return (TASK_STATE, TASK_INFO)
-
-
-def task_state(t_state, t_msg):
-    """
-    either uses celery for messaging or
-    updates the task state locally
-    """
-
-    global TASK_STATE
-    TASK_STATE = t_state
-
-    global TASK_INFO
-    TASK_INFO = t_msg
-
-    if USE_CELERY:
-        # send message to the front end
-        current_task.update_state(state=t_state, meta={'Status': t_msg})
+        if USE_CELERY:
+            # send message to the front end 
+            current_task.update_state(state=t_state, meta={'Status': t_msg})
 
 
 def task_error(t_msg):
     """
     sets the task state to FAILURE
     """
-    task_state('FAILURE', t_msg)
+    TaskComm.task_state('FAILURE', t_msg)

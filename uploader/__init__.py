@@ -27,7 +27,7 @@ import json
 
 from time import sleep
 
-from home.task_comm import task_error, task_state
+from home.task_comm import task_error, TaskComm
 
 
 def job_status(authorization=None, job_list=None):
@@ -58,7 +58,7 @@ def progress(_download_t, _download_d, upload_t, upload_d):
             if percent - TrackPercent.percent > 5:
                 meta_dict = {
                     'Status': "upload percent complete: " + str(int(percent))}
-                task_state("PROGRESS", meta_dict)
+                TaskComm.task_state("PROGRESS", meta_dict)
                 TrackPercent.percent = percent
 
         except Exception, ex:

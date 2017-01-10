@@ -19,7 +19,7 @@ import os
 
 import json
 
-from home.task_comm import task_state
+from home.task_comm import TaskComm
 
 CLEAN_TAR = True
 
@@ -55,7 +55,7 @@ def ping():
     check to see if the celery task process is started.
     """
     print "Pinged!"
-    task_state('PING', "Background process is alive")
+    TaskComm.task_state('PING', "Background process is alive")
 
 # tag to show this def as a celery task
 
@@ -74,26 +74,26 @@ def upload_files(ingest_server='',
 
     target_dir = os.path.dirname(bundle_name)
     if not os.path.isdir(target_dir):
-        task_state('ERROR', 'Bundle directory does not exist')
+        TaskComm.task_state('ERROR', 'Bundle directory does not exist')
         return 'Upload Failed'
 
-    task_state("PROGRESS", "Cleaning previous uploads")
+    TaskComm.task_state("PROGRESS", "Cleaning previous uploads")
 
     # clean tar directory
     # if CLEAN_TAR:
     #    err_str = clean_target_directory(target_dir)
     #    if err_str:
-    #        task_state('PROGRESS', err_str)
+    #        TaskComm.task_state('PROGRESS', err_str)
 
     # initial state pushed through celery
-    task_state("PROGRESS", "Starting Bundle/Upload Process")
+    TaskComm.task_state("PROGRESS", "Starting Bundle/Upload Process")
 
     bundle(bundle_name=bundle_name,
            file_list=file_list,
            meta_list=meta_list,
            bundle_size=bundle_size)
 
-    task_state("PROGRESS", "Completed Bundling")
+    TaskComm.task_state("PROGRESS", "Completed Bundling")
 
     if tartar:
         # create the file tuple list of 1 file
@@ -112,28 +112,28 @@ def upload_files(ingest_server='',
                meta_list=meta_list,
                bundle_size=bundle_size)
 
-    task_state("PROGRESS", "Starting Upload")
+    TaskComm.task_state("PROGRESS", "Starting Upload")
 
     result = upload(bundle_name=bundle_name, ingest_server=ingest_server)
 
     if not result:
-        task_state('FAILURE', "Uploader dieded. We don't know why it did")
+        TaskComm.task_state('FAILURE', "Uploader dieded. We don't know why it did")
 
     try:
         status = json.loads(result)
     except Exception, ex:
-        task_state('FAILURE', ex.message)
-        return 'Upload Failed'
+        TaskComm.task_state('FAILURE', result)
+        return False
 
     if status['state'] != 'OK':
-        task_state('FAILURE', result)
-        return 'Upload Failed'
+        TaskComm.task_state('FAILURE', result)
+        return False
 
     try:
         print "rename"
         tar_man.rename_tar_file(target_dir, bundle_name, status['job_id'])
-        task_state('DONE', result)
-        return result
+        TaskComm.task_state('DONE', result)
+        return True
     except Exception, ex:
-        task_state('FAILURE', ex.message +' Unable to rename ' + bundle_name)
-        return 'Rename Failed'
+        TaskComm.task_state('FAILURE', ex.message +' Unable to rename ' + bundle_name)
+        return False
