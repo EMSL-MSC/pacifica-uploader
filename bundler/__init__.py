@@ -29,7 +29,7 @@ import traceback
 from home.task_comm import task_error, TaskComm
 
 
-class FileBundler():
+class FileBundler(object):
     """
     An 'Abstract' Base Class that provide a template by which bundlers using
     specific formats/libraries shall be defined
@@ -44,7 +44,6 @@ class FileBundler():
                 The path to the target bundle file
         """
         self.bundle_path = os.path.abspath(bundle_path)
-        (self.bundle_dir, self.bundle_name) = os.path.split(self.bundle_path)
 
         self.file_meta = {}
 
@@ -143,26 +142,17 @@ class TarBundler(FileBundler):
     A Derived Class that bundles files in a tarfile format
     """
 
-    def __init__(self,
-                 bundle_path,
-                 proposal_ID='',
-                 instrument_name='',
-                 instrument_ID='',
-                 groups=None):
+    def __init__(self, bundle_path):
         """
         Initializes a Tar_Bundler
 
         :Parameters:
             bundle_path
                 The path to the target bundle file
-            proposal_ID
-                An optional string describing the proposal associated with this bundle
-            instrument_name
-                The name of the instrument that produced the data packaged in the bundle
         """
 
         if bundle_path == '' or bundle_path == None:
-            bundle_path = 'bundle.tar'
+            task_error('no bundle path')
 
         # Initialize the Base Bundler Class
         FileBundler.__init__(self, bundle_path)
@@ -171,7 +161,7 @@ class TarBundler(FileBundler):
             tarball = tarfile.TarFile(name=self.bundle_path, mode='w')
             tarball.close()
         except Exception:
-            task_error("Couldn't create bundle tarball: %s" % self.bundle_path)
+            task_error('Could not create bundle tarball: %s' % self.bundle_path)
 
         self.empty_tar = True
 
@@ -218,7 +208,7 @@ class TarBundler(FileBundler):
                             recursive=False)
 
         except Exception, err:
-            task_error("Failed to bundle file: %s" % (err.msg))
+            task_error('Failed to bundle file: %s' % (err.msg))
 
         tarball.close()
 
@@ -226,7 +216,7 @@ class TarBundler(FileBundler):
         """
         update the task state with the progress of the bundle
         """
-        meta_str = "Bundling percent complete: " + \
+        meta_str = 'Bundling percent complete: ' + \
             str(int(self.percent_complete))
         print meta_str
 
@@ -243,7 +233,7 @@ class TarBundler(FileBundler):
         try:
             metadata_file = tempfile.NamedTemporaryFile(delete=False)
         except IOError:
-            task_error("Can't create metadata file in working directory")
+            task_error('Cannot create metadata file in working directory')
 
         metadata_file.write(metadata)
         fname = metadata_file.name
@@ -260,7 +250,7 @@ class TarBundler(FileBundler):
             tarball = tarfile.TarFile(name=self.bundle_path, mode='a')
 
         try:
-            tar_info = tarfile.TarInfo("metadata.txt")
+            tar_info = tarfile.TarInfo('metadata.txt')
             tar_info.size = len(metadata)
             tar_info.mtime = time.time()
             tarball.addfile(tar_info, metadata_file)
@@ -297,15 +287,10 @@ def bundle(bundle_name='', file_list=None, bundle_size=0, meta_list=None):
 
     # Set up the bundle file
     bundle_path = os.path.abspath(bundle_name)
-    #print >> sys.stderr, "Bundle file set to %s" % bundle_path
 
     # Set up the bundler object
     bundler = None
 
-    # dfh note we are setting the instrument name and ID to the same thing,
-    # which is being
-    # sent in as the instrument name but is actually the instrument ID.  Fix
-    # this.
     bundler = TarBundler(bundle_path)
 
     bundler.bundle_file(file_list, bundle_size, meta_list)
