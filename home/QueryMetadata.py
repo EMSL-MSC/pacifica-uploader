@@ -1,4 +1,5 @@
-
+# pylint: disable=too-many-instance-attributes
+# justification: it is the perfect amount of attributes
 """
 class to query the policy server and provide metadata to the browser
 """
@@ -125,6 +126,11 @@ class QueryMetadata(object):
         meta.value = network_id
         self.user = -1
 
+    @staticmethod
+    def set_if_there(meta, meta_key, obj, attr):
+        if meta_key in meta:
+            setattr(obj, attr, meta[meta_key])
+
     def load_meta(self):
         """
         puts the metadata into a format that can eventually be
@@ -140,42 +146,19 @@ class QueryMetadata(object):
                 meta_entry = MetaData()
 
                 meta_entry.browser_field_population = {}
-
-                if 'sourceTable' in meta:
-                    meta_entry.source_table = meta['sourceTable']
-
-                if 'destinationTable' in meta:
-                    meta_entry.destination_table = meta['destinationTable']
-
-                if 'metaID' in meta:
-                    meta_entry.meta_id = meta['metaID']
-
-                if 'displayType' in meta:
-                    meta_entry.display_type = meta['displayType']
-
-                if 'displayTitle' in meta:
-                    meta_entry.display_title = meta['displayTitle']
-
-                if 'queryDependency' in meta:
-                    meta_entry.query_dependencies = meta['queryDependency']
-
-                if 'valueField' in meta:
-                    meta_entry.value_field = meta['valueField']
-
-                if 'queryFields' in meta:
-                    meta_entry.columns = meta['queryFields']
-
-                if 'diplayFormat' in meta:
-                    meta_entry.display_format = meta['diplayFormat']
-
-                if 'key' in meta:
-                    meta_entry.key = meta['key']
-
-                if 'value' in meta:
-                    meta_entry.value = meta['value']
-
-                if 'directoryOrder' in meta:
-                    meta_entry.directory_order = meta['directoryOrder']
+                
+                self.set_if_there(meta, 'sourceTable', meta_entry, 'source_table')
+                self.set_if_there(meta, 'destinationTable', meta_entry, 'destination_table')
+                self.set_if_there(meta, 'metaID', meta_entry, 'meta_id')
+                self.set_if_there(meta, 'displayType', meta_entry, 'display_type')
+                self.set_if_there(meta, 'displayTitle', meta_entry, 'display_title')
+                self.set_if_there(meta, 'queryDependency', meta_entry, 'query_dependencies')
+                self.set_if_there(meta, 'valueField', meta_entry, 'value_field')
+                self.set_if_there(meta, 'queryFields', meta_entry, 'columns')
+                self.set_if_there(meta, 'diplayFormat', meta_entry, 'display_format')
+                self.set_if_there(meta, 'key', meta_entry, 'key')
+                self.set_if_there(meta, 'value', meta_entry, 'value')
+                self.set_if_there(meta, 'directoryOrder', meta_entry, 'directory_order')
 
                 self.meta_list.append(meta_entry)
 
@@ -244,7 +227,7 @@ class QueryMetadata(object):
         if meta.initialized:
             return
 
-        for query_field, meta_id in meta.query_dependencies.iteritems():
+        for meta_id in meta.query_dependencies.values():
             dependency = self.get_node(meta_id)
 
             # ignore self referential nodes dfh
