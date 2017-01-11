@@ -10,6 +10,8 @@
 # pylint: disable=broad-except
 # justification: argument with style
 
+# pylint: disable=global-statement
+# justification: by design
 """
 Django views, handle requests from the client side pages
 """
@@ -702,7 +704,7 @@ def get_bundle(request):
             return return_bundle(tree, '')
 
         # this actually should be done already by getting parent nodes
-        filtered = session.files.filter_selected_list(paths)
+        # filtered = session.files.filter_selected_list(paths)
 
         common_path = session.files.data_dir
 
