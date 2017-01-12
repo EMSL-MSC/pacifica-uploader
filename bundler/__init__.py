@@ -28,6 +28,8 @@ import traceback
 
 from home.task_comm import task_error, TaskComm
 
+# pylint: disable=too-few-public-methods
+# justification: abstract class
 
 class FileBundler(object):
     """
@@ -157,11 +159,8 @@ class TarBundler(FileBundler):
         # Initialize the Base Bundler Class
         FileBundler.__init__(self, bundle_path)
 
-        try:
-            tarball = tarfile.TarFile(name=self.bundle_path, mode='w')
-            tarball.close()
-        except Exception:
-            task_error('Could not create bundle tarball: %s' % self.bundle_path)
+        tarball = tarfile.TarFile(name=self.bundle_path, mode='w')
+        tarball.close()
 
         self.empty_tar = True
 
