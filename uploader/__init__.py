@@ -38,7 +38,8 @@ def job_status(authorization=None, job_list=None):
 
     return True
 
-
+# pylint: disable=too-few-public-methods
+# justification: perfect amount of methods, possibly look at using "collection"
 class TrackPercent(object):
     """
     yay, module level global that pylint doesn't bitch about
