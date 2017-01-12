@@ -435,6 +435,13 @@ $(window).on("load", function () { initializeFields() });
             // populate session data before showing the status page
             $.post("/postData/", { form: JSON.stringify(frm) },
                 function (data) {
+                    $.post("/upload/", { files: JSON.stringify(fileList) },
+                        function (data) { })
+                        .fail(function (jqXHR, textStatus, errorThrown) {
+                            alert(jqXHR.responseText);
+                        });
+                });
+
                     var page = "/showStatus";
 
                     $.get(page, function (status_data) {
@@ -477,12 +484,6 @@ $(window).on("load", function () { initializeFields() });
                         }
                     });
 
-                    $.post("/upload/", { files: JSON.stringify(fileList) },
-                        function (data) {})
-                        .fail(function (jqXHR, textStatus, errorThrown) {
-                            alert(jqXHR.responseText);
-                        });
-                });
         });
 
 
