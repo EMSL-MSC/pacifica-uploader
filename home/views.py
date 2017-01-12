@@ -4,9 +4,6 @@
 # pylint: disable=invalid-name
 # justification: module level variables
 
-# pylint: disable=too-many-return-statements
-# justification: argument with style
-
 # pylint: disable=broad-except
 # justification: argument with style
 
@@ -170,20 +167,10 @@ def populate_upload_page(request):
     session.touch()
 
     request.session.modified = True
-    # age = request.session.get_expiry_age()
-
-    root_dir = session.files.data_dir
-
-    if not root_dir or root_dir == '':
-        return login_error(request, 'Data share is not configured')
-
-    try:
-        os.listdir(root_dir)
-    except Exception:
-        return login_error(request, 'error accessing Data share')
 
     # update the free space when the page is loaded
     # this will update after an upload is done
+    # move to file_tools dfh
     configuration.update_free_space()
 
     # Render list page with the documents and the form
@@ -373,7 +360,11 @@ def login_error(request, error_string):
     returns to the login page with an error message
     """
     if not configuration.initialized:
-        configuration.initialize_settings()
+        err = configuration.initialize_settings()
+        # if there is an error, override the error_string
+        if err != '[]':
+            error_string = err
+            configuration.initialized = False
 
     return render_to_response(settings.LOGIN_VIEW,
                               {'site_version': version,
@@ -411,7 +402,7 @@ def login(request):
     # initialize server settings from scratch
     configuration.initialized = False
     err = configuration.initialize_settings()
-    if err != '':
+    if err != '[]':
         return login_error(request, 'faulty configuration:  ' + err)
 
     # timeout

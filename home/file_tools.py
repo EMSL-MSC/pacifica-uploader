@@ -1,10 +1,6 @@
-# pylint: disable=unused-variable
-# justification: because I don't want to add extra code to parse a
-# returned tuple
 """
 tools to bundle, parse file structures, etc.
 """
-
 
 import os
 

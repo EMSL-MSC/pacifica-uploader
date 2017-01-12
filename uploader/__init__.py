@@ -2,11 +2,6 @@
 """
 An Uploader module that uses PycURL to transfer data
 """
-# pylint: disable=no-member
-# justification: because pylint doesn't get pycurl
-
-# pylint: disable=unused-argument
-# justification: pycurl callback
 
 import os
 import sys
@@ -30,13 +25,13 @@ from time import sleep
 from home.task_comm import task_error, TaskComm
 
 
-def job_status(authorization=None, job_list=None):
+def job_status(job_list=None):
     """
     checks the status of existing job
     tbd
     """
-
-    return True
+    job_list = []
+    return job_list
 
 # pylint: disable=too-few-public-methods
 # justification: perfect amount of methods, possibly look at using "collection"
@@ -48,7 +43,7 @@ class TrackPercent(object):
     percent = 0
 
 
-def progress(_download_t, _download_d, upload_t, upload_d):
+def progress(upload_t, upload_d):
     """
     gets the progress of the current pycurl upload
     """

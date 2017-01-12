@@ -1,6 +1,3 @@
-# pylint: disable=too-many-return-statements
-# justification: argument with style
-
 """
 Configuration specific to an instrument
 """
@@ -19,7 +16,6 @@ class UploaderConfiguration(object):
     """
     meta data about for a session
     """
-    run_without_celery = True
 
     initialized = False
 
@@ -35,63 +31,59 @@ class UploaderConfiguration(object):
     free_space = 0
     free_size_str = ''
 
+    @staticmethod
+    def set_if_there(config, key, obj, attr, err_list):
+        """ assigns config values """
+        if key in config:
+            setattr(obj, attr, config[key])
+        else:
+            err_list.append('Missing ' + key)
+
     def initialize_settings(self):
         """
         if the system hasn't been initialized, do so
         """
-        try:
-            if not self.initialized:  # first time through, initialize
+        err_list = []
 
-                configuration = read_config_file()
+        if not self.initialized:  # first time through, initialize
 
-                self.target_dir = configuration['target']
-                if self.target_dir == '':
-                    return 'Configuration: Missing target directory'
+            configuration = read_config_file()
 
-                if not os.path.isdir(self.target_dir):
-                    return 'Configuration: target directory unmounted'
+            self.set_if_there(configuration, 'target', self, 'target_dir', err_list)
 
-                self.policy_server = configuration['policyServer']
-                if self.policy_server == '':
-                    return 'Configuration: Missing policy server path'
+            if not os.path.isdir(self.target_dir):
+                err_list.append('target directory unmounted')
 
-                self.ingest_server = configuration['ingestServer']
-                if self.ingest_server == '':
-                    return 'Configuration: Missing ingest server path'
+            self.set_if_there(configuration, 'policyServer', self, 'policy_server', err_list)
 
-                self.timeout = int(configuration['timeout'])
-                if self.timeout == '':
-                    return 'Configuration: Missing timeout'
+            self.set_if_there(configuration, 'ingestServer', self, 'ingest_server', err_list)
 
-                try:
-                    use_celery = configuration['use_celery']
-                    task_comm.USE_CELERY = (use_celery == 'True')
-                except Exception:
-                    task_comm.USE_CELERY = True
+            self.set_if_there(configuration, 'timeout', self, 'timeout', err_list)
 
-                root_dir = os.path.normpath(configuration['dataRoot'])
-                if root_dir == '':
-                    return 'Configuration: Missing root directory'
-
-                if root_dir.endswith("\\"):
-                    root_dir = root_dir[:-1]
-
-                if not os.path.isdir(root_dir):
-                    return 'Configuration: root directory unmounted'
-
-                self.data_dir = root_dir
-
+            if 'use_celery' in configuration:
+                task_comm.USE_CELERY = (configuration['use_celery'] == 'True')
             else:
-                return ''
-        except Exception, err:
-            print err
-            return 'Configuration Error'
+                task_comm.USE_CELERY = True
 
-        return ''
+            self.set_if_there(configuration, 'dataRoot', self, 'data_dir', err_list)
+
+            self.data_dir = os.path.normpath(self.data_dir)
+
+            if self.data_dir.endswith("\\"):
+                self.data_dir = self.data_dir[:-1]
+
+            if not os.path.isdir(self.data_dir):
+                err_list.append('root directory unmounted')
+
+        err_str = json.dumps(err_list)
+
+        return err_str
+
 
     def update_free_space(self):
         """
         update the amount of free space currently available
+        this should go in file_tools
         """
         # get the disk usage
         space = psutil.disk_usage(self.target_dir)

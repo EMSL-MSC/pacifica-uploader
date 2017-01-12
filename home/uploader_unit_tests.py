@@ -79,8 +79,6 @@ class IndexServerUnitTests(unittest.TestCase):
         display = mdata.get_display(node)
         print display
 
-
-    # pylint: disable=broad-except
     def test_initialize(self):
         """
         tests the initial population of the metadata
@@ -93,7 +91,6 @@ class IndexServerUnitTests(unittest.TestCase):
 
         return mdata
 
-    # pylint: disable=broad-except
     def test_query_meta(self):
         """
         builds the metadata queries to the policy server

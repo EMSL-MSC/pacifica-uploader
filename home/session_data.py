@@ -1,6 +1,3 @@
-# pylint: disable=too-many-return-statements
-# justification: argument with style
-
 """
 maintains the state of a user session
 """

@@ -1,7 +1,4 @@
 
-# pylint: disable=broad-except
-# justification: argument with style
-
 """
 Celery tasks to be run in the background
 """
@@ -19,7 +16,7 @@ import os
 
 import json
 
-from home.task_comm import TaskComm
+from home.task_comm import TaskComm, task_error
 
 CLEAN_TAR = True
 
@@ -62,7 +59,7 @@ def ping():
 # pylint: disable=too-many-arguments
 # justification: perfect amount of arguments
 
-# pylint: disable=broad-exception
+# pylint: disable=broad-except
 # justification: we want to report and log any error at the highest level
 
 @shared_task
@@ -135,5 +132,5 @@ def upload_files(ingest_server='',
         TaskComm.task_state('DONE', result)
         return True
     except Exception, ex:
-        task_error('FAILURE','tasks: upload_files :' + ex.message)
+        task_error('tasks: upload_files :' + ex.message)
         return False
