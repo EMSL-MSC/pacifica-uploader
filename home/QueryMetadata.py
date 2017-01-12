@@ -1,5 +1,7 @@
 # pylint: disable=too-many-instance-attributes
 # justification: it is the perfect amount of attributes
+
+
 """
 class to query the policy server and provide metadata to the browser
 """
@@ -8,6 +10,8 @@ import os
 
 import requests
 
+# pylint: disable=too-few-public-methods
+# justification: perfect amount of methods, possibly look at using "collection"
 
 class MetaData(object):
     """
@@ -128,6 +132,7 @@ class QueryMetadata(object):
 
     @staticmethod
     def set_if_there(meta, meta_key, obj, attr):
+        """ kludge to avoid too many conditionals """
         if meta_key in meta:
             setattr(obj, attr, meta[meta_key])
 
@@ -146,7 +151,7 @@ class QueryMetadata(object):
                 meta_entry = MetaData()
 
                 meta_entry.browser_field_population = {}
-                
+
                 self.set_if_there(meta, 'sourceTable', meta_entry, 'source_table')
                 self.set_if_there(meta, 'destinationTable', meta_entry, 'destination_table')
                 self.set_if_there(meta, 'metaID', meta_entry, 'meta_id')

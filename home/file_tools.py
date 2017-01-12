@@ -8,6 +8,8 @@ tools to bundle, parse file structures, etc.
 
 import os
 
+# pylint: disable=too-few-public-methods
+# justification: perfect amount of methods, possibly look at using "collection"
 
 class FolderMeta(object):
     """
