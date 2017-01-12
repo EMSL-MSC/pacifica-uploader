@@ -47,5 +47,6 @@ class TaskComm(object):
 def task_error(t_msg):
     """
     sets the task state to FAILURE
+    also log the error here
     """
     TaskComm.task_state('FAILURE', t_msg)
