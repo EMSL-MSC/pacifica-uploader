@@ -1,0 +1,6 @@
+django<2
+psutil
+celery
+pysqlite
+coverage
+codeclimate-test-reporter

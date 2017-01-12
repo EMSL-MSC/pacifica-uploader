@@ -1,7 +1,4 @@
 django<2
 psutil
 celery
-pycurl
 pysqlite
-coverage
-codeclimate-test-reporter
