@@ -43,6 +43,14 @@ class TrackPercent(object):
     percent = 0
 
 
+    def read(self, size):
+        """Read wrapper for requests that calculates the hashcode inline."""
+        buf = self.fileobj.read(size)
+        # running checksum
+        self.hashval.update(buf)
+        return buf
+
+
 def progress(upload_t, upload_d):
     """
     gets the progress of the current pycurl upload
