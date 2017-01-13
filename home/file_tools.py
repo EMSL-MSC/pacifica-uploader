@@ -222,7 +222,9 @@ class FileManager(object):
         recursively add up the sizes of all files under a root dir
         """
         total_size = 0
-        for dirpath, dirnames, filenames in os.walk(start_path):
+        for parts in os.walk(start_path):
+            dirpath = parts[0]
+            filenames = parts[2]
             for filename in filenames:
                 filepath = os.path.join(dirpath, filename)
                 if self.accessible(filepath):
