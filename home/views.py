@@ -5,7 +5,8 @@
 # justification: module level variables
 
 # pylint: disable=broad-except
-# justification: argument with style
+# justification: need to catch broad exceptions at entry point to log
+# the stack trace to underlying exceptions
 
 # pylint: disable=global-statement
 # justification: by design
@@ -285,7 +286,8 @@ def post_upload_metadata(request):
         print '-'*60
         return HttpResponseServerError(json.dumps(e.message), content_type='application/json')
 
-
+# pylint: disable=too-many-return-statements
+# justification: disagreement with style
 def spin_off_upload(request):
     """
     spins the upload process off to a background celery process
