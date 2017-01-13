@@ -199,7 +199,7 @@ class FileManager(object):
                 #    return false;
                 with open(path) as temp_file:
                     temp_file.close()
-            except Exception as ex:
+            except OSError as ex:
                 print ex
                 retval = False
 
