@@ -188,26 +188,22 @@ class TarBundler(FileBundler):
         self.percent_complete = 0
         self.bundle_size = bundle_size
 
-        try:
-            self.report_percent_complete()
+        self.report_percent_complete()
 
-            for (file_path, file_arcname) in file_paths:
-                # hash the file and store in hash_dict
-                # percent complete is reported only as read and hashed
-                # hopefully that being the slowest part and all we have
-                # access to for completion statistics
-                # file metadata is also built at this time
-                meta = self.hash_file(file_path, file_arcname)
-                meta_list.append(meta)
+        for (file_path, file_arcname) in file_paths:
+            # hash the file and store in hash_dict
+            # percent complete is reported only as read and hashed
+            # hopefully that being the slowest part and all we have
+            # access to for completion statistics
+            # file metadata is also built at this time
+            meta = self.hash_file(file_path, file_arcname)
+            meta_list.append(meta)
 
-                # for version 1.2, push files to a data/ directory
-                # to avoid collisions with metadata.txt in the root
-                modified_arc_name = os.path.join('data', file_arcname)
-                tarball.add(file_path, arcname=modified_arc_name,
-                            recursive=False)
-
-        except Exception, err:
-            task_error('Failed to bundle file: %s' % (err.msg))
+            # for version 1.2, push files to a data/ directory
+            # to avoid collisions with metadata.txt in the root
+            modified_arc_name = os.path.join('data', file_arcname)
+            tarball.add(file_path, arcname=modified_arc_name,
+                        recursive=False)
 
         tarball.close()
 

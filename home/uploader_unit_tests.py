@@ -7,6 +7,9 @@
 
 
 import unittest
+
+# pylint: disable=relative-import
+# justification: no effing idea what it is asking for
 from QueryMetadata import QueryMetadata
 
 class IndexServerUnitTests(unittest.TestCase):
