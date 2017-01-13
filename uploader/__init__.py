@@ -48,6 +48,7 @@ class TrackPercent(object):
         buf = self.fileobj.read(size)
         # running checksum
         self.hashval.update(buf)
+
         return buf
 
 
