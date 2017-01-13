@@ -1,6 +1,8 @@
 django<2
 psutil
-celery
+celery<4
 pysqlite
+pycurl
+requests
 coverage
 codeclimate-test-reporter

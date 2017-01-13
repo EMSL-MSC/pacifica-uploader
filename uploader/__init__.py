@@ -16,7 +16,7 @@ from StringIO import StringIO
 
 import requests
 
-from home.Authorization import Authorization
+# from home.Authorization import Authorization
 
 import json
 

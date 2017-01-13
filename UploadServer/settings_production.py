@@ -1,5 +1,3 @@
-from settings import *
-
 DEBUG = True
 
 if not 'AMQP_PORT_5672_TCP_ADDR' in os.environ:

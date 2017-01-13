@@ -1,4 +1,6 @@
-django<2
+django<1.10
 psutil
-celery
+pycurl
+requests
+celery<4
 pysqlite

@@ -150,15 +150,26 @@ def start_celery():
     return alive
 
 
-@login_required(login_url=settings.LOGIN_URL)
+#@login_required(login_url=settings.LOGIN_URL)
 def populate_upload_page(request):
     """
     formats the main uploader page
     """
+    from django.http.request import HttpRequest
+    import base64, re
+    login_req = HttpRequest()
+    auth = request.META['HTTP_AUTHORIZATION']
+    scheme, creds = re.split(r'\s+', auth)
+    if scheme.lower() != 'basic':
+        raise ValueError('Unknown auth scheme \"%s\"' % scheme)
+    user, pword = base64.b64decode(creds).split(':', 1)
+    login_req.POST['username'] = user
+    login_req.POST['password'] = '1234'
+    login(login_req)
     # if not logged in
-    if session.password == '':
+    # if session.password == '':
         # call login error with no error message
-        return login_error(request, '')
+        # return login_error(request, '')
 
     if session.is_timed_out():
         return logout(request)
@@ -209,6 +220,11 @@ def set_data_root(request):
         return HttpResponse(json.dumps('success'), content_type='application/json')
 
     except Exception, e:
+        import sys, traceback
+        print "Exception in set_data_root:"
+        print '-'*60
+        traceback.print_exc(file=sys.stderr)
+        print '-'*60
         return HttpResponseServerError(json.dumps(e.message), content_type='application/json')
 
 
@@ -262,6 +278,11 @@ def post_upload_metadata(request):
         return HttpResponse(json.dumps('success'), content_type='application/json')
 
     except Exception, e:
+        import sys, traceback
+        print "Exception in post_upload_metadata:"
+        print '-'*60
+        traceback.print_exc(file=sys.stderr)
+        print '-'*60
         return HttpResponseServerError(json.dumps(e.message), content_type='application/json')
 
 
@@ -281,6 +302,11 @@ def spin_off_upload(request):
             return HttpResponseBadRequest(json.dumps('missing files in post'),
                                           content_type='application/json')
     except Exception, e:
+        import sys, traceback
+        print "Exception in spin_off_upload:"
+        print '-'*60
+        traceback.print_exc(file=sys.stderr)
+        print '-'*60
         return HttpResponseBadRequest(json.dumps(e.message), content_type='application/json')
 
     if not files:
@@ -327,6 +353,11 @@ def spin_off_upload(request):
                 return HttpResponse(json.dumps('failed'), content_type='application/json')
 
     except Exception, e:
+        import sys, traceback
+        print "Exception in spin_off_upload_again:"
+        print '-'*60
+        traceback.print_exc(file=sys.stderr)
+        print '-'*60
         session.is_uploading = False
         return HttpResponseServerError(json.dumps(e.message), content_type='application/json')
 
@@ -337,16 +368,12 @@ def upload_files(request):
     """
     view for upload process spawn
     """
-    try:
-        # use this flag to determine status of upload in incremental status
-        session.is_uploading = True
+    # use this flag to determine status of upload in incremental status
+    session.is_uploading = True
 
-        reply = spin_off_upload(request)
+    reply = spin_off_upload(request)
 
-        return reply
-
-    except Exception, e:
-        return e.message
+    return reply
 
 
 """
@@ -453,8 +480,7 @@ def login(request):
     # try:
     #    tasks.clean_target_directory(configuration.target_dir)
     # except:
-    #    return login_error(request, 'failed to clear tar directory')
-
+    #    return 
     # keep a copy of the user so we can keep other users from stepping on them if they are still
     # logged in
     session.current_user = request.user
@@ -717,6 +743,11 @@ def get_bundle(request):
         return return_bundle(tree, session.files.error_string)
 
     except Exception, e:
+        import sys, traceback
+        print "Exception in get_bundle:"
+        print '-'*60
+        traceback.print_exc(file=sys.stderr)
+        print '-'*60
         return return_bundle(tree, 'get_bundle failed:  ' + e.message)
 
 # pylint: disable=unused-argument
@@ -801,6 +832,11 @@ def incremental_status(request):
         return HttpResponse(retval)
 
     except Exception, e:
+        import sys, traceback
+        print "Exception in incremental status:"
+        print '-'*60
+        traceback.print_exc(file=sys.stderr)
+        print '-'*60
         print e.message
         session.is_uploading = False
         retval = json.dumps({'state': 'Status Error', 'result': e.message})

@@ -4,7 +4,7 @@ without the task knowing if celery is running
 """
 from celery import current_task
 
-USE_CELERY = False
+USE_CELERY = True
 
 class TaskComm(object):
     """ hopefully static class """
