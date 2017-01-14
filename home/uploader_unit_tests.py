@@ -1,16 +1,13 @@
 """
     index server unit and integration tests
 """
-
+from __future__ import absolute_import
 # pylint: disable=no-self-use
 # justification: unit test requirement
 
 
 import unittest
-
-# pylint: disable=relative-import
-# justification: no effing idea what it is asking for
-from QueryMetadata import QueryMetadata
+from .QueryMetadata import QueryMetadata
 
 class IndexServerUnitTests(unittest.TestCase):
     """
