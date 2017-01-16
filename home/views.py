@@ -1,10 +1,4 @@
-﻿# pylint: disable=no-member
-# justification:  dynamic methods
-
-# pylint: disable=invalid-name
-# justification: module level variables
-
-# pylint: disable=broad-except
+﻿# pylint: disable=broad-except
 # justification: need to catch broad exceptions at entry point to log
 # the stack trace to underlying exceptions
 
@@ -69,8 +63,8 @@ configuration = instrument_server.UploaderConfiguration()
 
 metadata = None
 
-# development version
-version = '2.02'
+# development VERSION
+VERSION = '2.02'
 
 
 def login_user_locally(request):
@@ -138,8 +132,8 @@ def start_celery():
             print 'attempting to start Celery'
             subprocess.Popen(
                 'celery -A UploadServer worker --loglevel=info', shell=True)
-        except Exception, e:
-            print e
+        except Exception, ex:
+            print ex
 
     count = 0
     alive = False
@@ -209,8 +203,8 @@ def set_data_root(request):
 
         return HttpResponse(json.dumps('success'), content_type='application/json')
 
-    except Exception, e:
-        return HttpResponseServerError(json.dumps(e.message), content_type='application/json')
+    except Exception, ex:
+        return HttpResponseServerError(json.dumps(ex.message), content_type='application/json')
 
 
 def show_status(request, message):
@@ -262,8 +256,8 @@ def post_upload_metadata(request):
         session.current_time = datetime.datetime.now().strftime('%m.%d.%Y.%H.%M.%S')
         return HttpResponse(json.dumps('success'), content_type='application/json')
 
-    except Exception, e:
-        return HttpResponseServerError(json.dumps(e.message), content_type='application/json')
+    except Exception, ex:
+        return HttpResponseServerError(json.dumps(ex.message), content_type='application/json')
 
 # pylint: disable=too-many-return-statements
 # justification: disagreement with style
@@ -282,8 +276,8 @@ def spin_off_upload(request):
         else:
             return HttpResponseBadRequest(json.dumps('missing files in post'),
                                           content_type='application/json')
-    except Exception, e:
-        return HttpResponseBadRequest(json.dumps(e.message), content_type='application/json')
+    except Exception, ex:
+        return HttpResponseBadRequest(json.dumps(ex.message), content_type='application/json')
 
     if not files:
         return HttpResponseBadRequest(json.dumps('missing files in post'),
@@ -328,9 +322,9 @@ def spin_off_upload(request):
             if not success:
                 return HttpResponse(json.dumps('failed'), content_type='application/json')
 
-    except Exception, e:
+    except Exception, ex:
         session.is_uploading = False
-        return HttpResponseServerError(json.dumps(e.message), content_type='application/json')
+        return HttpResponseServerError(json.dumps(ex.message), content_type='application/json')
 
     return HttpResponse(json.dumps('success'), content_type='application/json')
 
@@ -347,8 +341,8 @@ def upload_files(request):
 
         return reply
 
-    except Exception, e:
-        return e.message
+    except Exception, ex:
+        return ex.message
 
 
 """
@@ -369,7 +363,7 @@ def login_error(request, error_string):
             configuration.initialized = False
 
     return render_to_response(settings.LOGIN_VIEW,
-                              {'site_version': version,
+                              {'site_version': VERSION,
                                'instrument': configuration.instrument,
                                'message': error_string},
                               context_instance=RequestContext(request))
@@ -561,8 +555,8 @@ def get_children(request):
 
         retval = json.dumps(pathlist)
 
-    except Exception, e:
-        print e
+    except Exception, ex:
+        print ex
         return error_response('lazyload failed')
 
     return HttpResponse(retval)
@@ -718,8 +712,8 @@ def get_bundle(request):
 
         return return_bundle(tree, session.files.error_string)
 
-    except Exception, e:
-        return return_bundle(tree, 'get_bundle failed:  ' + e.message)
+    except Exception, ex:
+        return return_bundle(tree, 'get_bundle failed:  ' + ex.message)
 
 # pylint: disable=unused-argument
 # justification: django required
@@ -789,8 +783,8 @@ def incremental_status(request):
                 state, result = TaskComm.get_state()
 
             if state == 'DONE':
-                d = json.loads(result)
-                job_id = d['job_id']
+                ingest_result = json.loads(result)
+                job_id = ingest_result['job_id']
                 print 'completed job ', job_id
 
                 # if we have successfully uploaded, cleanup the lists
@@ -802,8 +796,8 @@ def incremental_status(request):
 
         return HttpResponse(retval)
 
-    except Exception, e:
-        print e.message
+    except Exception, ex:
+        print ex.message
         session.is_uploading = False
         retval = json.dumps({'state': 'Status Error', 'result': e.message})
         return HttpResponse(retval)
