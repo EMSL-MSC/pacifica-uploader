@@ -31,12 +31,6 @@ import os
 from home.task_comm import USE_CELERY
 from home.task_comm import TaskComm
 
-# session imports
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate
-from django.contrib import auth
-from django.contrib.auth.decorators import login_required
-
 # for checking celery status
 from celery.result import AsyncResult
 
@@ -65,41 +59,6 @@ metadata = None
 
 # development VERSION
 VERSION = '2.02'
-
-
-def login_user_locally(request):
-    """
-    if we have a new user, let's create a new Django user and log them
-    in. Actual EUS authentication will be done before this function is called.
-    """
-    username = request.POST['username']
-    password = request.POST['password']
-
-    # does this user exist?
-    try:
-        user = User.objects.get(username=username)
-    except User.DoesNotExist:
-        user = None
-
-    if user is None:
-        # create a new user
-        user = User.objects.create_user(username=username, password=password)
-        user.save()
-    else:
-        # user exists but their password may have changed
-        # if we make it this far, user has been validated by EUS
-        # so store the 'new' password
-        user.set_password(password)
-        user.save()
-
-    # we now have a local user that matches the already validated EUS user
-    # authenticate and log them in locally
-    user = authenticate(username=username, password=password)
-    if user:
-        if user.is_active:
-            auth.login(request, user)
-    else:
-        return 'Unable to create user'
 
 
 def ping_celery():
@@ -144,14 +103,12 @@ def start_celery():
 
     return alive
 
-
-@login_required(login_url=settings.LOGIN_URL)
 def populate_upload_page(request):
     """
     formats the main uploader page
     """
     # if not logged in
-    if session.password == '':
+    if not session.is_logged_in:
         # call login error with no error message
         return login_error(request, '')
 
@@ -390,7 +347,7 @@ def cookie_test(request):
 def login(request):
     """
     Logs the user in
-    If the login fails for whatever reason, authentication, invalid for instrument, etc.,
+    If the login fails for whatever reason, invalid for instrument, etc.,
     returns to login page with error.
     Otherwise, gets the user data to populate the main page
     """
@@ -401,15 +358,11 @@ def login(request):
     if err != '[]':
         return login_error(request, 'faulty configuration:  ' + err)
 
-    # timeout
-    #SESSION_COOKIE_AGE = configuration.timeout * 60
-
     # ignore GET
     if not request.POST:
         return login_error(request, '')
 
     new_user = request.POST['username']
-    new_password = request.POST['password']
 
     global session
     if session:
@@ -430,21 +383,12 @@ def login(request):
     session.config = configuration
 
     # initialize the data dir for the session to the configured default
+    # check to see if needed dfh
     session.files.data_dir = session.config.data_dir
 
     # loads the metadata structure from the config file
     global metadata
-    metadata = QueryMetadata.QueryMetadata(
-        configuration.policy_server, new_user)
-
-    # log them in locally for our session
-    err_str = login_user_locally(request)
-    if err_str:
-        return login_error(request, err_str)
-
-    # did that work?
-    if not request.user.is_authenticated():
-        return login_error(request, 'Problem with local authentication')
+    metadata = QueryMetadata.QueryMetadata(configuration.policy_server, new_user)
 
     # try:
     #    tasks.clean_target_directory(configuration.target_dir)
@@ -455,7 +399,6 @@ def login(request):
     # logged in
     session.current_user = request.user
     session.is_logged_in = True
-    session.password = new_password
     session.touch()
 
     return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
@@ -469,13 +412,10 @@ def logout(request):
 
     session.current_user = None
 
-    # logs out local user session
-    # if the LOGOUT_URL is set to this view, we create a recursive call to here
-    auth.logout(request)
-
     session.is_logged_in = False
 
     return HttpResponseRedirect(reverse('home.views.login'))
+
 
 # pylint: disable=unused-argument
 # justification: django required
@@ -506,6 +446,7 @@ def select_changed(request):
     retval = json.dumps(updates)
 
     return HttpResponse(retval, content_type='application/json')
+
 
 def get_children(request):
     """
