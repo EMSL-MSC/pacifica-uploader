@@ -57,7 +57,7 @@ def ping():
 # tag to show this def as a celery task
 
 # pylint: disable=too-many-arguments
-# justification: perfect amount of arguments
+# justification: this is the single point of entry to background processing
 
 # pylint: disable=broad-except
 # justification: we want to report and log any error at the highest level
