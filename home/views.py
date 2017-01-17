@@ -363,6 +363,9 @@ def login(request):
         return login_error(request, '')
 
     new_user = request.POST['username']
+    if new_user == '':
+        return login_error(request, 'No user specified')
+
 
     global session
     if session:
