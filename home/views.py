@@ -48,8 +48,15 @@ from home import file_tools
 from home import instrument_server
 from home import QueryMetadata
 
+# pylint: disable=global-statement
+# justification: by design
+
 # Module level variables
 # session is user specific information
+
+# pylint: disable=invalid-name
+# justification: fix later
+
 session = session_data.SessionState()
 
 # server is instrument uploader specific information
@@ -406,7 +413,8 @@ def login(request):
 
     return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
-
+# pylint: disable=unused-argument
+# justification: django required
 def logout(request):
     """
     logs the user out and returns to the main page
@@ -743,5 +751,5 @@ def incremental_status(request):
     except Exception, ex:
         print ex.message
         session.is_uploading = False
-        retval = json.dumps({'state': 'Status Error', 'result': e.message})
+        retval = json.dumps({'state': 'Status Error', 'result': ex.message})
         return HttpResponse(retval)
