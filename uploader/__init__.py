@@ -5,25 +5,63 @@ An Uploader module that uses PycURL to transfer data
 
 import os
 import sys
-import re
-import stat
-from optparse import OptionParser
-import pycurl
-import tempfile
-import bundler
-from getpass import getpass
-from StringIO import StringIO
-
 import requests
-
-from home.Authorization import Authorization
-
-import json
-
-from time import sleep
-
 from home.task_comm import task_error, TaskComm
 
+
+class Uploader(object):
+    """Class to send a single bundled file to the Ingest service."""
+
+    fileobj = None
+    bundle_name = None
+    ingest_server = None
+    percent_uploaded = 0
+    total_uploaded = 0
+    total_size = 0
+
+
+    def __init__(self, bundle_name='', ingest_server=''):
+        """Constructor for FileIngester class."""
+        self.ingest_server = ingest_server
+        self.bundle_name = bundle_name
+        self.total_size = os.path.getsize(bundle_name)
+
+    def read(self, size):
+        """Read wrapper for requests that calculates the hashcode inline."""
+        buf = self.fileobj.read(size)
+
+        # running total
+        self.total_uploaded += size
+
+        percent = 100.0 * float(self.total_uploaded) / float(self.total_size)
+        if percent > 100.0:
+            percent = 100.0
+
+        if percent - self.percent_uploaded > 5:
+            status = {
+                'Status': "upload percent complete: " + str(int(percent))}
+            TaskComm.task_state("PROGRESS", status)
+            self.percent_uploaded = percent
+
+        return buf
+
+    def upload_bundle(self):
+        """Upload a file from inside a tar file."""
+
+        bundle_path = os.path.abspath(self.bundle_name)
+        self.fileobj = open(bundle_path, 'rb')
+        size_str = str(self.total_size)
+        self.fileobj.seek(0)
+        url = self.ingest_server + '/upload'
+
+        headers = {}
+        headers['Content-Type'] = 'application/octet-stream'
+        headers['Content-Length'] = size_str
+
+        status = requests.post(url, data=self, headers=headers)
+        self.fileobj.close()
+
+        return status.content
 
 def job_status(job_list=None):
     """
@@ -32,64 +70,6 @@ def job_status(job_list=None):
     """
     job_list = []
     return job_list
-
-# pylint: disable=too-few-public-methods
-# justification: perfect amount of methods, possibly look at using "collection"
-class TrackPercent(object):
-    """
-    yay, module level global that pylint doesn't bitch about
-    used to track percent uploaded
-    """
-    percent = 0
-
-
-    def read(self, size):
-        """Read wrapper for requests that calculates the hashcode inline."""
-        buf = self.fileobj.read(size)
-        # running checksum
-        self.hashval.update(buf)
-
-        return buf
-
-
-def progress(upload_t, upload_d):
-    """
-    gets the progress of the current pycurl upload
-    """
-    if upload_t > 0:
-        try:
-            percent = 100.0 * float(upload_d) / float(upload_t)
-
-            if percent - TrackPercent.percent > 5:
-                meta_dict = {
-                    'Status': "upload percent complete: " + str(int(percent))}
-                TaskComm.task_state("PROGRESS", meta_dict)
-                TrackPercent.percent = percent
-
-        except Exception, ex:
-            raise task_error('Error during callback: '+ ex.message)
-
-
-def upload(bundle_name='', ingest_server=''):
-    """
-    Uploads a bundle of files via cURL to a specified server
-
-    :Parameters:
-        bundle_name
-            The name of the bundle file to upload.
-    """
-    status = None
-
-    bundle_path = os.path.abspath(bundle_name)
-
-#    files = {'file': (open(bundle_path, 'rb'), 'application/octet-stream')}
-    bundle = open(bundle_path, 'rb')
-    headers = {'content-type': 'application/octet-stream'}
-    url = ingest_server + '/upload'
-
-    status = requests.post(url, headers=headers, data=bundle)
-
-    return status.content
 
 
 def main():
