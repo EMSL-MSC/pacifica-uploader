@@ -226,18 +226,13 @@ def post_upload_metadata(request):
         session.current_time = datetime.datetime.now().strftime('%m.%d.%Y.%H.%M.%S')
         return HttpResponse(json.dumps('success'), content_type='application/json')
 
-<<<<<<< HEAD
-    except Exception, e:
+    except Exception, ex:
         import sys, traceback
         print "Exception in post_upload_metadata:"
         print '-'*60
         traceback.print_exc(file=sys.stderr)
         print '-'*60
-        return HttpResponseServerError(json.dumps(e.message), content_type='application/json')
-=======
-    except Exception, ex:
         return HttpResponseServerError(json.dumps(ex.message), content_type='application/json')
->>>>>>> master
 
 # pylint: disable=too-many-return-statements
 # justification: disagreement with style
@@ -256,18 +251,13 @@ def spin_off_upload(request):
         else:
             return HttpResponseBadRequest(json.dumps('missing files in post'),
                                           content_type='application/json')
-<<<<<<< HEAD
-    except Exception, e:
+    except Exception, ex:
         import sys, traceback
         print "Exception in spin_off_upload:"
         print '-'*60
         traceback.print_exc(file=sys.stderr)
         print '-'*60
-        return HttpResponseBadRequest(json.dumps(e.message), content_type='application/json')
-=======
-    except Exception, ex:
         return HttpResponseBadRequest(json.dumps(ex.message), content_type='application/json')
->>>>>>> master
 
     if not files:
         return HttpResponseBadRequest(json.dumps('missing files in post'),
@@ -312,16 +302,12 @@ def spin_off_upload(request):
             if not success:
                 return HttpResponse(json.dumps('failed'), content_type='application/json')
 
-<<<<<<< HEAD
-    except Exception, e:
+    except Exception, ex:
         import sys, traceback
         print "Exception in spin_off_upload_again:"
         print '-'*60
         traceback.print_exc(file=sys.stderr)
         print '-'*60
-=======
-    except Exception, ex:
->>>>>>> master
         session.is_uploading = False
         return HttpResponseServerError(json.dumps(ex.message), content_type='application/json')
 
@@ -337,12 +323,7 @@ def upload_files(request):
 
     reply = spin_off_upload(request)
 
-<<<<<<< HEAD
     return reply
-=======
-    except Exception, ex:
-        return ex.message
->>>>>>> master
 
 
 """
@@ -405,6 +386,8 @@ def login(request):
     if request.POST:
         new_user = request.POST['username']
         new_password = request.POST['password']
+        if new_user == '':
+            return login_error(request, 'No user specified')
     else:
         if 'HTTP_AUTHORIZATION' in request.META:
             auth = request.META['HTTP_AUTHORIZATION']
@@ -414,14 +397,6 @@ def login(request):
             new_user, new_password = base64.b64decode(creds).split(':', 1)
         else:
             return login_error(request, '')
-
-<<<<<<< HEAD
-=======
-    new_user = request.POST['username']
-    if new_user == '':
-        return login_error(request, 'No user specified')
-
->>>>>>> master
 
     global session
     if session:
@@ -712,18 +687,13 @@ def get_bundle(request):
 
         return return_bundle(tree, session.files.error_string)
 
-<<<<<<< HEAD
-    except Exception, e:
+    except Exception, ex:
         import sys, traceback
         print "Exception in get_bundle:"
         print '-'*60
         traceback.print_exc(file=sys.stderr)
         print '-'*60
-        return return_bundle(tree, 'get_bundle failed:  ' + e.message)
-=======
-    except Exception, ex:
         return return_bundle(tree, 'get_bundle failed:  ' + ex.message)
->>>>>>> master
 
 # pylint: disable=unused-argument
 # justification: django required
@@ -806,18 +776,13 @@ def incremental_status(request):
 
         return HttpResponse(retval)
 
-<<<<<<< HEAD
-    except Exception, e:
+    except Exception, ex:
         import sys, traceback
         print "Exception in incremental status:"
         print '-'*60
         traceback.print_exc(file=sys.stderr)
         print '-'*60
-        print e.message
-=======
-    except Exception, ex:
         print ex.message
->>>>>>> master
         session.is_uploading = False
         retval = json.dumps({'state': 'Status Error', 'result': ex.message})
         return HttpResponse(retval)
