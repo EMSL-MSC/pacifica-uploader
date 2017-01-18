@@ -33,6 +33,7 @@ import datetime
 
 # operating system
 import os
+import base64, re
 
 from home.task_comm import USE_CELERY
 from home.task_comm import TaskComm
@@ -151,26 +152,15 @@ def start_celery():
     return alive
 
 
-#@login_required(login_url=settings.LOGIN_URL)
+@login_required(login_url=settings.LOGIN_URL)
 def populate_upload_page(request):
     """
     formats the main uploader page
     """
-    from django.http.request import HttpRequest
-    import base64, re
-    login_req = HttpRequest()
-    auth = request.META['HTTP_AUTHORIZATION']
-    scheme, creds = re.split(r'\s+', auth)
-    if scheme.lower() != 'basic':
-        raise ValueError('Unknown auth scheme \"%s\"' % scheme)
-    user, pword = base64.b64decode(creds).split(':', 1)
-    login_req.POST['username'] = user
-    login_req.POST['password'] = '1234'
-    login(login_req)
     # if not logged in
-    # if session.password == '':
+    if session.password == '':
         # call login error with no error message
-        # return login_error(request, '')
+        return login_error(request, '')
 
     if session.is_timed_out():
         return logout(request)
@@ -438,11 +428,19 @@ def login(request):
     #SESSION_COOKIE_AGE = configuration.timeout * 60
 
     # ignore GET
-    if not request.POST:
-        return login_error(request, '')
+    if request.POST:
+        new_user = request.POST['username']
+        new_password = request.POST['password']
+    else:
+        if 'HTTP_AUTHORIZATION' in request.META:
+            auth = request.META['HTTP_AUTHORIZATION']
+            scheme, creds = re.split(r'\s+', auth)
+            if scheme.lower() != 'basic':
+                raise ValueError('Unknown auth scheme \"%s\"' % scheme)
+            new_user, new_password = base64.b64decode(creds).split(':', 1)
+        else:
+            return login_error(request, '')
 
-    new_user = request.POST['username']
-    new_password = request.POST['password']
 
     global session
     if session:
@@ -482,7 +480,7 @@ def login(request):
     # try:
     #    tasks.clean_target_directory(configuration.target_dir)
     # except:
-    #    return 
+    #    return
     # keep a copy of the user so we can keep other users from stepping on them if they are still
     # logged in
     session.current_user = request.user
