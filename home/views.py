@@ -1,10 +1,4 @@
-﻿# pylint: disable=no-member
-# justification:  dynamic methods
-
-# pylint: disable=invalid-name
-# justification: module level variables
-
-# pylint: disable=broad-except
+﻿# pylint: disable=broad-except
 # justification: need to catch broad exceptions at entry point to log
 # the stack trace to underlying exceptions
 
@@ -38,12 +32,6 @@ import base64, re
 from home.task_comm import USE_CELERY
 from home.task_comm import TaskComm
 
-# session imports
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate
-from django.contrib import auth
-from django.contrib.auth.decorators import login_required
-
 # for checking celery status
 from celery.result import AsyncResult
 
@@ -61,8 +49,15 @@ from home import file_tools
 from home import instrument_server
 from home import QueryMetadata
 
+# pylint: disable=global-statement
+# justification: by design
+
 # Module level variables
 # session is user specific information
+
+# pylint: disable=invalid-name
+# justification: fix later
+
 session = session_data.SessionState()
 
 # server is instrument uploader specific information
@@ -70,43 +65,8 @@ configuration = instrument_server.UploaderConfiguration()
 
 metadata = None
 
-# development version
-version = '2.02'
-
-
-def login_user_locally(request):
-    """
-    if we have a new user, let's create a new Django user and log them
-    in. Actual EUS authentication will be done before this function is called.
-    """
-    username = request.POST['username']
-    password = request.POST['password']
-
-    # does this user exist?
-    try:
-        user = User.objects.get(username=username)
-    except User.DoesNotExist:
-        user = None
-
-    if user is None:
-        # create a new user
-        user = User.objects.create_user(username=username, password=password)
-        user.save()
-    else:
-        # user exists but their password may have changed
-        # if we make it this far, user has been validated by EUS
-        # so store the 'new' password
-        user.set_password(password)
-        user.save()
-
-    # we now have a local user that matches the already validated EUS user
-    # authenticate and log them in locally
-    user = authenticate(username=username, password=password)
-    if user:
-        if user.is_active:
-            auth.login(request, user)
-    else:
-        return 'Unable to create user'
+# development VERSION
+VERSION = '2.02'
 
 
 def ping_celery():
@@ -139,8 +99,8 @@ def start_celery():
             print 'attempting to start Celery'
             subprocess.Popen(
                 'celery -A UploadServer worker --loglevel=info', shell=True)
-        except Exception, e:
-            print e
+        except Exception, ex:
+            print ex
 
     count = 0
     alive = False
@@ -151,14 +111,12 @@ def start_celery():
 
     return alive
 
-
-@login_required(login_url=settings.LOGIN_URL)
 def populate_upload_page(request):
     """
     formats the main uploader page
     """
     # if not logged in
-    if session.password == '':
+    if not session.is_logged_in:
         # call login error with no error message
         return login_error(request, '')
 
@@ -210,13 +168,13 @@ def set_data_root(request):
 
         return HttpResponse(json.dumps('success'), content_type='application/json')
 
-    except Exception, e:
+    except Exception, ex:
         import sys, traceback
         print "Exception in set_data_root:"
         print '-'*60
         traceback.print_exc(file=sys.stderr)
         print '-'*60
-        return HttpResponseServerError(json.dumps(e.message), content_type='application/json')
+        return HttpResponseServerError(json.dumps(ex.message), content_type='application/json')
 
 
 def show_status(request, message):
@@ -268,6 +226,7 @@ def post_upload_metadata(request):
         session.current_time = datetime.datetime.now().strftime('%m.%d.%Y.%H.%M.%S')
         return HttpResponse(json.dumps('success'), content_type='application/json')
 
+<<<<<<< HEAD
     except Exception, e:
         import sys, traceback
         print "Exception in post_upload_metadata:"
@@ -275,6 +234,10 @@ def post_upload_metadata(request):
         traceback.print_exc(file=sys.stderr)
         print '-'*60
         return HttpResponseServerError(json.dumps(e.message), content_type='application/json')
+=======
+    except Exception, ex:
+        return HttpResponseServerError(json.dumps(ex.message), content_type='application/json')
+>>>>>>> master
 
 # pylint: disable=too-many-return-statements
 # justification: disagreement with style
@@ -293,6 +256,7 @@ def spin_off_upload(request):
         else:
             return HttpResponseBadRequest(json.dumps('missing files in post'),
                                           content_type='application/json')
+<<<<<<< HEAD
     except Exception, e:
         import sys, traceback
         print "Exception in spin_off_upload:"
@@ -300,6 +264,10 @@ def spin_off_upload(request):
         traceback.print_exc(file=sys.stderr)
         print '-'*60
         return HttpResponseBadRequest(json.dumps(e.message), content_type='application/json')
+=======
+    except Exception, ex:
+        return HttpResponseBadRequest(json.dumps(ex.message), content_type='application/json')
+>>>>>>> master
 
     if not files:
         return HttpResponseBadRequest(json.dumps('missing files in post'),
@@ -344,14 +312,18 @@ def spin_off_upload(request):
             if not success:
                 return HttpResponse(json.dumps('failed'), content_type='application/json')
 
+<<<<<<< HEAD
     except Exception, e:
         import sys, traceback
         print "Exception in spin_off_upload_again:"
         print '-'*60
         traceback.print_exc(file=sys.stderr)
         print '-'*60
+=======
+    except Exception, ex:
+>>>>>>> master
         session.is_uploading = False
-        return HttpResponseServerError(json.dumps(e.message), content_type='application/json')
+        return HttpResponseServerError(json.dumps(ex.message), content_type='application/json')
 
     return HttpResponse(json.dumps('success'), content_type='application/json')
 
@@ -365,7 +337,12 @@ def upload_files(request):
 
     reply = spin_off_upload(request)
 
+<<<<<<< HEAD
     return reply
+=======
+    except Exception, ex:
+        return ex.message
+>>>>>>> master
 
 
 """
@@ -386,7 +363,7 @@ def login_error(request, error_string):
             configuration.initialized = False
 
     return render_to_response(settings.LOGIN_VIEW,
-                              {'site_version': version,
+                              {'site_version': VERSION,
                                'instrument': configuration.instrument,
                                'message': error_string},
                               context_instance=RequestContext(request))
@@ -413,7 +390,7 @@ def cookie_test(request):
 def login(request):
     """
     Logs the user in
-    If the login fails for whatever reason, authentication, invalid for instrument, etc.,
+    If the login fails for whatever reason, invalid for instrument, etc.,
     returns to login page with error.
     Otherwise, gets the user data to populate the main page
     """
@@ -423,9 +400,6 @@ def login(request):
     err = configuration.initialize_settings()
     if err != '[]':
         return login_error(request, 'faulty configuration:  ' + err)
-
-    # timeout
-    #SESSION_COOKIE_AGE = configuration.timeout * 60
 
     # ignore GET
     if request.POST:
@@ -441,6 +415,13 @@ def login(request):
         else:
             return login_error(request, '')
 
+<<<<<<< HEAD
+=======
+    new_user = request.POST['username']
+    if new_user == '':
+        return login_error(request, 'No user specified')
+
+>>>>>>> master
 
     global session
     if session:
@@ -461,21 +442,12 @@ def login(request):
     session.config = configuration
 
     # initialize the data dir for the session to the configured default
+    # check to see if needed dfh
     session.files.data_dir = session.config.data_dir
 
     # loads the metadata structure from the config file
     global metadata
-    metadata = QueryMetadata.QueryMetadata(
-        configuration.policy_server, new_user)
-
-    # log them in locally for our session
-    err_str = login_user_locally(request)
-    if err_str:
-        return login_error(request, err_str)
-
-    # did that work?
-    if not request.user.is_authenticated():
-        return login_error(request, 'Problem with local authentication')
+    metadata = QueryMetadata.QueryMetadata(configuration.policy_server, new_user)
 
     # try:
     #    tasks.clean_target_directory(configuration.target_dir)
@@ -485,12 +457,12 @@ def login(request):
     # logged in
     session.current_user = request.user
     session.is_logged_in = True
-    session.password = new_password
     session.touch()
 
     return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
 
-
+# pylint: disable=unused-argument
+# justification: django required
 def logout(request):
     """
     logs the user out and returns to the main page
@@ -499,13 +471,10 @@ def logout(request):
 
     session.current_user = None
 
-    # logs out local user session
-    # if the LOGOUT_URL is set to this view, we create a recursive call to here
-    auth.logout(request)
-
     session.is_logged_in = False
 
     return HttpResponseRedirect(reverse('home.views.login'))
+
 
 # pylint: disable=unused-argument
 # justification: django required
@@ -536,6 +505,7 @@ def select_changed(request):
     retval = json.dumps(updates)
 
     return HttpResponse(retval, content_type='application/json')
+
 
 def get_children(request):
     """
@@ -585,8 +555,8 @@ def get_children(request):
 
         retval = json.dumps(pathlist)
 
-    except Exception, e:
-        print e
+    except Exception, ex:
+        print ex
         return error_response('lazyload failed')
 
     return HttpResponse(retval)
@@ -742,6 +712,7 @@ def get_bundle(request):
 
         return return_bundle(tree, session.files.error_string)
 
+<<<<<<< HEAD
     except Exception, e:
         import sys, traceback
         print "Exception in get_bundle:"
@@ -749,6 +720,10 @@ def get_bundle(request):
         traceback.print_exc(file=sys.stderr)
         print '-'*60
         return return_bundle(tree, 'get_bundle failed:  ' + e.message)
+=======
+    except Exception, ex:
+        return return_bundle(tree, 'get_bundle failed:  ' + ex.message)
+>>>>>>> master
 
 # pylint: disable=unused-argument
 # justification: django required
@@ -818,8 +793,8 @@ def incremental_status(request):
                 state, result = TaskComm.get_state()
 
             if state == 'DONE':
-                d = json.loads(result)
-                job_id = d['job_id']
+                ingest_result = json.loads(result)
+                job_id = ingest_result['job_id']
                 print 'completed job ', job_id
 
                 # if we have successfully uploaded, cleanup the lists
@@ -831,6 +806,7 @@ def incremental_status(request):
 
         return HttpResponse(retval)
 
+<<<<<<< HEAD
     except Exception, e:
         import sys, traceback
         print "Exception in incremental status:"
@@ -838,6 +814,10 @@ def incremental_status(request):
         traceback.print_exc(file=sys.stderr)
         print '-'*60
         print e.message
+=======
+    except Exception, ex:
+        print ex.message
+>>>>>>> master
         session.is_uploading = False
-        retval = json.dumps({'state': 'Status Error', 'result': e.message})
+        retval = json.dumps({'state': 'Status Error', 'result': ex.message})
         return HttpResponse(retval)

@@ -7,7 +7,7 @@ Celery tasks to be run in the background
 from __future__ import absolute_import
 from celery import shared_task
 
-from uploader import upload
+from uploader import Uploader
 from bundler import bundle
 
 from home import tar_man
@@ -57,7 +57,7 @@ def ping():
 # tag to show this def as a celery task
 
 # pylint: disable=too-many-arguments
-# justification: perfect amount of arguments
+# justification: this is the single point of entry to background processing
 
 # pylint: disable=broad-except
 # justification: we want to report and log any error at the highest level
@@ -116,7 +116,10 @@ def upload_files(ingest_server='',
 
         TaskComm.task_state("PROGRESS", "Starting Upload")
 
-        result = upload(bundle_name=bundle_name, ingest_server=ingest_server)
+        uploader = Uploader(bundle_name, ingest_server)
+        result = uploader.upload_bundle()
+
+        # result = upload(bundle_name=bundle_name, ingest_server=ingest_server)
 
         if not result:
             TaskComm.task_state('FAILURE', "Uploader dieded. We don't know why it did")
