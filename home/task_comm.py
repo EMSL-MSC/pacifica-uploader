@@ -7,7 +7,10 @@ from celery import current_task
 USE_CELERY = False
 
 class TaskComm(object):
-    """ hopefully static class """
+    """ 
+    essentially static class that provides a single conduit from the backend
+    to the front end whether celery is being used or not.
+    """
 
     state = {'TASK_STATE':'', 'TASK_INFO':''}
 
@@ -15,7 +18,7 @@ class TaskComm(object):
     def set_state(cls, state, info):
         """
         sets the state of the currently running task to
-        be read by the front end task
+        be read by the front end task, whether celery is being used or not.
         """
         cls.state['TASK_STATE'] = state
         cls.state['TASK_INFO'] = info
