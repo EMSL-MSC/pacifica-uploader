@@ -1,14 +1,5 @@
 #! /usr/bin/env python
 
-# pylint: disable=unused-argument
-# justification: virtual class
-
-# pylint: disable=no-self-use
-# justification: virtual class
-
-# pylint: disable=no-member
-# justification: because pylint is dumb
-
 """
 A Bundler module that aggregates files into a single bundle
 """
@@ -27,9 +18,6 @@ import mimetypes
 import traceback
 
 from home.task_comm import task_error, TaskComm
-
-# pylint: disable=too-few-public-methods
-# justification: abstract class
 
 class FileBundler(object):
     """
@@ -138,6 +126,16 @@ class FileBundler(object):
 
         return info
 
+    def report_percent_complete(self):
+        """
+        update the task state with the progress of the bundle
+        """
+        meta_str = 'Bundling percent complete: ' + \
+            str(int(self.percent_complete))
+        print meta_str
+
+        TaskComm.task_state('PROGRESS', meta_str)
+
 
 class TarBundler(FileBundler):
     """
@@ -206,16 +204,6 @@ class TarBundler(FileBundler):
                         recursive=False)
 
         tarball.close()
-
-    def report_percent_complete(self):
-        """
-        update the task state with the progress of the bundle
-        """
-        meta_str = 'Bundling percent complete: ' + \
-            str(int(self.percent_complete))
-        print meta_str
-
-        TaskComm.task_state('PROGRESS', meta_str)
 
     def bundle_metadata(self, metadata):
         """
