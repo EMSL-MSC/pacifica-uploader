@@ -135,8 +135,7 @@ def populate_upload_page(request):
     # Render list page with the documents and the form
     return render_to_response('home/uploader.html',
                               {'data_root': session.files.data_dir,
-                               'metaList': metadata.meta_list,
-                               'user': session.user_full_name},
+                               'metaList': metadata.meta_list},
                               context_instance=RequestContext(request))
 
 
@@ -377,7 +376,7 @@ def login(request):
     global session
     if session:
         # check to see if there is an existing user logged in
-        if session.current_user:
+        if session.user:
             # if the session is timed out, logout the current user
             if session.is_timed_out():
                 logout(request)
@@ -396,9 +395,10 @@ def login(request):
     # check to see if needed dfh
     session.files.data_dir = session.config.data_dir
 
-    # loads the metadata structure from the config file
+    # loads the metadata structure from the config file so we can populate the initial
+    # html for the upload page
     global metadata
-    metadata = QueryMetadata.QueryMetadata(configuration.policy_server, new_user)
+    metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
 
     # try:
     #    tasks.clean_target_directory(configuration.target_dir)
@@ -407,7 +407,7 @@ def login(request):
 
     # keep a copy of the user so we can keep other users from stepping on them if they are still
     # logged in
-    session.current_user = request.user
+    session.user = new_user
     session.is_logged_in = True
     session.touch()
 
@@ -421,8 +421,7 @@ def logout(request):
     which will bounce to the login page
     """
 
-    session.current_user = None
-
+    session.user = None
     session.is_logged_in = False
 
     return HttpResponseRedirect(reverse('home.views.login'))
@@ -434,6 +433,10 @@ def initialize_fields(request):
     """
     initializes the metadata fields
     """
+    # start from scratch
+    metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
+    # populates metadata for the current user
+    metadata.initialize_user(session.user)
 
     updates = metadata.initial_population()
 
