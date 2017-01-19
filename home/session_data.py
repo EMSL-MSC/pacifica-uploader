@@ -14,11 +14,8 @@ class SessionState(object):
     """
     celery_is_alive = False
 
-    user = ''
-    user_full_name = ''
-    password = ''
+    user = None
 
-    current_user = None
     current_time = ''
 
     files = FileManager()
@@ -81,8 +78,7 @@ class SessionState(object):
         """
         resets a session to a clean state
         """
-        self.user = ''
-        self.password = ''
+        self.user = None
         self.user_full_name = ''
         self.cleanup_upload()
 
