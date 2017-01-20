@@ -161,17 +161,14 @@ def set_data_root(request):
             if not parent:
                 return HttpResponseServerError(json.dumps('missing root directory'),
                                                content_type='application/json')
-
             session.set_session_root(parent)
 
-            time = os.path.getmtime(session.files.data_dir)
+        time = os.path.getmtime(session.files.data_dir)
 
-            node = [{'title': session.files.data_dir, 'key': session.files.data_dir, 'folder': True,
-                             'lazy': True, 'data': {'time': time}}]
+        node = [{'title': session.files.data_dir, 'key': session.files.data_dir, 'folder': True,
+                            'lazy': True, 'data': {'time': time}}]
 
-            return HttpResponse(json.dumps(node), content_type='application/json')
-
-        return HttpResponse(json.dumps('success'), content_type='application/json')
+        return HttpResponse(json.dumps(node), content_type='application/json')
 
     except Exception, ex:
         return HttpResponseServerError(json.dumps(ex.message), content_type='application/json')
