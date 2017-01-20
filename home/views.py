@@ -164,6 +164,13 @@ def set_data_root(request):
 
             session.set_session_root(parent)
 
+            time = os.path.getmtime(session.files.data_dir)
+
+            node = [{'title': session.files.data_dir, 'key': session.files.data_dir, 'folder': True,
+                             'lazy': True, 'data': {'time': time}}]
+
+            return HttpResponse(json.dumps(node), content_type='application/json')
+
         return HttpResponse(json.dumps('success'), content_type='application/json')
 
     except Exception, ex:
@@ -277,14 +284,11 @@ def spin_off_upload(request):
                                          bundle_size=session.files.bundle_size,
                                          meta_list=meta_list)
         else:  # run local
-            success = tasks.upload_files(ingest_server=configuration.ingest_server,
+            tasks.upload_files(ingest_server=configuration.ingest_server,
                                          bundle_name=session.bundle_filepath,
                                          file_list=tuples,
                                          bundle_size=session.files.bundle_size,
                                          meta_list=meta_list)
-            if not success:
-                return HttpResponse(json.dumps('failed'), content_type='application/json')
-
     except Exception, ex:
         session.is_uploading = False
         return HttpResponseServerError(json.dumps(ex.message), content_type='application/json')
@@ -433,9 +437,13 @@ def initialize_fields(request):
     """
     initializes the metadata fields
     """
-    # start from scratch
+    # start from scratch on first load and subsequent reloads of page
+    global metadata
     metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
+    
     # populates metadata for the current user
+    # to have a common model for init and reload we need to set
+    # the network id here
     metadata.initialize_user(session.user)
 
     updates = metadata.initial_population()

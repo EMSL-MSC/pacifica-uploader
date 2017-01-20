@@ -111,32 +111,32 @@ $(window).on("load", function () { initializeFields() });
         //instNode.addChildren(selected);
         var fileList = [];
 
-        selected.forEach(function (node) {
-            fileList.push(node.key);
-        });
+        if (selected != null)
+        {
+            selected.forEach(function (node) {
+                fileList.push(node.key);
+            });
+        }
 
         var pkt = JSON.stringify(fileList);
 
-        //if (fileList.length > 0) {
-        if (true) {
-            var posted = { packet: pkt };
-            $.post("/getBundle/", posted,
-                function (data) {
-                    //alert('success');
-                    root.addChildren(data);
+        var posted = { packet: pkt };
+        $.post("/getBundle/", posted,
+            function (data) {
+                //alert('success');
+                root.addChildren(data);
 
-                    // update bundle size
-                    var message = data[0]["data"];
-                    $("#message").text(message);
+                // update bundle size
+                var message = data[0]["data"];
+                $("#message").text(message);
 
-                    var enabled = data[0]["enabled"];
-                    document.getElementById("upload_btn").disabled = !enabled;
-                })
-                .fail(function (xhr, textStatus, errorThrown ) {
-                    errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
-                    window.open(errtext, '_self');
-                });
-        }
+                var enabled = data[0]["enabled"];
+                document.getElementById("upload_btn").disabled = !enabled;
+            })
+            .fail(function (xhr, textStatus, errorThrown ) {
+                errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
+                window.open(errtext, '_self');
+            });
 
         root.setExpanded(true);
     }
@@ -317,8 +317,13 @@ $(window).on("load", function () { initializeFields() });
         function SetRoot(setmode, root) {
             $.post("/setRoot/", {mode:setmode, parent: root },
             function (data) {
-                // reload the page
-                document.location.reload(true);
+
+                var tree = $("#tree").fancytree("getTree");
+                var root = $("#tree").fancytree("getRootNode");
+                root.removeChildren();
+                root.addChildren(data);
+
+                loadUploadTree(null);
             })
             .fail(function (jqXHR, textStatus, errorThrown) {
                 alert(jqXHR.responseText);
