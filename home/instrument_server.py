@@ -23,6 +23,7 @@ class UploaderConfiguration(object):
 
     policy_server = ''
     ingest_server = ''
+    status_server = ''
     target_dir = ''
     data_dir = ''
     timeout = 30
@@ -57,6 +58,8 @@ class UploaderConfiguration(object):
             self.set_if_there(configuration, 'policyServer', self, 'policy_server', err_list)
 
             self.set_if_there(configuration, 'ingestServer', self, 'ingest_server', err_list)
+
+            self.set_if_there(configuration, 'statusServer', self, 'status_server', err_list)
 
             self.set_if_there(configuration, 'timeout', self, 'timeout', err_list)
 

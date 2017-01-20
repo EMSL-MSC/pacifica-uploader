@@ -27,25 +27,15 @@
                         window.open(statusPage, '_blank');
 
                         // close this window
-                        //window.close();
                         $(this).closest('.ui-dialog-content').dialog('close');
-
-                        //window.location.href = '/';
-                        //win.focus();
                     }
-                    //else {
-                    //    setTimeout(worker, 1000);
-                    //}
 
-                    // debug 
+                    // restart timer
                     setTimeout(worker, 1000);
                 })
                 .fail(function(obj, textStatus, error){
                     $('#currState').html('Unknown');
                 })
-                //.always(function(){
-                //    setTimeout(worker, 1000);
-                //});
 
         };
         $(function () {

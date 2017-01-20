@@ -747,6 +747,9 @@ def incremental_status(request):
                 job_id = ingest_result['job_id']
                 print 'completed job ', job_id
 
+                # create URL for status server
+                result = configuration.status_server + str(job_id)
+
                 # if we have successfully uploaded, cleanup the lists
                 session.cleanup_upload()
                 session.is_uploading = False
