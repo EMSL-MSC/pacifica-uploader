@@ -76,32 +76,35 @@ def remove_orphans(directory):
                 os.remove(full_path)
 
 
-def clean_tar_directory():
+def clean_target_directory(target_dir=''):
     """
-    remove turds and jobs that have been archived
-    needs to be rewritten to meet requirements of new ingester dfh
+    deletes local files that have made it to the archive
     """
-    #try:
 
-    #    jobs = job_list(directory)
+    # remove old files that were not uploaded
+    remove_orphans(target_dir)
 
-    #    # ex:
-    #    # jobs_state = '[{?20001066? : {?state_name?:?Received?, ?state?:?1"}},
-    #    #               {?20001067? : {?state_name?:?Available?, ?state?:?5"}},
-    #    #               {?20001068? : {?state_name?:?Available?, ?state?:?5"}}]'
+    # get job list from file
+    jobs = job_list(target_dir)
 
-    #    info = json.loads(jobs_state)
+    if not jobs:
+        return
 
-    #    for job in jobs:
-    #        try:
-    #            job_state = info[job]
-    #            if job_state is not None:
-    #                state_index = job_state['state']
-    #                val = int(state_index)
-    #                if val > 4:
-    #                    remove_tar_file(directory, job)
-    #        except Exception:
-    #            remove_tar_file(directory, job)
+    # get jobs state from database
+    jobs_state = job_status(job_list=jobs)
 
-    #except Exception:
-    #    return 'clean tar failed'
+    if not jobs_state:
+        return
+
+    info = json.loads(jobs_state)
+
+    for job in jobs:
+        try:
+            job_state = info[job]
+            if job_state is not None:
+                state_index = job_state['state']
+                val = int(state_index)
+                if val > 4:
+                    remove_tar_file(directory, job)
+        except Exception:
+            remove_tar_file(directory, job)
