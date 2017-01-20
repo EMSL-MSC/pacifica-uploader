@@ -132,7 +132,7 @@ def upload_files(ingest_server='',
         try:
             status = json.loads(result)
         except ValueError, ex:
-            task_error(ex.message)
+            task_error(ex.message + ': ' + result)
             return
 
         try:
