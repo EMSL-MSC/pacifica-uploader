@@ -46,6 +46,14 @@ def clean_target_directory(target_dir=''):
     #    return 'unable to fetch job status'
 
 
+def job_status(job_list=None):
+    """
+    checks the status of existing job
+    tbd
+    """
+    job_list = []
+    return job_list
+
 @shared_task
 def ping():
     """
@@ -73,6 +81,7 @@ def upload_files(ingest_server='',
     task created on a separate Celery process to bundle and upload in the background
     status and errors are pushed by celery to the main server through RabbitMQ
     """
+    # one big-ass exception handler for upload.
     try:
         target_dir = os.path.dirname(bundle_name)
         if not os.path.isdir(target_dir):
@@ -119,21 +128,24 @@ def upload_files(ingest_server='',
         uploader = Uploader(bundle_name, ingest_server)
         result = uploader.upload_bundle()
 
-        # result = upload(bundle_name=bundle_name, ingest_server=ingest_server)
+        # invalid json returned
+        try:
+            status = json.loads(result)
+        except ValueError, ex:
+            task_error(ex.message + ': ' + result)
+            return
 
-        if not result:
-            TaskComm.task_state('FAILURE', "Uploader dieded. We don't know why it did")
-
-        status = json.loads(result)
-
-        if status['state'] != 'OK':
-            TaskComm.task_state('FAILURE', result)
-            return False
+        try:
+            if status['state'] != 'OK':
+                task_error(result)
+                return
+        except KeyError, ex:
+            task_error('missing state returned ' + ex.message)
 
         print "rename"
         tar_man.rename_tar_file(target_dir, bundle_name, status['job_id'])
         TaskComm.task_state('DONE', result)
-        return True
+        return
     except Exception, ex:
         import sys, traceback
         print "Exception in spin_off_upload:"
@@ -141,4 +153,4 @@ def upload_files(ingest_server='',
         traceback.print_exc(file=sys.stderr)
         print '-'*60
         task_error('tasks: upload_files :' + ex.message)
-        return False
+        return

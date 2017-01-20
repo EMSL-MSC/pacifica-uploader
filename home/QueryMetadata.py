@@ -65,14 +65,12 @@ class QueryMetadata(object):
     user = ''
     meta_list = []
 
-    def __init__(self, host, networkID):
+    def __init__(self, host):
         """
         constructor for Query class
         """
         self.host = host
         self.load_meta()
-
-        self.initialize_user(networkID)
 
     def build_query(self, meta):
         """
@@ -246,6 +244,10 @@ class QueryMetadata(object):
 
         query_result = self.get_list(query)
 
+        # validate that we have a valid json return value
+        # will throw an error to the base level if not
+        # json.loads(query_result) # why does this fail with valid json?
+
         self.build_selection_list(meta, query_result)
 
         if meta.value == '':
@@ -254,10 +256,12 @@ class QueryMetadata(object):
                 if sel_list:
                     meta.value = sel_list[0]['id']
 
+
     def initial_population(self):
         """
         populate all the lists from the policy server for the first time
         """
+
         init_fields = []
 
         for meta in self.meta_list:
@@ -268,6 +272,7 @@ class QueryMetadata(object):
                     init_fields.append(meta.browser_field_population)
 
         return init_fields
+
 
     def populate_dependencies(self, form):
         """
@@ -336,18 +341,6 @@ class QueryMetadata(object):
 
         return data
 
-        #    # check for error
-        #    try:
-        #        status = data['status']
-        #        print status
-        #        return []
-        #    except Exception, ex:
-        #        print ex.message
-        #        return data
-
-        #except Exception, ex:
-        #    print ex
-        #    return[]
 
     def get_display(self, meta):
         """

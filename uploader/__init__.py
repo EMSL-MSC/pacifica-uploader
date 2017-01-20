@@ -59,18 +59,10 @@ class Uploader(object):
         headers['Content-Length'] = size_str
 
         status = requests.post(url, data=self, headers=headers)
+
         self.fileobj.close()
 
         return status.content
-
-def job_status(job_list=None):
-    """
-    checks the status of existing job
-    tbd
-    """
-    job_list = []
-    return job_list
-
 
 def main():
     """

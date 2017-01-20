@@ -136,8 +136,7 @@ def populate_upload_page(request):
     # Render list page with the documents and the form
     return render_to_response('home/uploader.html',
                               {'data_root': session.files.data_dir,
-                               'metaList': metadata.meta_list,
-                               'user': session.user_full_name},
+                               'metaList': metadata.meta_list},
                               context_instance=RequestContext(request))
 
 
@@ -163,10 +162,14 @@ def set_data_root(request):
             if not parent:
                 return HttpResponseServerError(json.dumps('missing root directory'),
                                                content_type='application/json')
-
             session.set_session_root(parent)
 
-        return HttpResponse(json.dumps('success'), content_type='application/json')
+        time = os.path.getmtime(session.files.data_dir)
+
+        node = [{'title': session.files.data_dir, 'key': session.files.data_dir, 'folder': True,
+                            'lazy': True, 'data': {'time': time}}]
+
+        return HttpResponse(json.dumps(node), content_type='application/json')
 
     except Exception, ex:
         import sys, traceback
@@ -294,14 +297,11 @@ def spin_off_upload(request):
                                          bundle_size=session.files.bundle_size,
                                          meta_list=meta_list)
         else:  # run local
-            success = tasks.upload_files(ingest_server=configuration.ingest_server,
+            tasks.upload_files(ingest_server=configuration.ingest_server,
                                          bundle_name=session.bundle_filepath,
                                          file_list=tuples,
                                          bundle_size=session.files.bundle_size,
                                          meta_list=meta_list)
-            if not success:
-                return HttpResponse(json.dumps('failed'), content_type='application/json')
-
     except Exception, ex:
         import sys, traceback
         print "Exception in spin_off_upload_again:"
@@ -401,7 +401,7 @@ def login(request):
     global session
     if session:
         # check to see if there is an existing user logged in
-        if session.current_user:
+        if session.user:
             # if the session is timed out, logout the current user
             if session.is_timed_out():
                 logout(request)
@@ -420,9 +420,10 @@ def login(request):
     # check to see if needed dfh
     session.files.data_dir = session.config.data_dir
 
-    # loads the metadata structure from the config file
+    # loads the metadata structure from the config file so we can populate the initial
+    # html for the upload page
     global metadata
-    metadata = QueryMetadata.QueryMetadata(configuration.policy_server, new_user)
+    metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
 
     # try:
     #    tasks.clean_target_directory(configuration.target_dir)
@@ -430,7 +431,7 @@ def login(request):
     #    return
     # keep a copy of the user so we can keep other users from stepping on them if they are still
     # logged in
-    session.current_user = request.user
+    session.user = new_user
     session.is_logged_in = True
     session.touch()
 
@@ -444,8 +445,7 @@ def logout(request):
     which will bounce to the login page
     """
 
-    session.current_user = None
-
+    session.user = None
     session.is_logged_in = False
 
     return HttpResponseRedirect(reverse('home.views.login'))
@@ -457,6 +457,14 @@ def initialize_fields(request):
     """
     initializes the metadata fields
     """
+    # start from scratch on first load and subsequent reloads of page
+    global metadata
+    metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
+    
+    # populates metadata for the current user
+    # to have a common model for init and reload we need to set
+    # the network id here
+    metadata.initialize_user(session.user)
 
     updates = metadata.initial_population()
 
