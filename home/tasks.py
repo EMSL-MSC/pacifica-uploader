@@ -47,7 +47,8 @@ def ping():
 # justification: we want to report and log any error at the highest level
 
 
-# tag to show this def as a celery task@shared_task
+# tag to show this def as a celery task
+@shared_task
 def upload_files(ingest_server='',
                  bundle_name='',
                  file_list=None,
@@ -60,6 +61,7 @@ def upload_files(ingest_server='',
     """
     # one big-ass exception handler for upload.
     try:
+
         target_dir = os.path.dirname(bundle_name)
         if not os.path.isdir(target_dir):
             TaskComm.task_state('ERROR', 'Bundle directory does not exist')
