@@ -4,13 +4,15 @@ without the task knowing if celery is running
 """
 from celery import current_task
 
-USE_CELERY = True
-
 class TaskComm(object):
     """
     essentially static class that provides a single conduit from the backend
     to the front end whether celery is being used or not.
     """
+
+    # make the default true so that if the tasks are run under celery and
+    # aren't updated by the config file, it is in the right state
+    USE_CELERY = True
 
     state = {'TASK_STATE':'', 'TASK_INFO':''}
 
@@ -42,7 +44,7 @@ class TaskComm(object):
         """
         cls.set_state(t_state, t_msg)
 
-        if USE_CELERY:
+        if TaskComm.USE_CELERY:
             # send message to the front end
             current_task.update_state(state=t_state, meta={'Status': t_msg})
 

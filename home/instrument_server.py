@@ -6,6 +6,8 @@ import json
 import os
 import psutil
 
+from home.task_comm import TaskComm
+
 from home import file_tools
 from home import task_comm
 
@@ -21,6 +23,7 @@ class UploaderConfiguration(object):
 
     policy_server = ''
     ingest_server = ''
+    status_server = ''
     target_dir = ''
     data_dir = ''
     timeout = 30
@@ -56,12 +59,14 @@ class UploaderConfiguration(object):
 
             self.set_if_there(configuration, 'ingestServer', self, 'ingest_server', err_list)
 
+            self.set_if_there(configuration, 'statusServer', self, 'status_server', err_list)
+
             self.set_if_there(configuration, 'timeout', self, 'timeout', err_list)
 
             if 'use_celery' in configuration:
-                task_comm.USE_CELERY = (configuration['use_celery'] == 'True')
+                TaskComm.USE_CELERY = (configuration['use_celery'] == 'True')
             else:
-                task_comm.USE_CELERY = True
+                TaskComm.USE_CELERY = True
 
             self.set_if_there(configuration, 'dataRoot', self, 'data_dir', err_list)
 
