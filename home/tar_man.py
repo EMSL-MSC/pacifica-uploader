@@ -6,7 +6,7 @@ import os
 import time
 
 
-def job_list(directory):
+def job_list_from_dir(directory):
     """
     gets a list of jobs based on the files in the tar directory
     """
@@ -47,7 +47,7 @@ def rename_tar_file(directory, old_name, job_id):
     if os.path.isfile(old_name):
         os.rename(old_name, new_name)
 
-def job_status():
+def job_status(job_list=None):
     """
     checks the status of existing job
     tbd
@@ -84,7 +84,7 @@ def clean_target_directory(target_dir=''):
     remove_orphans(target_dir)
 
     # get job list from file
-    jobs = job_list(target_dir)
+    jobs = job_list_from_dir(target_dir)
 
     if not jobs:
         return

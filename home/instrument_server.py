@@ -9,8 +9,6 @@ import psutil
 from home.task_comm import TaskComm
 
 from home import file_tools
-from home import task_comm
-
 
 class UploaderConfiguration(object):
     """
