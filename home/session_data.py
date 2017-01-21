@@ -15,6 +15,7 @@ class SessionState(object):
     celery_is_alive = False
 
     user = None
+    user_full_name = ''
 
     current_time = ''
 
@@ -57,10 +58,7 @@ class SessionState(object):
 
         timeout = self.config.timeout * 60
 
-        if elapsed > timeout:
-            return True
-        else:
-            return False
+        return elapsed > timeout
 
     def set_session_root(self, filepath):
         """

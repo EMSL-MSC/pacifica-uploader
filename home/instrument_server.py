@@ -3,12 +3,10 @@ Configuration specific to an instrument
 """
 
 import json
+import os
 import psutil
 
-import os
-
 from home import file_tools
-
 from home import task_comm
 
 

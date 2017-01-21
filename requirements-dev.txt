@@ -5,4 +5,5 @@ pysqlite
 pycurl
 requests
 coverage
+pylint
 codeclimate-test-reporter

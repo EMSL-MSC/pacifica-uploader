@@ -15,7 +15,9 @@ from celery import Celery
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'UploadServer.settings')
 
+# pylint: disable=wrong-import-position
 from django.conf import settings  # noqa
+# pylint: enable=wrong-import-position
 
 app = Celery('UploadServer')
 

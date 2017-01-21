@@ -1,21 +1,16 @@
-
 """
 Celery tasks to be run in the background
 """
-
-
 from __future__ import absolute_import
-from celery import shared_task
-
-from uploader import Uploader
-from bundler import bundle
-
-from home import tar_man
-
 import os
-
+import sys
+import traceback
 import json
 
+from celery import shared_task
+from uploader import Uploader
+from bundler import bundle
+from home import tar_man
 from home.task_comm import TaskComm, task_error
 
 CLEAN_TAR = True
@@ -46,13 +41,12 @@ def clean_target_directory(target_dir=''):
     #    return 'unable to fetch job status'
 
 
-def job_status(job_list=None):
+def job_status():
     """
     checks the status of existing job
     tbd
     """
-    job_list = []
-    return job_list
+    return []
 
 @shared_task
 def ping():
@@ -147,10 +141,9 @@ def upload_files(ingest_server='',
         TaskComm.task_state('DONE', result)
         return
     except Exception, ex:
-        import sys, traceback
-        print "Exception in spin_off_upload:"
-        print '-'*60
+        print >> sys.stderr, "Exception in spin_off_upload:"
+        print >> sys.stderr, '-'*60
         traceback.print_exc(file=sys.stderr)
-        print '-'*60
+        print >> sys.stderr, '-'*60
         task_error('tasks: upload_files :' + ex.message)
         return
