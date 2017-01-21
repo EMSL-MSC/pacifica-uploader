@@ -15,6 +15,7 @@ class SessionState(object):
     celery_is_alive = False
 
     user = None
+    user_full_name = ''
 
     current_time = ''
 
@@ -76,6 +77,7 @@ class SessionState(object):
         resets a session to a clean state
         """
         self.user = None
+        self.user_full_name = ''
         self.cleanup_upload()
 
     def cleanup_upload(self):
