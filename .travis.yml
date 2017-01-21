@@ -4,7 +4,7 @@ python:
 install: "pip install -r requirements-dev.txt"
 script:
  - pylint home/*.py UploadServer/*.py uploader/*.py bundler/*.py command_line/*.py
- - coverage run --include='ingest*' home/uploader_unit_tests.py -v
+ - coverage run --include='ingest*' -m home.uploader_unit_tests -v
  - codeclimate-test-reporter
 notifications:
   email:
