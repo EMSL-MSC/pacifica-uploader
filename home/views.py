@@ -343,11 +343,14 @@ def login_error(request, error_string):
             error_string = err
             configuration.initialized = False
 
-    return render_to_response(settings.LOGIN_VIEW,
-                              {'site_version': VERSION,
-                               'instrument': configuration.instrument,
-                               'message': error_string},
-                              context_instance=RequestContext(request))
+    if error_string != '':
+        return render_to_response(settings.LOGIN_VIEW,
+                                  {'site_version': VERSION,
+                                   'instrument': configuration.instrument,
+                                   'message': error_string},
+                                  context_instance=RequestContext(request))
+    else:
+        return HttpResponseRedirect(reverse('home.views.login'))
 
 
 def cookie_test(request):
