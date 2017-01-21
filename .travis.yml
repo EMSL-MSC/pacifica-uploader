@@ -3,15 +3,18 @@ services:
  - docker
 language: python
 python:
-  - "2.7"
+  - 2.7
+
+matrix:
+  include:
+    - python: 2.7
+      env: RUN_LINTS=true
+cache: pip
 env:
   DOCKER_COMPOSE_VERSION: 1.9.0
 before_install: bash -xe travis/before-install.sh
 install: "pip install -r requirements-dev.txt"
-script:
- - pylint home/*.py UploadServer/*.py uploader/*.py bundler/*.py command_line/*.py
- - coverage run --include='UploadServer/*' --include='home/*' -m home.uploader_unit_tests -v
- - codeclimate-test-reporter
+script: bash -xe travis/test-script.sh
 notifications:
   email:
     - dmlb2000@gmail.com
