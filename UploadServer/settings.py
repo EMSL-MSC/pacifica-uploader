@@ -13,7 +13,7 @@ from __future__ import absolute_import
 # library.  If you don't have this then `from celery.schedules import`
 # becomes `proj.celery.schedules` in Python 2.x since it allows
 # for relative imports by default.
-
+import os
 # Celery settings
 
 BROKER_URL = 'amqp://guest:guest@localhost//'
@@ -28,7 +28,7 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-import os
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 # Quick-start development settings - unsuitable for production
