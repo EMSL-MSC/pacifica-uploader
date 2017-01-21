@@ -4,3 +4,7 @@ python:
 install: "pip install -r requirements-dev.txt"
 script:
  - pylint home/*.py UploadServer/*.py uploader/*.py bundler/*.py command_line/*.py
+notifications:
+  email:
+    - dmlb2000@gmail.com
+    - derek.hopkins@pnnl.gov
