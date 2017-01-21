@@ -28,7 +28,6 @@ import datetime
 # operating system
 import os
 
-from home.task_comm import USE_CELERY
 from home.task_comm import TaskComm
 
 # for checking celery status
@@ -36,9 +35,6 @@ from celery.result import AsyncResult
 
 # delay for celery heartbeat
 from time import sleep
-
-# for restarting Celery
-import subprocess
 
 # celery tasks
 from home import tasks
@@ -86,29 +82,6 @@ def ping_celery():
 
     return False
 
-
-def start_celery():
-    """
-    starts the celery process
-    """
-
-    alive = ping_celery()
-    if not alive:
-        try:
-            print 'attempting to start Celery'
-            subprocess.Popen(
-                'celery -A UploadServer worker --loglevel=info', shell=True)
-        except Exception, ex:
-            print ex
-
-    count = 0
-    alive = False
-    while not alive and count < 10:
-        sleep(1)
-        alive = ping_celery()
-        count = count + 1
-
-    return alive
 
 def populate_upload_page(request):
     """
@@ -252,12 +225,12 @@ def spin_off_upload(request):
 
     session.is_uploading = True
 
-    if USE_CELERY:
+    if TaskComm.USE_CELERY:
         # check to see if background celery process is alive
         # Wait 5 seconds
-        session.celery_is_alive = ping_celery()
-        print 'Celery lives = %s' % (session.celery_is_alive)
-        if not session.celery_is_alive:
+        is_alive = ping_celery()
+        print 'Celery lives = %s' % (is_alive)
+        if not is_alive:
             session.is_uploading = False
             return HttpResponseServerError(json.dumps('Celery is dead'),
                                            content_type='application/json')
@@ -273,7 +246,7 @@ def spin_off_upload(request):
         meta_list = metadata.create_meta_upload_list()
 
         # spin this off as a background process and load the status page
-        if USE_CELERY:
+        if TaskComm.USE_CELERY:
             session.bundle_process = \
                 tasks.upload_files.delay(ingest_server=configuration.ingest_server,
                                          bundle_name=session.bundle_filepath,
@@ -724,7 +697,7 @@ def incremental_status(request):
                 result = ''
                 print state
 
-            elif USE_CELERY:
+            elif TaskComm.USE_CELERY:
                 if not session.bundle_process:
                     state = 'PENDING'
                     result = 'Spinning off background process'
