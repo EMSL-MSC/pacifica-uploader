@@ -57,10 +57,7 @@ class SessionState(object):
 
         timeout = self.config.timeout * 60
 
-        if elapsed > timeout:
-            return True
-        else:
-            return False
+        return elapsed > timeout
 
     def set_session_root(self, filepath):
         """
@@ -79,7 +76,6 @@ class SessionState(object):
         resets a session to a clean state
         """
         self.user = None
-        self.user_full_name = ''
         self.cleanup_upload()
 
     def cleanup_upload(self):
