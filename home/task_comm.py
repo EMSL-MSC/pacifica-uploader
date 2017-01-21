@@ -7,7 +7,7 @@ from celery import current_task
 USE_CELERY = True
 
 class TaskComm(object):
-    """ 
+    """
     essentially static class that provides a single conduit from the backend
     to the front end whether celery is being used or not.
     """

@@ -52,8 +52,7 @@ def job_status(job_list=None):
     checks the status of existing job
     tbd
     """
-    job_list = []
-    return job_list
+    return []
 
 
 def remove_orphans(directory):
