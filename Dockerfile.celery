@@ -1,4 +1,4 @@
-from pacifica/uploader
+from pacifica/uploader:local
 
 USER 1
 ENTRYPOINT ["celery", "-A", "UploadServer", "worker", "--loglevel=info"]

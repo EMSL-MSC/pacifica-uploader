@@ -1,6 +1,9 @@
 language: python
 python:
   - "2.7"
+env:
+  DOCKER_COMPOSE_VERSION: 1.9.0
+before_install: bash -xe travis/before-install.sh
 install: "pip install -r requirements-dev.txt"
 script:
  - pylint home/*.py UploadServer/*.py uploader/*.py bundler/*.py command_line/*.py
