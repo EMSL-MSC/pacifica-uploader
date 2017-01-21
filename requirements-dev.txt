@@ -1,4 +1,4 @@
-django<2
+django<1.10
 psutil
 celery<4
 pysqlite
