@@ -47,7 +47,7 @@ def rename_tar_file(directory, old_name, job_id):
     if os.path.isfile(old_name):
         os.rename(old_name, new_name)
 
-def job_status(job_list=None):
+def job_status(job_list_ids=None):
     """
     checks the status of existing job
     tbd
