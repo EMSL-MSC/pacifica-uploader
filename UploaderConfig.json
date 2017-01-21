@@ -2,8 +2,8 @@
     "dataRoot": "S:\\7_Representative_Data",
     "target": "E:\\tar",
     "timeout": "1",
-    "policyServer": "http://dmlb2000.emsl.pnl.gov:8181",
-	"ingestServer": "http://127.0.0.1:8066",
+    "policyServer": "http://localhost:8181",
+	"ingestServer": "http://localhost:8066",
     "use_celery": "False",
 
     "metadata": [
@@ -11,9 +11,9 @@
 			"sourceTable": "users",
 			"metaID": "logon",
 			"destinationTable": "Transactions.submitter",
-			"value": "d3e889",
+			"value": "dmlb2001",
 			"displayType": "logged_on",
-			"displayTitle": "Currently Logged On",			
+			"displayTitle": "Currently Logged On",
 			"valueField": "_id",
             "queryFields": [ "first_name", "last_name", "_id"],
 			"queryDependency": { "network_id": "logon" },
@@ -25,22 +25,22 @@
 			"destinationTable": "Transactions.instrument",
             "displayType": "select",
 			"displayTitle": "Instrument",
-            "value": "34002",
+            "value": "54",
 			"valueField": "_id",
             "queryDependency": { "_id": "instrumentByID" },
             "queryFields": ["_id",  "name_short", "display_name" ],
 			"diplayFormat": "%(_id)s %(name_short)s - %(display_name)s"
-        },		
+        },
 		{
             "sourceTable": "instruments",
             "metaID": "instrumentDirectory",
-            "displayType": "directoryTree", 
+            "displayType": "directoryTree",
 			"directoryOrder": 1,
 			"diplayFormat": "%(name_short)s",
 			"valueField": "_id",
             "queryDependency": { "_id": "instrumentByID" },
             "queryFields": ["_id", "name_short"]
-        },		
+        },
         {
             "sourceTable": "proposals",
             "metaID": "ProposalByInstrument",
@@ -52,14 +52,14 @@
 			"valueField": "_id",
             "queryFields": [ "_id", "title" ],
 			"diplayFormat": "%(_id)s %(title)s"
-        },		
+        },
         {
             "sourceTable": "proposals",
             "metaID": "ProposalDirectory",
             "value": "",
             "displayType": "directoryTree",
-			"diplayFormat": "Dave is a twit %(_id)s", 
-			"directoryOrder": 0,		
+			"diplayFormat": "Proposal %(_id)s",
+			"directoryOrder": 0,
             "queryDependency": { "_id": "ProposalByInstrument" },
 			"valueField": "_id",
             "queryFields": [ "_id"]
@@ -71,21 +71,21 @@
             "displayTitle": "EMSL User",
             "displayType": "select",
 			"key": "User of Record",
-			"value": "34002",
+			"value": "",
             "queryDependency": { "proposal_id": "ProposalByInstrument" },
 			"valueField": "_id",
             "queryFields": [ "first_name", "last_name", "_id"],
 			"diplayFormat": "%(first_name)s %(last_name)s"
         },
-        {            
+        {
 			"destinationTable": "TransactionKeyValue",
             "metaID": "tag1",
-			"key": "Tag",			
+			"key": "Tag",
             "value": "dummy",
             "displayTitle": "Tag",
             "displayType": "enter"
         },
-        {           
+        {
 			"destinationTable": "TransactionKeyValue",
             "metaID": "tag2",
 			"key": "Taggy",
@@ -93,7 +93,7 @@
             "displayTitle": "Taggy",
             "displayType": "enter"
         },
-        {            
+        {
 			"destinationTable": "TransactionKeyValue",
             "metaID": "tag3",
 			"key": "Tagier",
