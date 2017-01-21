@@ -1,3 +1,4 @@
+"""Production settings."""
 import os
 
 DEBUG = True

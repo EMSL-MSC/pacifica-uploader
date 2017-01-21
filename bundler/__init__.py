@@ -57,7 +57,7 @@ class FileBundler(object):
 
         # If the file_arcname argument is None use the base file name as the
         # arc name
-        if file_arcname == None:
+        if file_arcname is None:
             file_arcname = os.path.basename(file_path)
 
         if not os.path.exists(file_path):
@@ -151,7 +151,7 @@ class TarBundler(FileBundler):
                 The path to the target bundle file
         """
 
-        if bundle_path == '' or bundle_path == None:
+        if bundle_path == '' or bundle_path is None:
             task_error('no bundle path')
 
         # Initialize the Base Bundler Class
@@ -262,10 +262,10 @@ def bundle(bundle_name='', file_list=None, bundle_size=0, meta_list=None):
     """
 
     # validate parameters
-    if bundle_name == None or bundle_name == '':
+    if bundle_name is None or bundle_name == '':
         task_error("Missing bundle name")
 
-    if file_list == None or len(file_list) == 0:
+    if file_list is None or len(file_list) == 0:
         task_error("Missing file list")
 
     # Set up the bundle file

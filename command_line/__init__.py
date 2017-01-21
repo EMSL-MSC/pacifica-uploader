@@ -18,6 +18,13 @@ from home import session_data
 from home import instrument_server
 from home import file_tools
 
+# pylint: disable=unused-argument
+def _parser_add_group(option, opt, value, parser):
+    """
+    Callback to add a key value pair to metadata
+    """
+    pass
+# pylint: enable=unused-argument
 
 def _add_file_cb(option, opt, value, parser):
     """
@@ -45,7 +52,6 @@ def _add_file_cb(option, opt, value, parser):
     # Each entry in the file list is a tuple of the file's absolute path and
     # the relative file name
     files = []
-    abspath = os.path.abspath(parser.values.work_dir)
     for file_name in file_glob:
         if file_name[:1] != '/':
             file_name = os.path.abspath(os.path.join(
@@ -145,7 +151,7 @@ def add_options(parser):
                       help="Read content of password file as password.", metavar='PWD_FILE')
 
 
-def check_options(parser, bundle_name_optional=True):
+def check_options(parser):
     """
     Performs custom option checks for this module given an OptionParser
     """
