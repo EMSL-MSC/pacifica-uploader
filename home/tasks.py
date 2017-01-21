@@ -141,7 +141,7 @@ def upload_files(ingest_server='',
         TaskComm.task_state('DONE', result)
         return
     except Exception, ex:
-        print >> sys.stderr, "Exception in spin_off_upload:"
+        print >> sys.stderr, "Exception in upload_files:"
         print >> sys.stderr, '-'*60
         traceback.print_exc(file=sys.stderr)
         print >> sys.stderr, '-'*60
