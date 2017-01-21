@@ -18,7 +18,6 @@ import re
 import sys
 import traceback
 from time import sleep
-import subprocess
 
 from django.conf import settings
 from django.shortcuts import render_to_response

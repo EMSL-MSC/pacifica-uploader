@@ -4,6 +4,7 @@ manages the tar directory to keep it from overflowing
 
 import os
 import time
+import json
 
 
 def job_list_from_dir(directory):
@@ -47,12 +48,14 @@ def rename_tar_file(directory, old_name, job_id):
     if os.path.isfile(old_name):
         os.rename(old_name, new_name)
 
+# pylint: disable=unused-argument
 def job_status(job_list=None):
     """
     checks the status of existing job
     tbd
     """
     return []
+# pylint: enable=unused-argument
 
 
 def remove_orphans(directory):
@@ -104,6 +107,8 @@ def clean_target_directory(target_dir=''):
                 state_index = job_state['state']
                 val = int(state_index)
                 if val > 4:
-                    remove_tar_file(directory, job)
+                    remove_tar_file(target_dir, job)
+        # pylint: disable=broad-except
         except Exception:
-            remove_tar_file(directory, job)
+            remove_tar_file(target_dir, job)
+        # pylint: enable=broad-except

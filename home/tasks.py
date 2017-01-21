@@ -10,7 +10,7 @@ import json
 from celery import shared_task
 from uploader import Uploader
 from bundler import bundle
-from home.tar_man import rename_tar_file, clean_target_directory
+from home.tar_man import rename_tar_file
 from home.task_comm import TaskComm, task_error
 
 CLEAN_TAR = True
