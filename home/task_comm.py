@@ -10,7 +10,9 @@ class TaskComm(object):
     to the front end whether celery is being used or not.
     """
 
-    USE_CELERY = False
+    # make the default true so that if the tasks are run under celery and
+    # aren't updated by the config file, it is in the right state
+    USE_CELERY = True
 
     state = {'TASK_STATE':'', 'TASK_INFO':''}
 
