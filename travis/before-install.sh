@@ -22,5 +22,5 @@ while [[ $HTTP_CODE != 200 && $MAX_TRIES > 0 ]] ; do
 done
 docker run -it --rm --net=pacificauploader_default -e METADATA_URL=http://metadataserver:8121 -e PYTHONPATH=/usr/src/app pacifica/metadata python test_files/loadit.py
 docker-compose stop uploaddjango uploadcelery uploadamqp
-docker-compose stop policy
-docker-compost start policy
+docker-compose stop policyserver
+docker-compose start policyserver
