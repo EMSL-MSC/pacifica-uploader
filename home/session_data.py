@@ -12,8 +12,6 @@ class SessionState(object):
     """
     meta data about for a session
     """
-    celery_is_alive = False
-
     user = None
 
     current_time = ''
