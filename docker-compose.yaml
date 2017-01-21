@@ -33,3 +33,42 @@ services:
     environment:
       AMQP_PORT_5672_TCP_ADDR: uploadamqp
       AMQP_PORT_5672_TCP_PORT: 5672
+
+  policyserver:
+    container_name: policyserver
+    build:
+      context: .
+    links:
+      - metadataserver:metadata
+    ports:
+      - 8181:8181
+    environment:
+      METADATA_PORT: tcp://metadata:8121
+
+  elasticdb:
+    image: elasticsearch:2.4
+    container_name: elasticdb
+
+  metadatadb:
+    image: postgres
+    container_name: metadatadb
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: pacifica_metadata
+      POSTGRES_USER: metadata
+
+  metadataserver:
+    image: pacifica/metadata
+    container_name: metadataserver
+    links:
+      - metadatadb:postgres
+      - elasticdb:elasticdb
+    ports:
+      - 8121:8121
+    environment:
+      ELASTICDB_PORT: tcp://elasticdb:9200
+      POSTGRES_ENV_POSTGRES_DB: pacifica_metadata
+      POSTGRES_ENV_POSTGRES_USER: metadata
+      POSTGRES_PORT_5432_TCP_ADDR: postgres
+      POSTGRES_PORT_5432_TCP_PORT: 5432
+      POSTGRES_ENV_POSTGRES_PASSWORD: password
