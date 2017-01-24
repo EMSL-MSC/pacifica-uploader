@@ -207,7 +207,8 @@ def spin_off_upload(request):
     """
 
     # initialize the task state
-    TaskComm.set_state('', '')
+    if not TaskComm.USE_CELERY:
+        TaskComm.set_state('', '')
 
     data = request.POST.get('files')
     try:
@@ -247,7 +248,7 @@ def spin_off_upload(request):
 
         # spin this off as a background process and load the status page
         if TaskComm.USE_CELERY:
-            session.bundle_process = \
+            session.upload_process = \
                 tasks.upload_files.delay(ingest_server=configuration.ingest_server,
                                          bundle_name=session.bundle_filepath,
                                          file_list=tuples,
@@ -661,30 +662,56 @@ def get_state(request):
     if session.is_logged_in:
         state = 'logged in: '
 
-    if session.bundle_process:
-        print session.bundle_process.task_id
-        res = AsyncResult(session.bundle_process.task_id)
+    if session.upload_process:
+        print session.upload_process.task_id
+        res = AsyncResult(session.upload_process.task_id)
         if not res.ready():
             state += 'uploading'
 
     retval = json.dumps({'state': state})
     return HttpResponse(retval)
 
+def get_status():
+    """    get status from backend    """
+
+    if (TaskComm.USE_CELERY):
+        if session.upload_process == None:
+            return 'Initializing', ''
+
+        state = session.upload_process.state
+        result = session.upload_process.result
+        if state == 'FAILURE':
+            # we fail to succeed
+            try:
+                if result['exc_type'] == 'StandardError':
+                    return 'DONE', result['exc_message']
+                else:
+                    return session.upload_process.state, session.upload_process.result
+            except KeyError:
+                return session.upload_process.state, session.upload_process.result
+        else:
+            return session.upload_process.state, session.upload_process.result
+    else:
+        state, result = TaskComm.get_state()
+        return state, result
+
 
 def incremental_status(request):
     """
     updates the status page with the current status of the background upload process
     """
-    # pass pylint
-    request = request
+    if TaskComm.USE_CELERY:
+        if session.upload_process == None:
+            retval = json.dumps({'state': '', 'result': ''})
+            return HttpResponse(retval)
 
     # reset timeout
     session.touch()
 
     try:
         if request.POST:
-            if session.bundle_process:
-                session.bundle_process.revoke(terminate=True)
+            if session.upload_process:
+                session.upload_process.revoke(terminate=True)
             session.cleanup_upload()
             state = 'CANCELLED'
             result = ''
@@ -695,26 +722,12 @@ def incremental_status(request):
             if not session.is_uploading:
                 state = 'CANCELLED'
                 result = ''
-                print state
+                retval = json.dumps({'state': state, 'result': result})
+                return HttpResponse(retval)
+            
+        state, result = get_status()
 
-            elif TaskComm.USE_CELERY:
-                if not session.bundle_process:
-                    state = 'PENDING'
-                    result = 'Spinning off background process'
-                else:
-                    state = session.bundle_process.status
-                    if state is None:
-                        state = 'UNKNOWN'
-                    print state
-
-                    result = session.bundle_process.result
-                    if result is None:
-                        result = ''
-                    print result
-
-            else:
-                state, result = TaskComm.get_state()
-
+        if state is not None:
             if state == 'DONE':
                 ingest_result = json.loads(result)
                 job_id = ingest_result['job_id']
@@ -734,6 +747,6 @@ def incremental_status(request):
 
     except Exception, ex:
         print ex.message
-        session.is_uploading = False
+        # session.is_uploading = False
         retval = json.dumps({'state': 'Status Error', 'result': ex.message})
         return HttpResponse(retval)

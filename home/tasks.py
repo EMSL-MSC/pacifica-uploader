@@ -5,7 +5,10 @@ Celery tasks to be run in the background
 
 
 from __future__ import absolute_import
+
 from celery import shared_task
+
+from exceptions import Warning
 
 from uploader import Uploader
 from bundler import bundle
@@ -37,7 +40,7 @@ def ping():
     check to see if the celery task process is started.
     """
     print "Pinged!"
-    TaskComm.task_state('PING', "Background process is alive")
+    TaskComm.set_state('PING', "Background process is alive")
 
 
 # pylint: disable=too-many-arguments
@@ -64,24 +67,24 @@ def upload_files(ingest_server='',
 
         target_dir = os.path.dirname(bundle_name)
         if not os.path.isdir(target_dir):
-            TaskComm.task_state('ERROR', 'Bundle directory does not exist')
-            return 'Upload Failed'
+            task_error('Bundle directory does not exist')
+            return
 
-        TaskComm.task_state("PROGRESS", "Cleaning previous uploads")
+        TaskComm.set_state("PROGRESS", "Cleaning previous uploads")
 
         # clean tar directory
         #if CLEAN_TAR:
         #   clean_target_directory(target_dir)
 
         # initial state pushed through celery
-        TaskComm.task_state("PROGRESS", "Starting Bundle/Upload Process")
+        TaskComm.set_state("PROGRESS", "Starting Bundle/Upload Process")
 
         bundle(bundle_name=bundle_name,
                file_list=file_list,
                meta_list=meta_list,
                bundle_size=bundle_size)
 
-        TaskComm.task_state("PROGRESS", "Completed Bundling")
+        TaskComm.set_state("PROGRESS", "Completed Bundling")
 
         if tartar:
             # create the file tuple list of 1 file
@@ -100,30 +103,30 @@ def upload_files(ingest_server='',
                    meta_list=meta_list,
                    bundle_size=bundle_size)
 
-        TaskComm.task_state("PROGRESS", "Starting Upload")
+        TaskComm.set_state("PROGRESS", "Starting Upload")
 
         uploader = Uploader(bundle_name, ingest_server)
         result = uploader.upload_bundle()
 
-        # invalid json returned
-        try:
-            status = json.loads(result)
-        except ValueError, ex:
-            task_error(ex.message + ': ' + result)
-            return
+        TaskComm.set_state("PROGRESS", "Finished Upload")
 
-        try:
-            if status['state'] != 'OK':
-                task_error(result)
-                return
-        except KeyError, ex:
-            task_error('missing state returned ' + ex.message)
+        status = json.loads(result)
 
-        print "rename"
+        TaskComm.set_state("PROGRESS", "Rename Tar File")
+
         rename_tar_file(target_dir, bundle_name, status['job_id'])
-        TaskComm.task_state('DONE', result)
-        return
+
+        print status
+
+        #set job ID here
+        print 'exit with deliberate error'
+        print result
+        raise StandardError(result)
+
+    except StandardError, se:
+        raise se
 
     except Exception, ex:
         task_error('tasks: upload_files :' + ex.message)
-        return
+        print 'Task exception: ' + ex.message
+        raise ex

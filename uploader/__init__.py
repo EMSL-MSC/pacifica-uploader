@@ -40,7 +40,7 @@ class Uploader(object):
         if percent - self.percent_uploaded > 5:
             status = {
                 'Status': "upload percent complete: " + str(int(percent))}
-            TaskComm.task_state("PROGRESS", status)
+            TaskComm.set_state("PROGRESS", status)
             self.percent_uploaded = percent
 
         return buf

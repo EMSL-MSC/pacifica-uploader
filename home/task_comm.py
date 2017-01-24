@@ -4,6 +4,8 @@ without the task knowing if celery is running
 """
 from celery import current_task
 
+import json
+
 class TaskComm(object):
     """ 
     essentially static class that provides a single conduit from the backend
@@ -17,15 +19,6 @@ class TaskComm(object):
     state = {'TASK_STATE':'', 'TASK_INFO':''}
 
     @classmethod
-    def set_state(cls, state, info):
-        """
-        sets the state of the currently running task to
-        be read by the front end task, whether celery is being used or not.
-        """
-        cls.state['TASK_STATE'] = state
-        cls.state['TASK_INFO'] = info
-
-    @classmethod
     def get_state(cls):
         """
         sets the state of the currently running task to
@@ -37,16 +30,23 @@ class TaskComm(object):
         return (state, info)
 
     @classmethod
-    def task_state(cls, t_state, t_msg):
+    def set_state(cls, t_state, t_msg):
         """
-        either uses celery for messaging or
-        updates the task state locally
+        updates the task state
         """
-        cls.set_state(t_state, t_msg)
+        cls.state['TASK_STATE'] = t_state
+        cls.state['TASK_INFO'] = t_msg
 
-        if TaskComm.USE_CELERY:
+        if cls.USE_CELERY:
             # send message to the front end
-            current_task.update_state(state=t_state, meta={'Status': t_msg})
+            current_task.update_state(state=t_state, meta={'result': t_msg})
+
+            state = cls.state['TASK_STATE']
+            info = cls.state['TASK_INFO']
+            ret = {'state':state, 'info':info}
+
+            current_task.info = json.dumps(ret)
+
 
 
 def task_error(t_msg):
@@ -54,4 +54,5 @@ def task_error(t_msg):
     sets the task state to FAILURE
     also log the error here
     """
-    TaskComm.task_state('FAILURE', t_msg)
+    print 'FAILURE: ' + t_msg
+    TaskComm.set_state('FAILURE', t_msg)
