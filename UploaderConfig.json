@@ -2,16 +2,18 @@
     "dataRoot": "S:\\7_Representative_Data",
     "target": "E:\\tar",
     "timeout": "1",
+    "statusServer": "http://dmlb2000.emsl.pnl.gov/status_api/view/",
     "policyServer": "http://dmlb2000.emsl.pnl.gov:8181",
 	"ingestServer": "http://127.0.0.1:8066",
-    "use_celery": "False",
+	"timezone":  "",
+    "use_celery": "True",
 
     "metadata": [
 		{
-			"sourceTable": "users",
 			"metaID": "logon",
+			"sourceTable": "users",
 			"destinationTable": "Transactions.submitter",
-			"value": "d3e889",
+			"value": "",
 			"displayType": "logged_on",
 			"displayTitle": "Currently Logged On",			
 			"valueField": "_id",
@@ -19,9 +21,9 @@
 			"queryDependency": { "network_id": "logon" },
 			"diplayFormat": "%(first_name)s %(last_name)s"
 		},
-        {
-            "sourceTable": "instruments",
+        {		
             "metaID": "instrumentByID",
+            "sourceTable": "instruments",
 			"destinationTable": "Transactions.instrument",
             "displayType": "select",
 			"displayTitle": "Instrument",
@@ -41,9 +43,9 @@
             "queryDependency": { "_id": "instrumentByID" },
             "queryFields": ["_id", "name_short"]
         },		
-        {
-            "sourceTable": "proposals",
+        {		
             "metaID": "ProposalByInstrument",
+            "sourceTable": "proposals",
             "value": "",
 			"destinationTable": "Transactions.proposal",
             "displayTitle": "Proposal",
@@ -81,24 +83,8 @@
 			"destinationTable": "TransactionKeyValue",
             "metaID": "tag1",
 			"key": "Tag",			
-            "value": "dummy",
+            "value": "",
             "displayTitle": "Tag",
-            "displayType": "enter"
-        },
-        {           
-			"destinationTable": "TransactionKeyValue",
-            "metaID": "tag2",
-			"key": "Taggy",
-            "value": "dummy2",
-            "displayTitle": "Taggy",
-            "displayType": "enter"
-        },
-        {            
-			"destinationTable": "TransactionKeyValue",
-            "metaID": "tag3",
-			"key": "Tagier",
-            "value": "dummy3",
-            "displayTitle": "Tagier",
             "displayType": "enter"
         }
     ]

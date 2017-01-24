@@ -9,7 +9,6 @@
     <script type="text/javascript">
     var url = '/incStatus';
        
-	$.ajaxSetup({cache:false});
         function worker() {
             var jqobject = $.ajax(url)
                 .done(function (data) {
@@ -20,14 +19,17 @@
                     var stateStr = state.concat(': ');
                     stateStr = stateStr.concat(result);
                     $('#currState').html(stateStr);
+                        debugger;
 
                     if (dataObj.state == 'DONE') {
+
+
                         var statusPage = dataObj.result;
                         //var win = window.open(statusPage, '_blank');
                         window.open(statusPage, '_blank');
 
                         // close this window
-                        $(this).closest('.ui-dialog-content').dialog('close');
+                       // $(this).closest('.ui-dialog-content').dialog('close');
                     }
 
                     // restart timer
@@ -39,6 +41,8 @@
 
         };
         $(function () {
+            $.ajaxSetup({ cache: false });
+            debugger;
             worker();
         });
     </script>
