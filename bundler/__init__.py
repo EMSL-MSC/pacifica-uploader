@@ -14,6 +14,7 @@ import tarfile
 import tempfile
 import json
 import mimetypes
+import datetime as DT
 
 import traceback
 
@@ -113,10 +114,8 @@ class FileBundler(object):
 
         info['mimetype'] = mime_type
         info['name'] = file_name
-        info['mtime'] = int(os.path.getmtime(file_path))
-        info['ctime'] = int(os.path.getctime(file_path))
-        offset = time.mktime(time.gmtime(0))
-        info['UTCoffset'] = int(offset)
+        info['mtime'] =DT.datetime.utcfromtimestamp(int(os.path.getmtime(file_path))).isoformat()
+        info['ctime'] = DT.datetime.utcfromtimestamp(int(os.path.getctime(file_path))).isoformat()
         info['destinationTable'] = 'Files'
         info['subdir'] = file_dir
         info['hashsum'] = file_hash
