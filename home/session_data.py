@@ -26,7 +26,7 @@ class SessionState(object):
     is_logged_in = False
 
     # process that handles bundling and uploading
-    bundle_process = None
+    upload_process = None
 
     bundle_filepath = ''
 
@@ -82,7 +82,7 @@ class SessionState(object):
         """
         resets a session to a clean state
         """
-        self.bundle_process = None
+        self.upload_process = None
         self.current_time = None
         self.files.cleanup_files()
 

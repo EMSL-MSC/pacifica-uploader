@@ -2,16 +2,17 @@
     "dataRoot": "S:\\7_Representative_Data",
     "target": "E:\\tar",
     "timeout": "1",
+    "statusServer": "http://dmlb2000.emsl.pnl.gov/status_api/view/",
     "policyServer": "http://localhost:8181",
 	"ingestServer": "http://localhost:8066",
-    "use_celery": "False",
-
+	"timezone":  "",
+    "use_celery": "True",
     "metadata": [
 		{
-			"sourceTable": "users",
 			"metaID": "logon",
+			"sourceTable": "users",
 			"destinationTable": "Transactions.submitter",
-			"value": "dmlb2001",
+			"value": "",
 			"displayType": "logged_on",
 			"displayTitle": "Currently Logged On",
 			"valueField": "_id",
@@ -19,9 +20,9 @@
 			"queryDependency": { "network_id": "logon" },
 			"diplayFormat": "%(first_name)s %(last_name)s"
 		},
-        {
-            "sourceTable": "instruments",
+        {		
             "metaID": "instrumentByID",
+            "sourceTable": "instruments",
 			"destinationTable": "Transactions.instrument",
             "displayType": "select",
 			"displayTitle": "Instrument",
@@ -80,25 +81,9 @@
         {
 			"destinationTable": "TransactionKeyValue",
             "metaID": "tag1",
-			"key": "Tag",
-            "value": "dummy",
+			"key": "Tag",			
+            "value": "",
             "displayTitle": "Tag",
-            "displayType": "enter"
-        },
-        {
-			"destinationTable": "TransactionKeyValue",
-            "metaID": "tag2",
-			"key": "Taggy",
-            "value": "dummy2",
-            "displayTitle": "Taggy",
-            "displayType": "enter"
-        },
-        {
-			"destinationTable": "TransactionKeyValue",
-            "metaID": "tag3",
-			"key": "Tagier",
-            "value": "dummy3",
-            "displayTitle": "Tagier",
             "displayType": "enter"
         }
     ]

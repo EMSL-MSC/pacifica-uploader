@@ -119,9 +119,7 @@
     <Content Include="home\templates\home\images\x_14x14.png" />
     <Content Include="home\templates\home\cookie.html" />
     <Content Include="home\templates\home\login.html" />
-    <Content Include="home\templates\home\status.html" />
     <Content Include="home\templates\home\status_insert.html" />
-    <Content Include="home\templates\home\uploader - Copy.html" />
     <Content Include="home\templates\home\uploader.html" />
     <Content Include="home\templates\includes\global_styles.html" />
     <Content Include="home\templates\includes\view_footer.html" />

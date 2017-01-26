@@ -106,14 +106,18 @@ class FileBundler(object):
         # linuxfy the directory
         file_dir = file_dir.replace('\\', '/')
 
+
         info = {}
         info['size'] = os.path.getsize(file_path)
         mime_type = mimetypes.guess_type(file_path, strict=True)[0]
+
         info['mimetype'] = mime_type
         info['name'] = file_name
         info['mtime'] = int(os.path.getmtime(file_path))
-        info['destinationTable'] = 'Files'
         info['ctime'] = int(os.path.getctime(file_path))
+        offset = time.mktime(time.gmtime(0))
+        info['UTCoffset'] = int(offset)
+        info['destinationTable'] = 'Files'
         info['subdir'] = file_dir
         info['hashsum'] = file_hash
 
@@ -134,7 +138,7 @@ class FileBundler(object):
             str(int(self.percent_complete))
         print meta_str
 
-        TaskComm.task_state('PROGRESS', meta_str)
+        TaskComm.set_state('PROGRESS', meta_str)
 
 
 class TarBundler(FileBundler):
@@ -282,7 +286,7 @@ def bundle(bundle_name='', file_list=None, bundle_size=0, meta_list=None):
     bundler.bundle_metadata(meta_str)
 
     #print >> sys.stderr, "Finished bundling"
-    TaskComm.task_state('PROGRESS', "Bundling complete")
+    TaskComm.set_state('PROGRESS', "Bundling complete")
 
 
 def main():
