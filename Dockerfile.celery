@@ -1,5 +1,4 @@
-from pacifica/uploader
+from pacifica/uploader:local
 
 USER 1
-WORKDIR /app
 ENTRYPOINT ["celery", "-A", "UploadServer", "worker", "--loglevel=info"]

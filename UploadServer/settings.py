@@ -13,9 +13,8 @@ from __future__ import absolute_import
 # library.  If you don't have this then `from celery.schedules import`
 # becomes `proj.celery.schedules` in Python 2.x since it allows
 # for relative imports by default.
-
+import os
 from os import getenv
-
 # Celery settings
 
 BROKER_SERVER = getenv('BROKER_SERVER', '127.0.0.1')
@@ -42,7 +41,7 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-import os
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 # Quick-start development settings - unsuitable for production
@@ -89,9 +88,14 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.RemoteUserMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+)
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.RemoteUserBackend',
 )
 
 ROOT_URLCONF = 'UploadServer.urls'

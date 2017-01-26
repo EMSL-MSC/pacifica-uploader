@@ -1,10 +1,6 @@
 #! /usr/bin/env python
-"""
-A command line module that provides a front end for the uploader
-"""
-
+"""A command line module that provides a front end for the uploader"""
 import sys
-import stat
 import time
 import os.path
 import tempfile
@@ -12,12 +8,20 @@ from glob import glob
 from optparse import OptionParser
 from getpass import getpass
 import datetime
+import stat
 
 from home import tasks
 from home import session_data
 from home import instrument_server
 from home import file_tools
 
+# pylint: disable=unused-argument
+def _parser_add_group(option, opt, value, parser):
+    """
+    Callback to add a key value pair to metadata
+    """
+    pass
+# pylint: enable=unused-argument
 
 def _add_file_cb(option, opt, value, parser):
     """
@@ -45,7 +49,6 @@ def _add_file_cb(option, opt, value, parser):
     # Each entry in the file list is a tuple of the file's absolute path and
     # the relative file name
     files = []
-    abspath = os.path.abspath(parser.values.work_dir)
     for file_name in file_glob:
         if file_name[:1] != '/':
             file_name = os.path.abspath(os.path.join(
@@ -145,7 +148,7 @@ def add_options(parser):
                       help="Read content of password file as password.", metavar='PWD_FILE')
 
 
-def check_options(parser, bundle_name_optional=True):
+def check_options(parser):
     """
     Performs custom option checks for this module given an OptionParser
     """
@@ -175,7 +178,7 @@ def upload_from_options(parser):
     session = session_data.SessionState()
 
     # get rid of redundant file paths
-    filtered = session.files.filter_selected_list(parser.values.file_list)
+    session.files.filter_selected_list(parser.values.file_list)
 
     session.files.data_dir = parser.values.work_dir
     # add a final separator
@@ -186,7 +189,7 @@ def upload_from_options(parser):
     configuration.instrument_short_name = parser.values.instrument
     session.proposal_id = parser.values.proposal
     session.config = configuration
-    session.get_archive_tree()
+    session.get_archive_tree(None)
 
     # get the file tuples (local name, archive name) to bundle
     tuples = session.files.get_bundle_files(parser.values.file_list)
@@ -194,7 +197,8 @@ def upload_from_options(parser):
     tartar = False
     if parser.values.tartar == 'True':
         tartar = True
-
+    # pylint: disable=unexpected-keyword-arg
+    # just to be more expicit
     tasks.upload_files(bundle_name=parser.values.bundle_name,
                        instrument_name=parser.values.instrument,
                        proposal=parser.values.proposal,
@@ -205,6 +209,7 @@ def upload_from_options(parser):
                        user=parser.values.user,
                        password=parser.values.password,
                        tartar=tartar)
+    # pylint: enable=unexpected-keyword-arg
 
 
 def main():
@@ -220,9 +225,10 @@ def main():
         parser.parse_args()
         check_options(parser)
         upload_from_options(parser)
-
+    # pylint: disable=broad-except
     except Exception as err:
         print >> sys.stderr, "CLU dieded: %s" % err
+    # pylint: enable=broad-except
 
 
 if __name__ == '__main__':

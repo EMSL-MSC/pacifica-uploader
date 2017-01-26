@@ -10,6 +10,15 @@ Django views, handle requests from the client side pages
 
 from __future__ import absolute_import
 
+import json
+import datetime
+import os
+import base64
+import re
+import sys
+import traceback
+from time import sleep
+
 from django.conf import settings
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -21,44 +30,24 @@ from django.http import HttpResponseServerError
 
 from django.core.urlresolvers import reverse
 
-import json
-
-import datetime
-
-# operating system
-import os
-
-from home.task_comm import TaskComm
-
-# for checking celery status
 from celery.result import AsyncResult
 
-# delay for celery heartbeat
-from time import sleep
-
-# celery tasks
+from home.task_comm import TaskComm
 from home import tasks
-
 from home import session_data
 from home import file_tools
 from home import instrument_server
 from home import QueryMetadata
 
-# pylint: disable=global-statement
-# justification: by design
-
-# Module level variables
-# session is user specific information
-
 # pylint: disable=invalid-name
-# justification: fix later
-
+# session is global need to fix later
 session = session_data.SessionState()
 
 # server is instrument uploader specific information
 configuration = instrument_server.UploaderConfiguration()
 
 metadata = None
+# pylint: enable=invalid-name
 
 # development VERSION
 VERSION = '2.02'
@@ -109,7 +98,7 @@ def populate_upload_page(request):
     return render_to_response('home/uploader.html',
                               {'data_root': session.files.data_dir,
                                'metaList': metadata.meta_list},
-                              context_instance=RequestContext(request))
+                              RequestContext(request))
 
 
 def show_initial_status(request):
@@ -139,11 +128,15 @@ def set_data_root(request):
         time = os.path.getmtime(session.files.data_dir)
 
         node = [{'title': session.files.data_dir, 'key': session.files.data_dir, 'folder': True,
-                            'lazy': True, 'data': {'time': time}}]
+                 'lazy': True, 'data': {'time': time}}]
 
         return HttpResponse(json.dumps(node), content_type='application/json')
 
     except Exception, ex:
+        print >> sys.stderr, "Exception in set_data_root:"
+        print >> sys.stderr, '-'*60
+        traceback.print_exc(file=sys.stderr)
+        print >> sys.stderr, '-'*60
         return HttpResponseServerError(json.dumps(ex.message), content_type='application/json')
 
 
@@ -161,7 +154,7 @@ def show_status(request, message):
                                   'bundle_size': session.files.bundle_size_str,
                                   'free_size': configuration.free_size_str,
                                   'user': session.user_full_name},
-                              context_instance=RequestContext(request))
+                              RequestContext(request))
 
 
 def show_status_insert(request, message):
@@ -176,7 +169,7 @@ def show_status_insert(request, message):
                                'current_time': session.current_time,
                                'bundle_size': session.files.bundle_size_str,
                                'free_size': configuration.free_size_str},
-                              context_instance=RequestContext(request))
+                              RequestContext(request))
 
 
 def post_upload_metadata(request):
@@ -197,6 +190,10 @@ def post_upload_metadata(request):
         return HttpResponse(json.dumps('success'), content_type='application/json')
 
     except Exception, ex:
+        print >> sys.stderr, "Exception in post_upload_metadata:"
+        print >> sys.stderr, '-'*60
+        traceback.print_exc(file=sys.stderr)
+        print >> sys.stderr, '-'*60
         return HttpResponseServerError(json.dumps(ex.message), content_type='application/json')
 
 # pylint: disable=too-many-return-statements
@@ -218,6 +215,10 @@ def spin_off_upload(request):
             return HttpResponseBadRequest(json.dumps('missing files in post'),
                                           content_type='application/json')
     except Exception, ex:
+        print >> sys.stderr, "Exception in spin_off_upload:"
+        print >> sys.stderr, '-'*60
+        traceback.print_exc(file=sys.stderr)
+        print >> sys.stderr, '-'*60
         return HttpResponseBadRequest(json.dumps(ex.message), content_type='application/json')
 
     if not files:
@@ -256,11 +257,15 @@ def spin_off_upload(request):
                                          meta_list=meta_list)
         else:  # run local
             tasks.upload_files(ingest_server=configuration.ingest_server,
-                                         bundle_name=session.bundle_filepath,
-                                         file_list=tuples,
-                                         bundle_size=session.files.bundle_size,
-                                         meta_list=meta_list)
+                               bundle_name=session.bundle_filepath,
+                               file_list=tuples,
+                               bundle_size=session.files.bundle_size,
+                               meta_list=meta_list)
     except Exception, ex:
+        print >> sys.stderr, "Exception in spin_off_upload_again:"
+        print >> sys.stderr, '-'*60
+        traceback.print_exc(file=sys.stderr)
+        print >> sys.stderr, '-'*60
         session.is_uploading = False
         return HttpResponseServerError(json.dumps(ex.message), content_type='application/json')
 
@@ -271,21 +276,16 @@ def upload_files(request):
     """
     view for upload process spawn
     """
-    try:
-        # use this flag to determine status of upload in incremental status
-        session.is_uploading = True
+    # use this flag to determine status of upload in incremental status
+    session.is_uploading = True
 
-        reply = spin_off_upload(request)
+    reply = spin_off_upload(request)
 
-        return reply
-
-    except Exception, ex:
-        return ex.message
+    return reply
 
 
-"""
-login and login related accesories
-"""
+########################################################################
+# login and login related accesories
 ##########################################################################
 
 
@@ -299,12 +299,14 @@ def login_error(request, error_string):
         if err != '[]':
             error_string = err
             configuration.initialized = False
-
-    return render_to_response(settings.LOGIN_VIEW,
-                              {'site_version': VERSION,
-                               'instrument': configuration.instrument,
-                               'message': error_string},
-                              context_instance=RequestContext(request))
+    if error_string != '':
+        return render_to_response(settings.LOGIN_VIEW,
+                                  {'site_version': VERSION,
+                                   'instrument': configuration.instrument,
+                                   'message': error_string},
+                                  RequestContext(request))
+    else:
+        return HttpResponseRedirect(reverse('home.views.login'))
 
 
 def cookie_test(request):
@@ -318,11 +320,11 @@ def cookie_test(request):
     if request.session.test_cookie_worked():
         request.session.delete_test_cookie()
         return render_to_response('home/cookie.html', {'message': 'Cookie Success'},
-                                  context_instance=RequestContext(request))
+                                  RequestContext(request))
     else:
         request.session.set_test_cookie()
         return render_to_response('home/cookie.html', {'message': 'Cookie Failure'},
-                                  context_instance=RequestContext(request))
+                                  RequestContext(request))
 
 
 def login(request):
@@ -340,15 +342,23 @@ def login(request):
         return login_error(request, 'faulty configuration:  ' + err)
 
     # ignore GET
-    if not request.POST:
-        return login_error(request, '')
+    if request.POST:
+        new_user = request.POST['username']
+        if new_user == '':
+            return login_error(request, 'No user specified')
+    else:
+        if 'HTTP_AUTHORIZATION' in request.META:
+            auth = request.META['HTTP_AUTHORIZATION']
+            scheme, creds = re.split(r'\s+', auth)
+            if scheme.lower() != 'basic':
+                raise ValueError('Unknown auth scheme \"%s\"' % scheme)
+            new_user = base64.b64decode(creds).split(':', 1)[0]
+        else:
+            return login_error(request, '')
 
-    new_user = request.POST['username']
-    if new_user == '':
-        return login_error(request, 'No user specified')
-
-
+    # pylint: disable=invalid-name
     global session
+    # pylint: enable=invalid-name
     if session:
         # check to see if there is an existing user logged in
         if session.user:
@@ -372,14 +382,15 @@ def login(request):
 
     # loads the metadata structure from the config file so we can populate the initial
     # html for the upload page
+    # pylint: disable=invalid-name
     global metadata
+    # pylint: enable=invalid-name
     metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
 
     # try:
     #    tasks.clean_target_directory(configuration.target_dir)
     # except:
-    #    return login_error(request, 'failed to clear tar directory')
-
+    #    return
     # keep a copy of the user so we can keep other users from stepping on them if they are still
     # logged in
     session.user = new_user
@@ -409,9 +420,11 @@ def initialize_fields(request):
     initializes the metadata fields
     """
     # start from scratch on first load and subsequent reloads of page
+    # pylint: disable=invalid-name
     global metadata
+    # pylint: enable=invalid-name
     metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
-    
+
     # populates metadata for the current user
     # to have a common model for init and reload we need to set
     # the network id here
@@ -647,6 +660,10 @@ def get_bundle(request):
         return return_bundle(tree, session.files.error_string)
 
     except Exception, ex:
+        print >> sys.stderr, "Exception in get_bundle:"
+        print >> sys.stderr, '-'*60
+        traceback.print_exc(file=sys.stderr)
+        print >> sys.stderr, '-'*60
         return return_bundle(tree, 'get_bundle failed:  ' + ex.message)
 
 # pylint: disable=unused-argument
@@ -746,7 +763,11 @@ def incremental_status(request):
         return HttpResponse(retval)
 
     except Exception, ex:
+        print >> sys.stderr, "Exception in incremental status:"
+        print >> sys.stderr, '-'*60
+        traceback.print_exc(file=sys.stderr)
+        print >> sys.stderr, '-'*60
+        print >> sys.stderr, ex.message
         print ex.message
-        # session.is_uploading = False
         retval = json.dumps({'state': 'Status Error', 'result': ex.message})
         return HttpResponse(retval)

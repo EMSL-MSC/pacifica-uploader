@@ -1,0 +1,9 @@
+django<1.10
+psutil
+celery<4
+pysqlite
+pycurl
+requests
+coverage
+pylint
+codeclimate-test-reporter

@@ -35,7 +35,7 @@ class IndexServerUnitTests(unittest.TestCase):
         """
         tests the initial population of the metadata
         """
-        mdata = QueryMetadata('http://dmlb2000.emsl.pnl.gov:8181', 'd3e889')
+        mdata = QueryMetadata('http://localhost:8181')
 
         mdata.load_meta()
 
@@ -49,7 +49,7 @@ class IndexServerUnitTests(unittest.TestCase):
         """
         builds the metadata queries to the policy server
         """
-        mdata = QueryMetadata('http://dmlb2000.emsl.pnl.gov:8181', 'd3e889')
+        mdata = QueryMetadata('http://localhost:8181')
 
         mdata.load_meta()
 

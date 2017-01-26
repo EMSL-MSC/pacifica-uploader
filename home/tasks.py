@@ -1,36 +1,27 @@
-
 """
 Celery tasks to be run in the background
 """
-
-
 from __future__ import absolute_import
-
-from celery import shared_task
-
-from exceptions import Warning
-
-from uploader import Uploader
-from bundler import bundle
-
-from home.tar_man import rename_tar_file, clean_target_directory
-
 import os
-
+import sys
+import traceback
 import json
 
+from celery import shared_task
+from uploader import Uploader
+from bundler import bundle
+from home.tar_man import rename_tar_file
 from home.task_comm import TaskComm, task_error
 
 CLEAN_TAR = True
 
 
-def job_status(job_list=None):
+def job_status():
     """
     checks the status of existing job
     tbd
     """
-    job_list = []
-    return job_list
+    return []
 
 
 # tag to show this def as a celery task
@@ -130,6 +121,10 @@ def upload_files(ingest_server='',
         raise se
 
     except Exception, ex:
+        print >> sys.stderr, "Exception in upload_files:"
+        print >> sys.stderr, '-'*60
+        traceback.print_exc(file=sys.stderr)
+        print >> sys.stderr, '-'*60
         task_error('tasks: upload_files :' + ex.message)
         print 'Task exception: ' + ex.message
         raise ex
