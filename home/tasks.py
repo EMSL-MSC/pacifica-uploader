@@ -118,10 +118,13 @@ def upload_files(ingest_server='',
 
         print status
 
-        #set job ID here
-        print 'exit with deliberate error'
-        print result
-        raise StandardError(result)
+        if (TaskComm.USE_CELERY):
+            #set job ID here
+            print 'exit with deliberate error'
+            print result
+            raise StandardError(result)
+        else:
+            TaskComm.set_state("DONE", result)
 
     except StandardError, se:
         raise se
