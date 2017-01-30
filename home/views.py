@@ -50,7 +50,7 @@ metadata = None
 # pylint: enable=invalid-name
 
 # development VERSION
-VERSION = '2.02'
+VERSION = '2.1'
 
 
 def ping_celery():
