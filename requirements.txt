@@ -1,6 +1,5 @@
 django<1.10
 psutil
-pycurl
 requests
 celery<4
 pysqlite
