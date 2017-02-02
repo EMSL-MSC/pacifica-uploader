@@ -12,7 +12,7 @@
     <PythonRunWebServerCommandArguments>runserver --settings $(DjangoSettingsModule) %SERVER_PORT% $(CommandLineArguments)</PythonRunWebServerCommandArguments>
     <WebBrowserUrl>
     </WebBrowserUrl>
-    <WebBrowserPort>9999</WebBrowserPort>
+    <WebBrowserPort>9001</WebBrowserPort>
     <CommandLineArguments>
     </CommandLineArguments>
     <PythonDebugWebServerCommandType>script</PythonDebugWebServerCommandType>
@@ -258,6 +258,7 @@
     <Content Include="media\stylesheets\status.css" />
     <Content Include="media\stylesheets\status_style.css" />
     <Content Include="media\stylesheets\upload_style.css" />
+    <Content Include="requirements.txt" />
     <Content Include="UploadServer\paths.txt" />
   </ItemGroup>
   <ItemGroup>

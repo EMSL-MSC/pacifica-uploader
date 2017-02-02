@@ -115,3 +115,16 @@ E:\MyEmsl\github\pacifica-uploader - lint\bin\Microsoft.PythonTools.AzureSetup.e
 E:\MyEmsl\github\pacifica-uploader - lint\bin\wfastcgi.py
 E:\MyEmsl\github\pacifica-uploader - lint\obj\Debug\web.config
 E:\MyEmsl\github\pacifica-uploader - lint\obj\Debug\web.debug.config
+E:\MyEmsl\github\pacifica-uploader - remote user\pacifica-uploader\bin\Microsoft.PythonTools.WebRole.dll
+E:\MyEmsl\github\pacifica-uploader - remote user\pacifica-uploader\obj\Debug\attach_server.py
+E:\MyEmsl\github\pacifica-uploader - remote user\pacifica-uploader\obj\Debug\visualstudio_py_debugger.py
+E:\MyEmsl\github\pacifica-uploader - remote user\pacifica-uploader\obj\Debug\visualstudio_py_repl.py
+E:\MyEmsl\github\pacifica-uploader - remote user\pacifica-uploader\obj\Debug\visualstudio_py_util.py
+E:\MyEmsl\github\pacifica-uploader - remote user\pacifica-uploader\obj\Debug\__init__.py
+E:\MyEmsl\github\pacifica-uploader - remote user\pacifica-uploader\obj\Debug\__main__.py
+E:\MyEmsl\github\pacifica-uploader - remote user\pacifica-uploader\bin\AzureSetup.cfg
+E:\MyEmsl\github\pacifica-uploader - remote user\pacifica-uploader\bin\Microsoft.PythonTools.AzureSetup.exe
+E:\MyEmsl\github\pacifica-uploader - remote user\pacifica-uploader\bin\Microsoft.PythonTools.AzureSetup.exe.config
+E:\MyEmsl\github\pacifica-uploader - remote user\pacifica-uploader\bin\wfastcgi.py
+E:\MyEmsl\github\pacifica-uploader - remote user\pacifica-uploader\obj\Debug\web.config
+E:\MyEmsl\github\pacifica-uploader - remote user\pacifica-uploader\obj\Debug\web.debug.config
