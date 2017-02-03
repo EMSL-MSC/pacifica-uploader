@@ -1,4 +1,4 @@
-ddjango<1.10
+django<1.10
 psutil
 requests
 celery==3.1.18
