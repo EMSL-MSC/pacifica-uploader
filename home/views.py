@@ -293,20 +293,17 @@ def login_error(request, error_string):
     """
     returns to the login page with an error message
     """
-    if not configuration.initialized:
-        err = configuration.initialize_settings()
-        # if there is an error, override the error_string
-        if err != '[]':
-            error_string = err
-            configuration.initialized = False
-    if error_string != '':
-        return render_to_response(settings.LOGIN_VIEW,
-                                  {'site_version': VERSION,
-                                   'instrument': configuration.instrument,
-                                   'message': error_string},
-                                  RequestContext(request))
-    else:
-        return HttpResponseRedirect(reverse('home.views.login'))
+    #if not configuration.initialized:
+    #    err = configuration.initialize_settings()
+    #    # if there is an error, override the error_string
+    #    if err != '[]':
+    #        error_string = err
+    #        configuration.initialized = False
+    return render_to_response(settings.LOGIN_VIEW,
+                                {'site_version': VERSION,
+                                'instrument': configuration.instrument,
+                                'message': error_string},
+                                RequestContext(request))
 
 
 def cookie_test(request):
@@ -335,6 +332,8 @@ def login(request):
     Otherwise, gets the user data to populate the main page
     """
 
+    traceback.print_stack()
+
     # initialize server settings from scratch
     configuration.initialized = False
     err = configuration.initialize_settings()
@@ -354,7 +353,8 @@ def login(request):
                 raise ValueError('Unknown auth scheme \"%s\"' % scheme)
             new_user = base64.b64decode(creds).split(':', 1)[0]
         else:
-            return login_error(request, '')
+            render = login_error(request, 'auth error')
+            return render
 
     # pylint: disable=invalid-name
     global session
@@ -698,19 +698,19 @@ def get_status():
         state = session.upload_process.state
         result = session.upload_process.result
         if state == 'FAILURE':
-            # we fail to succeed
+            # we fail to succeed, expecting an error object
             try:
-                if result['exc_type'] == 'StandardError':
-                    return 'DONE', result['exc_message']
-                else:
-                    return session.upload_process.state, session.upload_process.result
+                result = result.args[0]
+                val = json.loads(result)
+                val['job_id']
+                state = 'DONE'
             except KeyError:
-                return session.upload_process.state, session.upload_process.result
-        else:
-            return session.upload_process.state, session.upload_process.result
+                # if this isn't a successful upload (no job_id) then just return the args.
+                pass
     else:
         state, result = TaskComm.get_state()
-        return state, result
+        
+    return state, result
 
 
 def incremental_status(request):
