@@ -27,7 +27,6 @@ urlpatterns = patterns('',
                        url(r'^initializeFields/', 'home.views.initialize_fields',
                            name='initializeFields'),
                        url(r'^selectChanged/', 'home.views.select_changed', name='selectChanged'),
-                       url(r'^cookie/', 'home.views.cookie_test', name='cookie'),
                        url(r'^login/$', 'home.views.login'),
                        url(r'^logout/$', 'home.views.logout'),)
 

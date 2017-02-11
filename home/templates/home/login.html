@@ -21,30 +21,6 @@
                 <input type="hidden" name="next" value="{{ next }}" />
                 {% endif %}
 
-                <fieldset style="margin-top:3em;position:relative;width:300px;margin-left:auto;margin-right:auto;">
-                    <legend>MyEMSL User Login</legend>
-                    <div id="login_container" class="full_width_block">
-                        <div class="control-group">
-                            <label class="control-label" for="username">Username</label>
-                            <div class="controls">
-                                <input type="text" id="username" name="username" placeholder="Username">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="buttons" style="height:30px;">
-                        <div class="control-group">
-                            <div id="submit_button" class="controls">
-                                <button type="submit" class="btn">Login</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="info_container" style="height:30px;" class="full_width_block">
-                        <div id="version_container" class="left_block">
-                            Site Version: v<span id="site_version">{{site_version}}</span>
-                        </div>
-                    </div>
-                </fieldset>
             </form>
             <section class="warning_messages">
                 <span id="warning_message">{{message}}</span>

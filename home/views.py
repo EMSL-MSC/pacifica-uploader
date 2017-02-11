@@ -50,7 +50,7 @@ metadata = None
 # pylint: enable=invalid-name
 
 # development VERSION
-VERSION = '2.1'
+VERSION = '2.11'
 
 
 def ping_celery():
@@ -71,18 +71,49 @@ def ping_celery():
 
     return False
 
+def validate_user_handler(request):
+    """
+    checks to see if:
+        no one is logged in, in which case log this user in
+        user is logged in and this is the current user, in which case just reload the page (losing context)
+        a user is logged in and this is not that user, in which case block them out
+    """
+
+    if 'HTTP_AUTHORIZATION' in request.META:
+        auth = request.META['HTTP_AUTHORIZATION']
+        scheme, creds = re.split(r'\s+', auth)
+        if scheme.lower() != 'basic':
+            raise ValueError('Unknown auth scheme \"%s\"' % scheme)
+        new_user = base64.b64decode(creds).split(':', 1)[0]
+    else:
+        render = login_error(request, 'missing authorization')
+        return render
+
+    # pylint: disable=invalid-name
+    global session
+    # pylint: enable=invalid-name
+    if session:
+        # check to see if there is an existing user logged in
+        if session.user:
+            # if the current user is still logged in and this is not that
+            # user, throw an error
+            if new_user != session.user:
+                return login_error(request,
+                                    'User %s is currently logged in' % session.user_full_name)
+            else:
+                return # just reload the page if user is already logged in.
+    
+    # new valid user, log that bad boy in
+    return login(request, new_user)
 
 def populate_upload_page(request):
     """
     formats the main uploader page
     """
-    # if not logged in
-    if not session.is_logged_in:
-        # call login error with no error message
-        return login_error(request, '')
 
-    if session.is_timed_out():
-        return logout(request)
+    validation_redirect = validate_user_handler(request)
+    if validation_redirect:
+        return validation_redirect
 
     # reset timeout
     session.touch()
@@ -90,11 +121,10 @@ def populate_upload_page(request):
     request.session.modified = True
 
     # update the free space when the page is loaded
-    # this will update after an upload is done
     # move to file_tools dfh
     configuration.update_free_space()
 
-    # Render list page with the documents and the form
+    # Render the upload page with the meta (just the render format) and the default root directory
     return render_to_response('home/uploader.html',
                               {'data_root': session.files.data_dir,
                                'metaList': metadata.meta_list},
@@ -139,22 +169,6 @@ def set_data_root(request):
         print >> sys.stderr, '-'*60
         return HttpResponseServerError(json.dumps(ex.message), content_type='application/json')
 
-
-def show_status(request, message):
-    """
-    show the status of the existing upload task
-    """
-    session.current_time = datetime.datetime.now().strftime('%m.%d.%Y.%H.%M.%S')
-
-    return render_to_response('home/status.html',
-                              {
-                                  'status': message,
-                                  'metaList': metadata.meta_list,
-                                  'current_time': session.current_time,
-                                  'bundle_size': session.files.bundle_size_str,
-                                  'free_size': configuration.free_size_str,
-                                  'user': session.user_full_name},
-                              RequestContext(request))
 
 
 def show_status_insert(request, message):
@@ -285,20 +299,15 @@ def upload_files(request):
 
 
 ########################################################################
-# login and login related accesories
+# login and login related accessories
 ##########################################################################
 
 
 def login_error(request, error_string):
     """
-    returns to the login page with an error message
+    returns page with an error message
     """
-    #if not configuration.initialized:
-    #    err = configuration.initialize_settings()
-    #    # if there is an error, override the error_string
-    #    if err != '[]':
-    #        error_string = err
-    #        configuration.initialized = False
+
     return render_to_response(settings.LOGIN_VIEW,
                                 {'site_version': VERSION,
                                 'instrument': configuration.instrument,
@@ -306,25 +315,8 @@ def login_error(request, error_string):
                                 RequestContext(request))
 
 
-def cookie_test(request):
-    """
-    This test needs to be called twice in a row.  The first call should fail as the
-    cookie hasn't been set.  The second should succeed.  If it doesn't,
-    you need to enable cookies on the browser.
-    """
-    # test that the browser is supporting cookies so we can maintain our
-    # session state
-    if request.session.test_cookie_worked():
-        request.session.delete_test_cookie()
-        return render_to_response('home/cookie.html', {'message': 'Cookie Success'},
-                                  RequestContext(request))
-    else:
-        request.session.set_test_cookie()
-        return render_to_response('home/cookie.html', {'message': 'Cookie Failure'},
-                                  RequestContext(request))
 
-
-def login(request):
+def login(request, new_user):
     """
     Logs the user in
     If the login fails for whatever reason, invalid for instrument, etc.,
@@ -332,7 +324,6 @@ def login(request):
     Otherwise, gets the user data to populate the main page
     """
 
-    traceback.print_stack()
 
     # initialize server settings from scratch
     configuration.initialized = False
@@ -340,39 +331,15 @@ def login(request):
     if err != '[]':
         return login_error(request, 'faulty configuration:  ' + err)
 
-    # ignore GET
-    if request.POST:
-        new_user = request.POST['username']
-        if new_user == '':
-            return login_error(request, 'No user specified')
-    else:
-        if 'HTTP_AUTHORIZATION' in request.META:
-            auth = request.META['HTTP_AUTHORIZATION']
-            scheme, creds = re.split(r'\s+', auth)
-            if scheme.lower() != 'basic':
-                raise ValueError('Unknown auth scheme \"%s\"' % scheme)
-            new_user = base64.b64decode(creds).split(':', 1)[0]
-        else:
-            render = login_error(request, 'auth error')
-            return render
-
+    # loads the metadata structure from the config file so we can populate the initial html for the upload page
     # pylint: disable=invalid-name
-    global session
+    global metadata
     # pylint: enable=invalid-name
-    if session:
-        # check to see if there is an existing user logged in
-        if session.user:
-            # if the session is timed out, logout the current user
-            if session.is_timed_out():
-                logout(request)
-            else:
-                # if the current user is still logged in and this is not that
-                # user, throw an error
-                if new_user != session.user:
-                    return login_error(request,
-                                       'User %s is currently logged in' % session.user_full_name)
+    metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
+
 
     # after login you lose your session context
+    global session
     session = session_data.SessionState()
     session.config = configuration
 
@@ -380,24 +347,21 @@ def login(request):
     # check to see if needed dfh
     session.files.data_dir = session.config.data_dir
 
-    # loads the metadata structure from the config file so we can populate the initial
-    # html for the upload page
-    # pylint: disable=invalid-name
-    global metadata
-    # pylint: enable=invalid-name
-    metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
-
     # try:
     #    tasks.clean_target_directory(configuration.target_dir)
     # except:
     #    return
-    # keep a copy of the user so we can keep other users from stepping on them if they are still
-    # logged in
+
+    # keep a copy of the user so we can keep other users from stepping on them
     session.user = new_user
     session.is_logged_in = True
     session.touch()
 
-    return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
+    # current assumption for a single user system is that we have been called through the / url
+    # which is the populate page
+    # which accepts a 'none' as a valid login or NOP
+    # if we made it this far, this must meet our definition of truth
+    return
 
 # pylint: disable=unused-argument
 # justification: django required
@@ -410,7 +374,7 @@ def logout(request):
     session.user = None
     session.is_logged_in = False
 
-    return HttpResponseRedirect(reverse('home.views.login'))
+    return login_error(request, "Logged out of MyEmsl")
 
 
 # pylint: disable=unused-argument
