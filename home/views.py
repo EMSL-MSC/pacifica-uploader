@@ -137,6 +137,18 @@ def show_initial_status(request):
     """
     return show_status_insert(request, '')
 
+def print_err(ex):
+    """ prints error """
+    print >> sys.stderr, '-'*60
+    print >> sys.stderr, 'Exception:'
+    traceback.print_exc(file=sys.stderr)
+    print >> sys.stderr, '-'*60
+
+def report_err(ex):
+    """ consolidates error reporting code """
+    print_err(ex)
+    return HttpResponseServerError(json.dumps(ex.message), content_type='application/json')
+
 
 def set_data_root(request):
     """
@@ -163,11 +175,7 @@ def set_data_root(request):
         return HttpResponse(json.dumps(node), content_type='application/json')
 
     except Exception, ex:
-        print >> sys.stderr, "Exception in set_data_root:"
-        print >> sys.stderr, '-'*60
-        traceback.print_exc(file=sys.stderr)
-        print >> sys.stderr, '-'*60
-        return HttpResponseServerError(json.dumps(ex.message), content_type='application/json')
+        return report_err(ex)
 
 
 
@@ -204,11 +212,7 @@ def post_upload_metadata(request):
         return HttpResponse(json.dumps('success'), content_type='application/json')
 
     except Exception, ex:
-        print >> sys.stderr, "Exception in post_upload_metadata:"
-        print >> sys.stderr, '-'*60
-        traceback.print_exc(file=sys.stderr)
-        print >> sys.stderr, '-'*60
-        return HttpResponseServerError(json.dumps(ex.message), content_type='application/json')
+        return report_err(ex)
 
 # pylint: disable=too-many-return-statements
 # justification: disagreement with style
@@ -229,11 +233,7 @@ def spin_off_upload(request):
             return HttpResponseBadRequest(json.dumps('missing files in post'),
                                           content_type='application/json')
     except Exception, ex:
-        print >> sys.stderr, "Exception in spin_off_upload:"
-        print >> sys.stderr, '-'*60
-        traceback.print_exc(file=sys.stderr)
-        print >> sys.stderr, '-'*60
-        return HttpResponseBadRequest(json.dumps(ex.message), content_type='application/json')
+        return report_err(ex)
 
     if not files:
         return HttpResponseBadRequest(json.dumps('missing files in post'),
@@ -276,12 +276,8 @@ def spin_off_upload(request):
                                bundle_size=session.files.bundle_size,
                                meta_list=meta_list)
     except Exception, ex:
-        print >> sys.stderr, "Exception in spin_off_upload_again:"
-        print >> sys.stderr, '-'*60
-        traceback.print_exc(file=sys.stderr)
-        print >> sys.stderr, '-'*60
         session.is_uploading = False
-        return HttpResponseServerError(json.dumps(ex.message), content_type='application/json')
+        return report_err(ex)
 
     return HttpResponse(json.dumps('success'), content_type='application/json')
 
@@ -466,20 +462,10 @@ def get_children(request):
 
         retval = json.dumps(pathlist)
 
-    except Exception, ex:
-        print ex
-        return error_response('lazyload failed')
+    except Exception, ex:        
+        return report_err(ex)
 
     return HttpResponse(retval)
-
-
-def error_response(err_str):
-    """
-    send an http error response with an appropriate error message
-    """
-    return HttpResponse(json.dumps('Error: ' + err_str),
-                        content_type='application/json',
-                        status=500)
 
 
 def make_leaf(title, path):
@@ -624,10 +610,7 @@ def get_bundle(request):
         return return_bundle(tree, session.files.error_string)
 
     except Exception, ex:
-        print >> sys.stderr, "Exception in get_bundle:"
-        print >> sys.stderr, '-'*60
-        traceback.print_exc(file=sys.stderr)
-        print >> sys.stderr, '-'*60
+        print_err(ex)
         return return_bundle(tree, 'get_bundle failed:  ' + ex.message)
 
 # pylint: disable=unused-argument
@@ -727,11 +710,6 @@ def incremental_status(request):
         return HttpResponse(retval)
 
     except Exception, ex:
-        print >> sys.stderr, "Exception in incremental status:"
-        print >> sys.stderr, '-'*60
-        traceback.print_exc(file=sys.stderr)
-        print >> sys.stderr, '-'*60
-        print >> sys.stderr, ex.message
-        print ex.message
+        print_err(ex)
         retval = json.dumps({'state': 'Status Error', 'result': ex.message})
         return HttpResponse(retval)
