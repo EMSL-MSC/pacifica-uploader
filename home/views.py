@@ -50,7 +50,7 @@ metadata = None
 # pylint: enable=invalid-name
 
 # development VERSION
-VERSION = '2.11'
+VERSION = '2.11.1.1.1'
 
 
 def ping_celery():
@@ -103,6 +103,7 @@ def validate_user_handler(request):
             else:
                 return # just reload the page if user is already logged in.
     
+    print 'trying to log in:  ' + new_user
     # new valid user, log that bad boy in
     return login(request, new_user)
 
