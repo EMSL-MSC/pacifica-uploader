@@ -371,7 +371,7 @@ def logout(request):
     session.user = None
     session.is_logged_in = False
 
-    return login_error(request, "Logged out of MyEmsl")
+    return login_error(request, "Logged out")
 
 
 # pylint: disable=unused-argument
