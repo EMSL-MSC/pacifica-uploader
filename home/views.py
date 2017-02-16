@@ -94,7 +94,7 @@ def validate_user_handler(request):
     # pylint: enable=invalid-name
     if session:
         # check to see if there is an existing user logged in
-        if session.user:
+        if session.user and session.is_logged_in:
             # if the current user is still logged in and this is not that
             # user, throw an error
             if new_user != session.user:
