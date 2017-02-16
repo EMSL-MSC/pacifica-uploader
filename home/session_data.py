@@ -12,7 +12,8 @@ class SessionState(object):
     """
     meta data about for a session
     """
-    user = None
+
+    network_id = None
 
     current_time = ''
 

@@ -9,6 +9,7 @@ import json
 import os
 
 import requests
+import copy
 
 # pylint: disable=too-few-public-methods
 # justification: perfect amount of methods, possibly look at using "collection"
@@ -355,6 +356,17 @@ class QueryMetadata(object):
         display = entry['text']
 
         return display
+
+    def get_user_name(self, network_id):
+        """ return the formatted logon user """
+
+        node = self.get_node('logon')
+        #kludgy
+        db_user = node.value
+        node.value = network_id
+        name = self.get_display(node)
+        node.value = db_user
+        return name
 
 
     def populate_metadata_from_form(self, form):
