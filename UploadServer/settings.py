@@ -55,7 +55,7 @@ DEBUG = True
 
 TEMPLATE_DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # URL of the login page.
 LOGIN_URL = '/login/'
