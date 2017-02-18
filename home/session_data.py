@@ -12,8 +12,8 @@ class SessionState(object):
     """
     meta data about for a session
     """
-    user = None
-    user_full_name = ''
+
+    network_id = None
 
     current_time = ''
 
@@ -75,7 +75,6 @@ class SessionState(object):
         resets a session to a clean state
         """
         self.user = None
-        self.user_full_name = ''
         self.cleanup_upload()
 
     def cleanup_upload(self):

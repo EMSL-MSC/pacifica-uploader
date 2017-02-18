@@ -94,12 +94,13 @@ def validate_user_handler(request):
     # pylint: enable=invalid-name
     if session:
         # check to see if there is an existing user logged in
-        if session.user:
+        if session.network_id and session.is_logged_in:
             # if the current user is still logged in and this is not that
             # user, throw an error
-            if new_user != session.user:
+            if new_user != session.network_id:
+                name = metadata.get_user_name(session.network_id)
                 return login_error(request,
-                                    'User %s is currently logged in' % session.user_full_name)
+                                    'User %s is currently logged in' % name)
             else:
                 return # just reload the page if user is already logged in.
 
@@ -350,7 +351,7 @@ def login(request, new_user):
     #    return
 
     # keep a copy of the user so we can keep other users from stepping on them
-    session.user = new_user
+    session.network_id = new_user
     session.is_logged_in = True
     session.touch()
 
@@ -368,10 +369,10 @@ def logout(request):
     which will bounce to the login page
     """
 
-    session.user = None
+    session.network_id = None
     session.is_logged_in = False
 
-    return login_error(request, "Logged out of MyEmsl")
+    return login_error(request, "Logged out")
 
 
 # pylint: disable=unused-argument
@@ -389,7 +390,7 @@ def initialize_fields(request):
     # populates metadata for the current user
     # to have a common model for init and reload we need to set
     # the network id here
-    metadata.initialize_user(session.user)
+    metadata.initialize_user(session.network_id)
 
     updates = metadata.initial_population()
 
