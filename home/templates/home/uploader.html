@@ -22,7 +22,7 @@
                           {% endif %}
                      {% endfor %}
 
-                    
+
                     <p class="smallprint"><a href="/logout">kitty? Click here to Logout</a></p>
                 </div>
             </div>
@@ -31,14 +31,14 @@
                 <form method="post" enctype="multipart/form-data">
 	                {% csrf_token %}
 
-                    <fieldset style="min-height:170px;">
+                    <fieldset id="metadata_container" style="min-height:170px;">
                         <legend>Metadata</legend>
 
                             {% for meta in metaList %}
                                 {% if meta.display_type == 'select'  %}
                                     <div class="full_width_block">
                                         <label for="{{meta.meta_id}}" style="display:block;">{{meta.display_title}}</label>
-                                        <select id="{{meta.meta_id}}" name="{{meta.meta_id}}" class="main_page_selector"> 
+                                        <select id="{{meta.meta_id}}" name="{{meta.meta_id}}" class="main_page_selector">
                                             {#<option selected="selected" value="34002">thing1</option>#}
                                             {#{% for sel in meta.select_list %}
                                                 <option value="{{sel.key}}">{{sel.display}}</option>
@@ -55,24 +55,34 @@
                                     <li>
                                        <label for="{{meta.meta_id}}" style="display:block;">{{meta.display_title}}</label>
                                        <input type="text" id="{{meta.meta_id}}" style="width:80%;border-width:1px;" name="{{meta.meta_id}}" value = "{{meta.value}}">
-                                    </li>                                
+                                    </li>
                                 {% endif %}
                             {% endfor %}
                             </ul>
                         </div>
                     </fieldset>
 
-                    <fieldset style="margin-top:1em;padding: 1em;">
+                    <fieldset id="upload_status_container" style="margin-top:1em;padding: 1em;display:none;">
+                        <legend>
+                            Upload Status
+                        </legend>
+                        <div id="upload_status"></div>
+                        <div id="status_view_button_container" style="float:right;">
+                            <input type="button" id="status_view_button" name="status_view_button" value="View Status" />
+                        </div>
+                    </fieldset>
+
+                    <fieldset id="files_container" style="margin-top:1em;padding: 1em;">
                         <legend>Files to be Uploaded to the EMSL Archive</legend>
                         <div class="full_width_block">
-                            <div id="uploadFiles" style=width: 75%;">
+                            <div id="uploadFiles" style="width: 75%;">
                                 <ul id="load" style="display:none;" class="ui-fancytree-source ui-helper-hidden">
                                     <li id="upload" class="lazy folder">
                                         <span> Upload </span>
                                     </li>
                                 </ul>
                             </div>
-                            <div style="text-align: center; position: absolute; top:0; right:0;">  
+                            <div style="text-align: center; position: absolute; top:0; right:0;">
                               <input type="submit" name="upload_btn" id="upload_btn" value="Upload Files &amp; Metadata" />
                               <div id="message">
                                   <p class = "tight">
@@ -82,7 +92,7 @@
                           </div>
                         </div>
                     </fieldset>
-                    <fieldset style="margin-top:1em;padding: 1em;">
+                    <fieldset id="file_chooser_container" style="margin-top:1em;padding: 1em;">
                         <legend>Choose Files to Upload from the EMSL Instrument</legend>
                         <div class="full_width_block">
                           <div id="tree">
@@ -93,7 +103,7 @@
                             </ul>
                           </div>
                         </div>
-                        
+
                     </fieldset>
                 </form>
             </div>

@@ -2,33 +2,87 @@
     <div class="full_width_block"><strong>Bundle Size:</strong> {{bundle_size}}</div>
     <div class="full_width_block"><strong>Available Free Space:</strong> {{free_size}}</div>
     <div class="full_width_block" style="margin-top:10px;">
-        <div><strong>Current Upload Processing Status:</strong></div>
-        <div><span id="currState"></span></div>
+        <!-- <div><strong>Current Upload Processing Status:</strong></div>
+        <div><span id="currState"></span></div> -->
+        <div id="dialog" title="File Download">
+            <div class="progress-label">Starting Upload...</div>
+            <div id="progressbar"></div>
+        </div>
     </div>
 </div>
+<style>
+#progressbar {
+  margin-top: 20px;
+}
+
+.progress-label {
+  font-weight: bold;
+  text-shadow: 1px 1px 0 #fff;
+}
+
+.ui-dialog-titlebar-close {
+  display: none;
+}
+</style>
+
+{"state": "PROGRESS", "result": {"result": {"Status": "upload percent complete: 95"}}}
 
 <script type="text/javascript">
     var url = '/incStatus';
     var statusTimeoutHandler;
-       
+    var progressbar = $( "#progressbar" );
+    var progressLabel = $( ".progress-label" );
+
 $.ajaxSetup({cache:false});
     function worker() {
         var jqobject = $.ajax(url)
             .done(function (data) {
-                    
+
                 var dataObj = $.parseJSON(data);
                 var state = dataObj.state;
                 var result = JSON.stringify(dataObj.result);
                 var stateStr = state.concat(': ');
+                var percentComplete = 0;
+                var currentTask = '';
+                var statusMatcher = /(\D+)(\d+)/;
                 stateStr = stateStr.concat(result);
                 $('#currState').html(stateStr);
 
+                progressbar.progressbar({
+                  value: false,
+                  change: function() {
+                    progressLabel.text( "Current " + currentTask + "Progress: " + progressbar.progressbar( "value" ) + "%" );
+                  },
+                  complete: function() {
+                    progressLabel.text( "Upload Complete" );
+                  }
+                });
+
+
                 if (dataObj.state == 'DONE') {
                     var statusPage = dataObj.result;
-                    window.open(statusPage, '_blank');
+                    // window.open(statusPage, '_blank');
+
+                    $('#upload_status').append("<span>Upload completed successfully</span>");
+                    $('#status_view_button').click(function(event){
+                        var redirectWindow = window.open(statusPage, "_blank");
+                        redirectWindow.location;
+                    })
+                    $('#upload_status_container').show()
 
                     $('#status_info_container').dialog('close');
 
+                }
+                else if (dataObj.state == 'PROGRESS') {
+        		    if(dataObj.result.result.Status){
+        		        percentComplete = dataObj.result.result.Status.split(' ').pop();
+                        currentTask = 'Upload ';
+        		    }else if(dataObj.result.result.indexOf('Bundling') >= 0){
+                        percentComplete = dataObj.result.result.split(' ').pop()
+                        currentTask = 'File Bundling ';
+                    }
+                    progressbar.progressbar( "value", percentComplete );
+                    statusTimeoutHandler = setTimeout(worker, 1000);
                 }
                 else if (dataObj.state == 'CANCELLED') {
                     $('#status_info_container').dialog('close');

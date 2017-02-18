@@ -102,7 +102,7 @@ def validate_user_handler(request):
                                     'User %s is currently logged in' % session.user_full_name)
             else:
                 return # just reload the page if user is already logged in.
-    
+
     print 'trying to log in:  ' + new_user
     # new valid user, log that bad boy in
     return login(request, new_user)
@@ -463,7 +463,7 @@ def get_children(request):
 
         retval = json.dumps(pathlist)
 
-    except Exception, ex:        
+    except Exception, ex:
         return report_err(ex)
 
     return HttpResponse(retval)
@@ -657,7 +657,7 @@ def get_status():
                 pass
     else:
         state, result = TaskComm.get_state()
-        
+
     return state, result
 
 
@@ -689,7 +689,7 @@ def incremental_status(request):
                 result = ''
                 retval = json.dumps({'state': state, 'result': result})
                 return HttpResponse(retval)
-            
+
         state, result = get_status()
 
         if state is not None:
@@ -699,7 +699,8 @@ def incremental_status(request):
                 print 'completed job ', job_id
 
                 # create URL for status server
-                result = configuration.status_server + str(job_id)
+                result = '{0}/view/{1}'.format(configuration.status_server.strip('/'), job_id)
+                # result = configuration.status_server + str(job_id)
 
                 # if we have successfully uploaded, cleanup the lists
                 session.cleanup_upload()

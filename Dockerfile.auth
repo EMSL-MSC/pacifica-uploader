@@ -1,0 +1,8 @@
+from nginx
+from nginx
+
+COPY ./auth/htpasswd /etc/nginx/.htpasswd
+COPY ./auth/mysite.template /etc/nginx/conf.d/mysite.template
+COPY ./auth/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT /entrypoint.sh
