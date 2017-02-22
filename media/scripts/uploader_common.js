@@ -66,7 +66,7 @@ $(window).on("load", function () { initializeFields() });
 
         resetTimeout();
 
-        // handles the edge of a single tree branch selected where each subfolder 
+        // handles the edge of a single tree branch selected where each subfolder
         // contains one folder only
         // we handle intent by checking to see if the user actually selected a folder or
         // whether fancytree filled in the blanks.
@@ -164,7 +164,7 @@ $(window).on("load", function () { initializeFields() });
                     // Only send the token to relative URLs i.e. locally.
                     xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
                 }
-            } 
+            }
         });
 
         $('select').select2({width:'resolve'});
@@ -240,7 +240,7 @@ $(window).on("load", function () { initializeFields() });
                                 anchor = node.parent.children[idx];
                             }
                             idx--;
-                        } 
+                        }
                     }
 
                     if (!anchor) {
@@ -260,7 +260,7 @@ $(window).on("load", function () { initializeFields() });
                         n.setSelected(false);
                     });
                     //node.setSelected();
-                    
+
                     if (anchor && anchor.parent === node.parent) {
                         // select range up to active node (only if within common parent)
                         idx = anchor.getIndex();
@@ -278,7 +278,7 @@ $(window).on("load", function () { initializeFields() });
                     if (clicked_item_type != 'checkbox' && clicked_item_type != 'expander') {
                         node.toggleExpanded();
                     }
-                } 
+                }
             },
             loadChildren: function (event, data) {
                 // Apply parent's state to new child nodes:
@@ -387,7 +387,7 @@ $(window).on("load", function () { initializeFields() });
                         SortByName(node);
                         break;
                 }
-                
+
             }
         });
 
@@ -441,17 +441,18 @@ $(window).on("load", function () { initializeFields() });
             $.post("/postData/", { form: JSON.stringify(frm) },
                 function (data) {
                     $.post("/upload/", { files: JSON.stringify(fileList) },
-                        function (data) { })
+                        function (data) {
+                            var page = "/showStatus";
+
+                            $.get(page, function (status_data) {
+                                $('#status_info_container').html(status_data);
+                            });
+                        })
                         .fail(function (jqXHR, textStatus, errorThrown) {
                             alert(jqXHR.responseText);
                         });
                 });
 
-                    var page = "/showStatus";
-
-                    $.get(page, function (status_data) {
-                        $('#status_info_container').html(status_data);
-                    });
 
                     $('#status_info_container').dialog({
                         autoOpen: true,
@@ -515,4 +516,3 @@ $(window).on("load", function () { initializeFields() });
             });
         });
     });
-
