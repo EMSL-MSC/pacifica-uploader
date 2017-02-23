@@ -54,7 +54,7 @@ class SessionState(object):
         now = time.time()
         elapsed = now - self.last_touched_time
 
-        timeout = self.config.timeout * 60
+        timeout = int(self.config.timeout) * 60
 
         return elapsed > timeout
 
