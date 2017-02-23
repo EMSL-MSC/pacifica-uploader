@@ -71,6 +71,14 @@ def ping_celery():
 
     return False
 
+def validate_timeout(old_user, new_user):
+    """ 
+    checks to see if the current user, if any, has timed out.
+    if so, logs them out
+    """
+
+    
+
 def validate_user_handler(request):
     """
     checks to see if:
@@ -78,6 +86,8 @@ def validate_user_handler(request):
         user is logged in and this is the current user, in which case just reload the page (losing context)
         a user is logged in and this is not that user, in which case block them out
     """
+
+    print 'validate user touched'
 
     if 'HTTP_AUTHORIZATION' in request.META:
         auth = request.META['HTTP_AUTHORIZATION']
@@ -94,14 +104,19 @@ def validate_user_handler(request):
     # pylint: enable=invalid-name
     if session:
         # check to see if there is an existing user logged in
-        if session.network_id and session.is_logged_in:
-            # if the current user is still logged in and this is not that
-            # user, throw an error
+        if session.network_id and session.is_logged_in:           
+
+            # if the current user is still logged in and this is not that user
             if new_user != session.network_id:
-                name = metadata.get_user_name(session.network_id)
-                return login_error(request,
-                                    'User %s is currently logged in' % name)
+                 # if timed out, log out, don't show page
+                if session.is_timed_out():
+                    logout(request)
+                else:
+                    name = metadata.get_user_name(session.network_id)
+                    return login_error(request,
+                                        'User %s is currently logged in' % name)
             else:
+                session.touch()
                 return # just reload the page if user is already logged in.
     
     print 'trying to log in:  ' + new_user
@@ -200,6 +215,7 @@ def post_upload_metadata(request):
     """
     populates the upload metadata from the upload form
     """
+
     # do this here because the async call from the browser
     # may call for a status before spin_off_upload is started
     session.is_uploading = True
