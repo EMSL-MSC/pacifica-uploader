@@ -15,17 +15,18 @@ var timeoutID;
 
 
 function logOutAndBack() {
+    window.location.href = '/logout';
     //alert("Logging you out");
-    var jqobject = $.ajax("/logout")
-    .done(function (data) {
-        var logoutPage = data;
-            // uh, this opens two login windows
-            //window.open("/login", '_blank');
-            window.location.href = '/';
-    })
-    .fail(function (obj, textStatus, error) {
-        $('#currState').html('Unknown');
-    })
+    // var jqobject = $.ajax("/logout")
+    // .done(function (data) {
+    //     var logoutPage = data;
+    //         // uh, this opens two login windows
+    //         //window.open("/login", '_blank');
+    //         window.location.href = '/logout';
+    // })
+    // .fail(function (obj, textStatus, error) {
+    //     $('#currState').html('Unknown');
+    // })
 }
 
 function logOut() {
