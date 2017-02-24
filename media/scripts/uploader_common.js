@@ -447,7 +447,7 @@ $(window).on("load", function () { initializeFields() });
                             $.get(page, function (status_data) {
                                 $('#status_info_container').html(status_data);
                             });
-                        });
+                        })
                         .fail(function (jqXHR, textStatus, errorThrown) {
                             alert(jqXHR.responseText);
                         });
