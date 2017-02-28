@@ -71,13 +71,28 @@ def ping_celery():
 
     return False
 
-def validate_timeout(old_user, new_user):
-    """ 
-    checks to see if the current user, if any, has timed out.
-    if so, logs them out
-    """
+def user_from_request(request):
+    """ returns the user if in meta """
 
-    
+    if 'HTTP_AUTHORIZATION' in request.META:
+        auth = request.META['HTTP_AUTHORIZATION']
+        scheme, creds = re.split(r'\s+', auth)
+        if scheme.lower() != 'basic':
+            raise ValueError('Unknown auth scheme \"%s\"' % scheme)
+        user = base64.b64decode(creds).split(':', 1)[0]
+        print 'user_from_request: ' + user
+        return user
+    else:
+        return None
+
+def is_current_user(request):
+    """ is this the user currently logged in? """
+
+    new_user = user_from_request(request)
+
+    print 'is_current_user: ' +  new_user
+
+    return (new_user == session.network_id)
 
 def validate_user_handler(request):
     """
@@ -87,15 +102,11 @@ def validate_user_handler(request):
         a user is logged in and this is not that user, in which case block them out
     """
 
-    print 'validate user touched'
+    print 'validate_user_handler'
 
-    if 'HTTP_AUTHORIZATION' in request.META:
-        auth = request.META['HTTP_AUTHORIZATION']
-        scheme, creds = re.split(r'\s+', auth)
-        if scheme.lower() != 'basic':
-            raise ValueError('Unknown auth scheme \"%s\"' % scheme)
-        new_user = base64.b64decode(creds).split(':', 1)[0]
-    else:
+    new_user = user_from_request(request)
+
+    if not new_user:
         render = login_error(request, 'missing authorization')
         return render
 
@@ -104,7 +115,7 @@ def validate_user_handler(request):
     # pylint: enable=invalid-name
     if session:
         # check to see if there is an existing user logged in
-        if session.network_id and session.is_logged_in:           
+        if session.network_id and session.is_logged_in:
 
             # if the current user is still logged in and this is not that user
             if new_user != session.network_id:
@@ -385,10 +396,35 @@ def logout(request):
     which will bounce to the login page
     """
 
-    session.network_id = None
-    session.is_logged_in = False
+    print 'logout'
+
+    if is_current_user(request):
+        session.network_id = None
+        session.is_logged_in = False
 
     return login_error(request, "Logged out")
+
+# pylint: disable=unused-argument
+# justification: django required
+def logged_in(request):
+    """
+    logs the user out and returns to the main page
+    which will bounce to the login page
+    """
+
+    print 'logged_in'
+
+    # timeout check.
+    # this will clear the user
+    if session.is_timed_out():
+        logout(request)
+
+    if is_current_user(request):
+        return_val = 'TRUE'
+    else:        
+        return_val = 'FALSE'
+
+    return HttpResponse(return_val)
 
 
 # pylint: disable=unused-argument

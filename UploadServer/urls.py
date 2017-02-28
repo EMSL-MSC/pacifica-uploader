@@ -28,6 +28,7 @@ urlpatterns = patterns('',
                            name='initializeFields'),
                        url(r'^selectChanged/', 'home.views.select_changed', name='selectChanged'),
                        url(r'^login/$', 'home.views.login'),
+                       url(r'^loggedIn/$', 'home.views.logged_in'),
                        url(r'^logout/$', 'home.views.logout'),)
 
 urlpatterns += patterns('', (r'^media/(?P<path>.*)$', \

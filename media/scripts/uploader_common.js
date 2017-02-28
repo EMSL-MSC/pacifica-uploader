@@ -10,23 +10,10 @@ function setup_upload_tree() {
 }
 
 //**********************************************************************
-// timer for auto logout
-var timeoutID;
 
 
 function logOutAndBack() {
     window.location.href = '/logout';
-    //alert("Logging you out");
-    // var jqobject = $.ajax("/logout")
-    // .done(function (data) {
-    //     var logoutPage = data;
-    //         // uh, this opens two login windows
-    //         //window.open("/login", '_blank');
-    //         window.location.href = '/logout';
-    // })
-    // .fail(function (obj, textStatus, error) {
-    //     $('#currState').html('Unknown');
-    // })
 }
 
 function logOut() {
@@ -37,27 +24,21 @@ function logOut() {
     })
 }
 
-function setLogoutTimer() {
-    // 10 minutes hardcoded for now
-    timeoutID = window.setTimeout(logOutAndBack, 600000);
+function still_logged_in() {
+
+    $.post("/loggedIn/", "{}",
+        function (data) {
+            var statStr = data;
+            if (statStr == "FALSE")
+                logOutAndBack();
+        })
+    .fail(function (xhr, textStatus, errorThrown) {
+        errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
+        window.open(errtext, '_self');
+    });
+    
 }
 
-function clearLogoutTimer() {
-    window.clearTimeout(timeoutID);
-}
-
-function resetTimeout() {
-    clearLogoutTimer();
-    setLogoutTimer();
-}
-
-window.onload = function () {
-    resetTimeout();
-};
-
-window.onbeforeunload = function (event) {
-    //logOut();
-};
 
 $(window).on("load", function () { initializeFields() });
 
@@ -65,7 +46,7 @@ $(window).on("load", function () { initializeFields() });
 
     function FilterSingleBranch(clickedNode, parentNodes) {
 
-        resetTimeout();
+        still_logged_in();
 
         // handles the edge of a single tree branch selected where each subfolder
         // contains one folder only
@@ -99,7 +80,7 @@ $(window).on("load", function () { initializeFields() });
 
     function loadUploadTree(selected) {
 
-        resetTimeout();
+        still_logged_in();
 
         var upload = $("#uploadFiles").fancytree("getTree");
         var root = $("#uploadFiles").fancytree("getRootNode");
@@ -142,10 +123,15 @@ $(window).on("load", function () { initializeFields() });
         root.setExpanded(true);
     }
 
+
+
     $(function () {
         $.ajaxSetup({
             cache: false,
-            beforeSend: function(xhr, settings) {
+            beforeSend: function (xhr, settings) {
+                //if (!logged_in) {
+                //    xhr.abort();
+                //}
                 function getCookie(name) {
                     var cookieValue = null;
                     if (document.cookie && document.cookie != '') {
@@ -160,6 +146,7 @@ $(window).on("load", function () { initializeFields() });
                         }
                     }
                     return cookieValue;
+
                 }
                 if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
                     // Only send the token to relative URLs i.e. locally.
@@ -202,7 +189,7 @@ $(window).on("load", function () { initializeFields() });
                 if (!respondToSelect)
                     return;
 
-                resetTimeout();
+                still_logged_in();
 
                 node = data.node;
                 var tree = $("#tree").fancytree("getTree");
@@ -223,7 +210,7 @@ $(window).on("load", function () { initializeFields() });
             },
             click: function (event, data) {
 
-                resetTimeout();
+                still_logged_in();
 
                 var anchor, idx, inc,
                     tree = data.tree,
@@ -371,7 +358,7 @@ $(window).on("load", function () { initializeFields() });
             select: function (event, ui) {
                 var node = $.ui.fancytree.getNode(ui.target);
 
-                resetTimeout();
+                still_logged_in();
 
                 switch (ui.cmd)
                 {
@@ -485,9 +472,6 @@ $(window).on("load", function () { initializeFields() });
 
 
                             loadUploadTree(selected);
-
-                            // restart the logout timer
-                            resetTimeout();
                         }
                     });
 
