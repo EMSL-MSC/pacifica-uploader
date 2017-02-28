@@ -221,11 +221,45 @@ def show_status_insert(request, message):
                                'free_size': configuration.free_size_str},
                               RequestContext(request))
 
+def user_logged_in(request):
+    """
+    checks to see if:
+        no one is logged in, in which case log this user in
+        user is logged in and this is the current user, in which case just reload the page (losing context)
+        a user is logged in and this is not that user, in which case block them out
+    """
+
+    print 'user_logged_in'
+
+    new_user = user_from_request(request)
+
+    if not new_user:
+        return False
+
+    # pylint: disable=invalid-name
+    global session
+    # pylint: enable=invalid-name
+    if session:
+        # check to see if there is an existing user logged in
+        if session.network_id and session.is_logged_in:
+
+            # if the current user is still logged in
+            if new_user == session.network_id:
+                 # if timed out, log out, don't show page
+                if session.is_timed_out():
+                    logout(request)
+                else:
+                    return True
+    return False
 
 def post_upload_metadata(request):
     """
     populates the upload metadata from the upload form
     """
+
+    if not user_logged_in(request):
+        return HttpResponse(json.dumps('failed'), content_type='application/json')
+
 
     # do this here because the async call from the browser
     # may call for a status before spin_off_upload is started

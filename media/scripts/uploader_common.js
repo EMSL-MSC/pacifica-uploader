@@ -404,10 +404,7 @@ $(window).on("load", function () { initializeFields() });
         };
 
         $("form").submit(function (event) {
-
-            // stop the logout timer
-            clearLogoutTimer();
-
+            
             event.preventDefault();
 
             var tree = $("#tree").fancytree("getTree");
@@ -428,6 +425,12 @@ $(window).on("load", function () { initializeFields() });
             // populate session data before showing the status page
             $.post("/postData/", { form: JSON.stringify(frm) },
                 function (data) {
+                    if (data != "success") {
+                        alert("user is locked out");
+                        still_logged_in();
+                        return;
+                    }
+
                     $.post("/upload/", { files: JSON.stringify(fileList) },
                         function (data) {
                             var page = "/showStatus";
