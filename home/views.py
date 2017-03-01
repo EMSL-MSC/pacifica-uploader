@@ -163,6 +163,9 @@ def show_initial_status(request):
     """
     shows the status page with no message
     """
+    # reset timeout
+    session.touch()
+
     return show_status_insert(request, '')
 
 def print_err(ex):
@@ -182,6 +185,10 @@ def set_data_root(request):
     """
     explicitly set the data root
     """
+
+    # reset timeout
+    session.touch()
+
     try:
         mode = request.POST.get('mode')
 
@@ -211,6 +218,9 @@ def show_status_insert(request, message):
     """
     show the status of the existing upload task
     """
+    # reset timeout
+    session.touch()
+
     session.current_time = datetime.datetime.now().strftime('%m.%d.%Y.%H.%M.%S')
 
     return render_to_response('home/status_insert.html',
@@ -260,6 +270,8 @@ def post_upload_metadata(request):
     if not user_logged_in(request):
         return HttpResponse(json.dumps('failed'), content_type='application/json')
 
+    # reset timeout
+    session.touch()
 
     # do this here because the async call from the browser
     # may call for a status before spin_off_upload is started
@@ -283,6 +295,9 @@ def spin_off_upload(request):
     """
     spins the upload process off to a background celery process
     """
+    
+    # reset timeout
+    session.touch()
 
     # initialize the task state
     if not TaskComm.USE_CELERY:
@@ -349,6 +364,9 @@ def upload_files(request):
     """
     view for upload process spawn
     """
+    # reset timeout
+    session.touch()
+
     # use this flag to determine status of upload in incremental status
     session.is_uploading = True
 
@@ -467,6 +485,10 @@ def initialize_fields(request):
     """
     initializes the metadata fields
     """
+
+    # reset timeout
+    session.touch()
+
     # start from scratch on first load and subsequent reloads of page
     # pylint: disable=invalid-name
     global metadata
@@ -506,6 +528,10 @@ def get_children(request):
     """
     get the children of a parent directory, used for lazy loading
     """
+
+    # reset timeout
+    session.touch()
+
     try:
         # return empty list on error, folder permissions, etc.
         pathlist = []
@@ -625,6 +651,10 @@ def return_bundle(tree, message):
     """
     formats the return message from get_bundle
     """
+
+    # reset timeout
+    session.touch()
+
     # validate that the currently selected bundle will fit in the target space
     upload_enabled = session.validate_space_available()
     # disable the upload if there isn't enough space in the intermediate
@@ -710,6 +740,10 @@ def get_state(request):
         uploading
         idle
     """
+
+    # reset timeout
+    session.touch()
+
     state = 'idle'
     if session.is_logged_in:
         state = 'logged in: '
@@ -725,6 +759,9 @@ def get_state(request):
 
 def get_status():
     """    get status from backend    """
+
+    # reset timeout
+    session.touch()
 
     if (TaskComm.USE_CELERY):
         if session.upload_process == None:
@@ -752,13 +789,14 @@ def incremental_status(request):
     """
     updates the status page with the current status of the background upload process
     """
+
+    # reset timeout
+    session.touch()
+
     if TaskComm.USE_CELERY:
         if session.upload_process == None:
             retval = json.dumps({'state': '', 'result': ''})
             return HttpResponse(retval)
-
-    # reset timeout
-    session.touch()
 
     try:
         if request.POST:
