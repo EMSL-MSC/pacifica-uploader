@@ -119,6 +119,7 @@ class FileBundler(object):
         info['destinationTable'] = 'Files'
         info['subdir'] = file_dir
         info['hashsum'] = file_hash
+        info['hashtype'] = 'sha1'
 
         # todo make sure errors bubble up without crashing
         if file_arcname in self.file_meta:
