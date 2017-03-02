@@ -687,8 +687,12 @@ def get_bundle(request):
     # reset timeout
     session.touch()
 
+    tree = []
+
     try:
         session.files.error_string = ''
+
+        print 'get pseudo directory'
 
         tree, lastnode = session.get_archive_tree(metadata)
         session.files.bundle_size = 0
