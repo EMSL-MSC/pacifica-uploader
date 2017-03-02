@@ -86,6 +86,10 @@ $(window).on("load", function () { initializeFields() });
         var upload = $("#uploadFiles").fancytree("getTree");
         var root = $("#uploadFiles").fancytree("getRootNode");
 
+        while (root.hasChildren()) {
+            child = root.getFirstChild();
+            child.remove();
+        }
 
         //instNode.addChildren(selected);
         var fileList = [];
@@ -100,17 +104,10 @@ $(window).on("load", function () { initializeFields() });
         var pkt = JSON.stringify(fileList);
 
         var posted = { packet: pkt };
-        var currentHeight = $('#uploadFiles').height();
-        $("#uploadFiles").height(currentHeight);
-
         $.post("/getBundle/", posted,
             function (data) {
                 //alert('success');
-                // while (root.hasChildren()) {
-                //     child = root.getFirstChild();
-                //     child.remove();
-                // }
-                root.reload(data);
+                root.addChildren(data);
 
                 // update bundle size
                 var message = data[0]["data"];
