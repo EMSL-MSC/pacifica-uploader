@@ -472,6 +472,9 @@ def logged_in(request):
         logout(request)
 
     if is_current_user(request):
+        # if this is the current user, they must have touched the browser
+        # so, reset the timer
+        session.touch()
         return_val = 'TRUE'
     else:        
         return_val = 'FALSE'
