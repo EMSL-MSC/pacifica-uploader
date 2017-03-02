@@ -114,7 +114,7 @@ class FileBundler(object):
 
         info['mimetype'] = mime_type if mime_type is not None else 'application/octet-stream'
         info['name'] = file_name
-        info['mtime'] =DT.datetime.utcfromtimestamp(int(os.path.getmtime(file_path))).isoformat()
+        info['mtime'] = DT.datetime.utcfromtimestamp(int(os.path.getmtime(file_path))).isoformat()
         info['ctime'] = DT.datetime.utcfromtimestamp(int(os.path.getctime(file_path))).isoformat()
         info['destinationTable'] = 'Files'
         info['subdir'] = file_dir

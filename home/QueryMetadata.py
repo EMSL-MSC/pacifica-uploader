@@ -212,7 +212,7 @@ class QueryMetadata(object):
             else:
                 display = ''
 
-             # put in format to be used by select2
+            # put in format to be used by select2
             choices.append({"id": key, "text": display})
 
         # special case for logon, need to initialize user

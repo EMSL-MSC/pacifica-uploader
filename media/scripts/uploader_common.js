@@ -33,10 +33,11 @@ function still_logged_in() {
                 logOutAndBack();
         })
     .fail(function (xhr, textStatus, errorThrown) {
-        errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
-        window.open(errtext, '_self');
+        // errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
+        // window.open(errtext, '_blank');
+        console.log(xhr.responseText);
     });
-    
+
 }
 
 
@@ -85,10 +86,6 @@ $(window).on("load", function () { initializeFields() });
         var upload = $("#uploadFiles").fancytree("getTree");
         var root = $("#uploadFiles").fancytree("getRootNode");
 
-        while (root.hasChildren()) {
-            child = root.getFirstChild();
-            child.remove();
-        }
 
         //instNode.addChildren(selected);
         var fileList = [];
@@ -103,10 +100,17 @@ $(window).on("load", function () { initializeFields() });
         var pkt = JSON.stringify(fileList);
 
         var posted = { packet: pkt };
+        var currentHeight = $('#uploadFiles').height();
+        $("#uploadFiles").height(currentHeight);
+
         $.post("/getBundle/", posted,
             function (data) {
                 //alert('success');
-                root.addChildren(data);
+                // while (root.hasChildren()) {
+                //     child = root.getFirstChild();
+                //     child.remove();
+                // }
+                root.reload(data);
 
                 // update bundle size
                 var message = data[0]["data"];
@@ -116,9 +120,13 @@ $(window).on("load", function () { initializeFields() });
                 document.getElementById("upload_btn").disabled = !enabled;
             })
             .fail(function (xhr, textStatus, errorThrown ) {
-                errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
-                window.open(errtext, '_self');
-            });
+                // errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
+                // window.open(errtext, '_blank');
+                console.log(xhr.responseText);
+            })
+            .always(function(){
+                $("#uploadFiles").height('auto');
+            })
 
         root.setExpanded(true);
     }
@@ -318,8 +326,6 @@ $(window).on("load", function () { initializeFields() });
             });
         }
 
-
-
         $("#tree").contextmenu({
             delegate: "span.fancytree-node",
             //      menu: "#options",
@@ -404,7 +410,7 @@ $(window).on("load", function () { initializeFields() });
         };
 
         $("form").submit(function (event) {
-            
+
             event.preventDefault();
 
             var tree = $("#tree").fancytree("getTree");
@@ -469,10 +475,7 @@ $(window).on("load", function () { initializeFields() });
                             });
 
                             respondToSelect = true;
-
-
                             selected = tree.getSelectedNodes(stopOnParents = true);
-
 
                             loadUploadTree(selected);
                         }
@@ -499,8 +502,9 @@ $(window).on("load", function () { initializeFields() });
                     updateFields(data);
                 })
             .fail(function (xhr, textStatus, errorThrown) {
-                errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
-                window.open(errtext, '_self');
+                // errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
+                // window.open(errtext, '_blank');
+                console.log(xhr.responseText);
             });
         });
     });
