@@ -346,7 +346,7 @@ class QueryMetadata(object):
         except Exception, ex:
             err = ex.message + ' query: ' + query
             print err
-            raise Exception (err)
+            raise Exception (err) 
 
 
     def get_display(self, meta):
