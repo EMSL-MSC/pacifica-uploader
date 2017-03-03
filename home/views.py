@@ -464,7 +464,12 @@ def logged_in(request):
     which will bounce to the login page
     """
 
-    print 'logged_in'
+    
+    # pylint: disable=invalid-name
+    global session
+    # pylint: enable=invalid-name
+
+    print 'logged_in. timeout is: ' + str(session.config.timeout)
 
     # timeout check.
     # this will clear the user
