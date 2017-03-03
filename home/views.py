@@ -481,8 +481,10 @@ def logged_in(request):
         # so, reset the timer
         session.touch()
         return_val = 'TRUE'
+        print 'logged in check returns TRUE'
     else:        
         return_val = 'FALSE'
+        print 'logged in check returns FALSE'
 
     return HttpResponse(return_val)
 
