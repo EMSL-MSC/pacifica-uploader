@@ -333,14 +333,20 @@ class QueryMetadata(object):
         """
         #try:
 
-        headers = {'content-type': 'application/json'}
-        url = self.host + '/uploader'
+        try:
+            headers = {'content-type': 'application/json'}
+            url = self.host + '/uploader'
 
-        reply = requests.post(url, headers=headers, data=query)
+            reply = requests.post(url, headers=headers, data=query)
 
-        data = json.loads(reply.content)
+            data = json.loads(reply.content)
 
-        return data
+            return data
+
+        except Exception, ex:
+            err = ex.message + ' query: ' + query
+            print err
+            raise Exception (err)
 
 
     def get_display(self, meta):
