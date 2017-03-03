@@ -402,6 +402,8 @@ def login(request, new_user):
     """
 
 
+    print '*** login ***'
+
     # initialize server settings from scratch
     configuration.initialized = False
     err = configuration.initialize_settings()
