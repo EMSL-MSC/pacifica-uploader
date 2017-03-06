@@ -92,6 +92,11 @@ def is_current_user(request):
 
     print 'is_current_user: ' +  new_user
 
+    if session.network_id:
+        print 'session.network_id: ' + session.network_id
+    else:
+        print 'session.network_id: Set to NONE'
+
     return (new_user == session.network_id)
 
 def validate_user_handler(request):
@@ -445,18 +450,26 @@ def login(request, new_user):
     return
 
 # pylint: disable=unused-argument
-# justification: django required
+# justification: django required'
 def logout(request):
     """
     logs the user out and returns to the main page
     which will bounce to the login page
     """
 
+    # pylint: disable=invalid-name
+    global session
+    # pylint: enable=invalid-name
+
     print 'logout'
 
     if is_current_user(request):
+
+        print 'this is the current user, setting the session.network_id to None'
         session.network_id = None
         session.is_logged_in = False
+    else:
+        print 'this is NOT the current user, leaving the session.network_id alone'
 
     return login_error(request, "Logged out")
 
