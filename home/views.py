@@ -123,9 +123,11 @@ def validate_user_handler(request):
                 if session.is_timed_out():
                     logout(request)
                 else:
-                    name = metadata.get_user_name(session.network_id)
-                    return login_error(request,
-                                        'User %s is currently logged in' % name)
+                    #commenting this out temporarily to see if it fixes the query error
+                    #name = metadata.get_user_name(session.network_id)
+                    #return login_error(request,
+                    #                    'User %s is currently logged in' % name)
+                    return login_error(request, 'Another user is currently logged in')
             else:
                 session.touch()
                 return # just reload the page if user is already logged in.
