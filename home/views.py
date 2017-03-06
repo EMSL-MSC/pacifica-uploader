@@ -539,6 +539,10 @@ def select_changed(request):
     get the updated metadata on a select field change
     """
 
+    if not is_current_user(request):
+       retval = json.dumps([])
+       return HttpResponse(retval, content_type='application/json')
+
     # reset timeout
     session.touch()
 
