@@ -482,6 +482,9 @@ $(window).on("load", function () { initializeFields() });
 
 
         $('select').on("change", function (event) {
+
+            still_logged_in();
+
             var el = $(event.target)
 
             // the element id that maps to a metadata object
