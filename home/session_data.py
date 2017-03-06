@@ -42,7 +42,7 @@ class SessionState(object):
         """
         self.last_touched_time = time.time()
 
-        print '************* good touch! *************'
+        print '************* good touch by ' + self.network_id + '! *************'
 
     def is_timed_out(self):
         """
