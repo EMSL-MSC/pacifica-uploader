@@ -56,16 +56,16 @@ class SessionState(object):
 
         now = time.time()
         elapsed = now - self.last_touched_time
-
-        print 'timed_out:  elapsed = ' + str(elapsed)
+        
+        print 'timed_out:  elapsed = ' + str(elapsed) + ' = ' + str(now) + ' - ' +  str(self.last_touched_time)
 
         timeout = int(self.config.timeout) * 60
         
-        print 'timeout: ' + str(timeout)
+        print 'timeout limit: ' + str(timeout)
 
         return elapsed > timeout
 
-        
+
 
     def set_session_root(self, filepath):
         """
