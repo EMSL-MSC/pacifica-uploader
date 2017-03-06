@@ -195,6 +195,9 @@ class QueryMetadata(object):
                           ]}
         """
 
+        print 'build_selection_list, query_result is'
+        print query_result
+
         meta.browser_field_population['meta_id'] = meta.meta_id
 
         # build the list of choices
