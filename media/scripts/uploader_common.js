@@ -483,6 +483,7 @@ $(window).on("load", function () { initializeFields() });
 
         $('select').on("change", function (event) {
 
+            // test github
             still_logged_in();
 
             var el = $(event.target)
