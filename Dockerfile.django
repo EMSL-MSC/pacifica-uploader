@@ -1,4 +1,4 @@
-FROM pacifica/uploader:local
+FROM pacifica/uploader
 
 USER 1
 EXPOSE 8000

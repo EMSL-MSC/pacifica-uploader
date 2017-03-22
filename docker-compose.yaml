@@ -3,7 +3,7 @@ services:
   baseimage:
     build:
       context: .
-    image: pacifica/uploader:local
+    image: pacifica/uploader:latest
 
   uploadamqp:
     image: rabbitmq:latest
