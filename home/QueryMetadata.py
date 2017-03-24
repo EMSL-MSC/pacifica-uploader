@@ -66,6 +66,8 @@ class QueryMetadata(object):
     user = ''
     meta_list = []
 
+    auth = {}
+
     def __init__(self, host):
         """
         constructor for Query class
@@ -141,6 +143,11 @@ class QueryMetadata(object):
         read by the metadata archive
         """
         configuration = read_config()
+
+        # get authorization
+
+        self.set_if_there(configuration, 'auth', self, 'auth')
+
 
         # create a list of metadata entries to pass to the list upload page
         try:
@@ -340,7 +347,7 @@ class QueryMetadata(object):
             headers = {'content-type': 'application/json'}
             url = self.host + '/uploader'
 
-            reply = requests.post(url, headers=headers, data=query)
+            reply = requests.post(url, headers=headers, data=query, **self.auth)
 
             data = json.loads(reply.content)
 
