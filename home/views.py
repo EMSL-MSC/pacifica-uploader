@@ -85,19 +85,19 @@ def user_from_request(request):
     else:
         return None
 
-def is_current_user(request):
-    """ is this the user currently logged in? """
+#def is_current_user(request):
+#    """ is this the user currently logged in? """
 
-    new_user = user_from_request(request)
+#    new_user = user_from_request(request)
 
-    print 'is_current_user: ' +  new_user
+#    print 'is_current_user: ' +  new_user
 
-    if session.network_id:
-        print 'session.network_id: ' + session.network_id
-    else:
-        print 'session.network_id: Set to NONE'
+#    if session.network_id:
+#        print 'session.network_id: ' + session.network_id
+#    else:
+#        print 'session.network_id: Set to NONE'
 
-    return (new_user == session.network_id)
+#    return (new_user == session.network_id)
 
 def validate_user_handler(request):
     """
@@ -114,32 +114,13 @@ def validate_user_handler(request):
     if not new_user:
         render = login_error(request, 'missing authorization')
         return render
-
-    # pylint: disable=invalid-name
-    global session
-    # pylint: enable=invalid-name
-    if session:
-        # check to see if there is an existing user logged in
-        if session.network_id and session.is_logged_in:
-
-            # if the current user is still logged in and this is not that user
-            if new_user != session.network_id:
-                 # if timed out, log out, don't show page
-                if session.is_timed_out():
-                    logout(request)
-                else:
-                    #commenting this out temporarily to see if it fixes the query error
-                    #name = metadata.get_user_name(session.network_id)
-                    #return login_error(request,
-                    #                    'User %s is currently logged in' % name)
-                    return login_error(request, 'Another user is currently logged in')
-            else:
-                session.touch()
-                return # just reload the page if user is already logged in.
     
-    print 'trying to log in:  ' + new_user
-    # new valid user, log that bad boy in
-    return login(request, new_user)
+    if not session.is_logged_in:
+        print 'trying to log in:  ' + new_user
+        # new valid user, log that bad boy in
+        return login(request, new_user)
+    else:
+        return
 
 def populate_upload_page(request):
     """
@@ -151,7 +132,7 @@ def populate_upload_page(request):
         return validation_redirect
 
     # reset timeout
-    session.touch()
+    #session.touch()
 
     request.session.modified = True
 
@@ -171,7 +152,7 @@ def show_initial_status(request):
     shows the status page with no message
     """
     # reset timeout
-    session.touch()
+    #session.touch()
 
     return show_status_insert(request, '')
 
@@ -194,7 +175,7 @@ def set_data_root(request):
     """
 
     # reset timeout
-    session.touch()
+    #session.touch()
 
     try:
         mode = request.POST.get('mode')
@@ -226,7 +207,7 @@ def show_status_insert(request, message):
     show the status of the existing upload task
     """
     # reset timeout
-    session.touch()
+    #session.touch()
 
     session.current_time = datetime.datetime.now().strftime('%m.%d.%Y.%H.%M.%S')
 
@@ -238,47 +219,47 @@ def show_status_insert(request, message):
                                'free_size': configuration.free_size_str},
                               RequestContext(request))
 
-def user_logged_in(request):
-    """
-    checks to see if:
-        no one is logged in, in which case log this user in
-        user is logged in and this is the current user, in which case just reload the page (losing context)
-        a user is logged in and this is not that user, in which case block them out
-    """
+#def user_logged_in(request):
+#    """
+#    checks to see if:
+#        no one is logged in, in which case log this user in
+#        user is logged in and this is the current user, in which case just reload the page (losing context)
+#        a user is logged in and this is not that user, in which case block them out
+#    """
 
-    print 'user_logged_in'
+#    print 'user_logged_in'
 
-    new_user = user_from_request(request)
+#    new_user = user_from_request(request)
 
-    if not new_user:
-        return False
+#    if not new_user:
+#        return False
 
-    # pylint: disable=invalid-name
-    global session
-    # pylint: enable=invalid-name
-    if session:
-        # check to see if there is an existing user logged in
-        if session.network_id and session.is_logged_in:
+#    # pylint: disable=invalid-name
+#    global session
+#    # pylint: enable=invalid-name
+#    if session:
+#        # check to see if there is an existing user logged in
+#        if session.network_id and session.is_logged_in:
 
-            # if the current user is still logged in
-            if new_user == session.network_id:
-                 # if timed out, log out, don't show page
-                if session.is_timed_out():
-                    logout(request)
-                else:
-                    return True
-    return False
+#            # if the current user is still logged in
+#            if new_user == session.network_id:
+#                 # if timed out, log out, don't show page
+#                #if session.is_timed_out():
+#                #    logout(request)
+#                #else:
+#                 return True
+#    return False
 
 def post_upload_metadata(request):
     """
     populates the upload metadata from the upload form
     """
 
-    if not user_logged_in(request):
-        return HttpResponse(json.dumps('failed'), content_type='application/json')
+    #if not user_logged_in(request):
+    #    return HttpResponse(json.dumps('failed'), content_type='application/json')
 
     # reset timeout
-    session.touch()
+    #session.touch()
 
     # do this here because the async call from the browser
     # may call for a status before spin_off_upload is started
@@ -304,7 +285,7 @@ def spin_off_upload(request):
     """
     
     # reset timeout
-    session.touch()
+    #session.touch()
 
     # initialize the task state
     if not TaskComm.USE_CELERY:
@@ -372,7 +353,7 @@ def upload_files(request):
     view for upload process spawn
     """
     # reset timeout
-    session.touch()
+    #session.touch()
 
     # use this flag to determine status of upload in incremental status
     session.is_uploading = True
@@ -439,9 +420,9 @@ def login(request, new_user):
     #    return
 
     # keep a copy of the user so we can keep other users from stepping on them
-    session.network_id = new_user
+    #session.network_id = new_user
     session.is_logged_in = True
-    session.touch()
+    #session.touch()
 
     # current assumption for a single user system is that we have been called through the / url
     # which is the populate page
@@ -457,19 +438,19 @@ def logout(request):
     which will bounce to the login page
     """
 
-    # pylint: disable=invalid-name
-    global session
-    # pylint: enable=invalid-name
+    ## pylint: disable=invalid-name
+    #global session
+    ## pylint: enable=invalid-name
 
-    print 'logout'
+    #print 'logout'
 
-    if is_current_user(request):
+    #if is_current_user(request):
 
-        print 'this is the current user, setting the session.network_id to None'
-        session.network_id = None
-        session.is_logged_in = False
-    else:
-        print 'this is NOT the current user, leaving the session.network_id alone'
+    #    #print 'this is the current user, setting the session.network_id to None'
+    #    ##session.network_id = None
+    #    session.is_logged_in = False
+    #else:
+    #    print 'this is NOT the current user, leaving the session.network_id alone'
 
     return login_error(request, "Logged out")
 
@@ -482,28 +463,28 @@ def logged_in(request):
     """
 
     
-    # pylint: disable=invalid-name
-    global session
-    # pylint: enable=invalid-name
+    ## pylint: disable=invalid-name
+    #global session
+    ## pylint: enable=invalid-name
 
-    print 'logged_in. timeout is: ' + str(session.config.timeout)
+    #print 'logged_in. timeout is: ' + str(session.config.timeout)
 
-    # timeout check.
-    # this will clear the user
-    if session.is_timed_out():
-        logout(request)
+    ## timeout check.
+    ## this will clear the user
+    ##if session.is_timed_out():
+    ##    logout(request)
 
-    if is_current_user(request):
-        # if this is the current user, they must have touched the browser
-        # so, reset the timer
-        session.touch()
-        return_val = 'TRUE'
-        print 'logged in check returns TRUE'
-    else:        
-        return_val = 'FALSE'
-        print 'logged in check returns FALSE'
+    #if is_current_user(request):
+    #    # if this is the current user, they must have touched the browser
+    #    # so, reset the timer
+    #    #session.touch()
+    #    return_val = 'TRUE'
+    #    print 'logged in check returns TRUE'
+    #else:        
+    #    return_val = 'FALSE'
+    #    print 'logged in check returns FALSE'
 
-    return HttpResponse(return_val)
+    return HttpResponse('FALSE')
 
 
 # pylint: disable=unused-argument
@@ -512,9 +493,10 @@ def initialize_fields(request):
     """
     initializes the metadata fields
     """
+    
 
     # reset timeout
-    session.touch()
+    #session.touch()
 
     # start from scratch on first load and subsequent reloads of page
     # pylint: disable=invalid-name
@@ -525,7 +507,8 @@ def initialize_fields(request):
     # populates metadata for the current user
     # to have a common model for init and reload we need to set
     # the network id here
-    metadata.initialize_user(session.network_id)
+    user = user_from_request(request)
+    metadata.initialize_user(user)
 
     updates = metadata.initial_population()
 
@@ -539,12 +522,12 @@ def select_changed(request):
     get the updated metadata on a select field change
     """
 
-    if not is_current_user(request):
-       retval = json.dumps([])
-       return HttpResponse(retval, content_type='application/json')
+    #if not is_current_user(request):
+    #   retval = json.dumps([])
+    #   return HttpResponse(retval, content_type='application/json')
 
     # reset timeout
-    session.touch()
+    #session.touch()
 
     form = json.loads(request.body)
 
@@ -561,7 +544,7 @@ def get_children(request):
     """
 
     # reset timeout
-    session.touch()
+    #session.touch()
 
     try:
         # return empty list on error, folder permissions, etc.
@@ -684,7 +667,7 @@ def return_bundle(tree, message):
     """
 
     # reset timeout
-    session.touch()
+    #session.touch()
 
     # validate that the currently selected bundle will fit in the target space
     upload_enabled = session.validate_space_available()
@@ -716,7 +699,7 @@ def get_bundle(request):
     """
 
     # reset timeout
-    session.touch()
+    #session.touch()
 
     tree = []
 
@@ -777,7 +760,7 @@ def get_state(request):
     """
 
     # reset timeout
-    session.touch()
+    #session.touch()
 
     state = 'idle'
     if session.is_logged_in:
@@ -796,7 +779,7 @@ def get_status():
     """    get status from backend    """
 
     # reset timeout
-    session.touch()
+    #session.touch()
 
     if (TaskComm.USE_CELERY):
         if session.upload_process == None:
@@ -826,7 +809,7 @@ def incremental_status(request):
     """
 
     # reset timeout
-    session.touch()
+    #session.touch()
 
     if TaskComm.USE_CELERY:
         if session.upload_process == None:

@@ -354,7 +354,7 @@ class QueryMetadata(object):
             return data
 
         except Exception, ex:
-            err = ex.message + ' query: ' + query
+            err = str(ex.message) + ' query: ' + query
             print err
             raise Exception (err) 
 

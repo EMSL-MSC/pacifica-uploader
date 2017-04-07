@@ -20,7 +20,7 @@ class SessionState(object):
     files = FileManager()
     config = None
 
-    last_touched_time = None
+   # last_touched_time = None
 
     is_uploading = False
     is_logged_in = False
@@ -34,36 +34,36 @@ class SessionState(object):
         """
         constructor for session_data class
         """
-        print 'Session Initializzed'
+        print 'Session Initialized'
 
-    def touch(self):
-        """
-        resets time out
-        """
-        self.last_touched_time = time.time()
+    #def touch(self):
+    #    """
+    #    resets time out
+    #    """
+    #    self.last_touched_time = time.time()
 
-        print '************* good touch by ' + self.network_id + '! *************'
+    #    print '************* good touch by ' + self.network_id + '! *************'
 
-    def is_timed_out(self):
-        """
-        returns whether the session is timed out
-        """
-        if self.is_uploading:
-            return False
+    #def is_timed_out(self):
+    #    """
+    #    returns whether the session is timed out
+    #    """
+    #    if self.is_uploading:
+    #        return False
 
-        if not self.last_touched_time:
-            return False
+    #    if not self.last_touched_time:
+    #        return False
 
-        now = time.time()
-        elapsed = now - self.last_touched_time
+    #    now = time.time()
+    #    elapsed = now - self.last_touched_time
         
-        print 'timed_out:  elapsed = ' + str(elapsed) + ' = ' + str(now) + ' - ' +  str(self.last_touched_time)
+    #    print 'timed_out:  elapsed = ' + str(elapsed) + ' = ' + str(now) + ' - ' +  str(self.last_touched_time)
 
-        timeout = int(self.config.timeout) * 60
+    #    timeout = int(self.config.timeout) * 60
         
-        print 'timeout limit: ' + str(timeout)
+    #    print 'timeout limit: ' + str(timeout)
 
-        return elapsed > timeout
+    #    return elapsed > timeout
 
 
 
