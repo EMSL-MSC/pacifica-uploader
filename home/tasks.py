@@ -48,7 +48,7 @@ def upload_files(ingest_server='',
                  file_list=None,
                  bundle_size=0,
                  meta_list=None,
-                 auth={},
+                 auth=None,
                  tartar=False):
     """
     task created on a separate Celery process to bundle and upload in the background
@@ -110,7 +110,7 @@ def upload_files(ingest_server='',
 
         print status
 
-        if (TaskComm.USE_CELERY):
+        if TaskComm.USE_CELERY:
             #set job ID here
             print 'exit with deliberate error'
             print result
@@ -118,8 +118,8 @@ def upload_files(ingest_server='',
         else:
             TaskComm.set_state("DONE", result)
 
-    except StandardError, se:
-        raise se
+    except StandardError, error:
+        raise error
 
     except Exception, ex:
         print >> sys.stderr, "Exception in upload_files:"
