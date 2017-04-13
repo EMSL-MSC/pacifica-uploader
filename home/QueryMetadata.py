@@ -66,6 +66,8 @@ class QueryMetadata(object):
     user = ''
     meta_list = []
 
+    auth = {}
+
     def __init__(self, host):
         """
         constructor for Query class
@@ -144,6 +146,11 @@ class QueryMetadata(object):
 
         # create a list of metadata entries to pass to the list upload page
         try:
+            
+            # get authorization
+
+            self.set_if_there(configuration, 'auth', self, 'auth')
+
             self.meta_list = []
             for meta in configuration['metadata']:
 
@@ -339,8 +346,8 @@ class QueryMetadata(object):
         try:
             headers = {'content-type': 'application/json'}
             url = self.host + '/uploader'
-
-            reply = requests.post(url, headers=headers, data=query)
+            
+            reply = requests.post(url, headers=headers, data=query, **self.auth)
 
             data = json.loads(reply.content)
 
