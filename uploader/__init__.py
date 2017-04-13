@@ -21,7 +21,7 @@ class Uploader(object):
     auth = {}
 
 
-    def __init__(self, bundle_name='', ingest_server='', auth = {}):
+    def __init__(self, bundle_name='', ingest_server='', auth=None):
         """Constructor for FileIngester class."""
         self.ingest_server = ingest_server
         self.bundle_name = bundle_name
