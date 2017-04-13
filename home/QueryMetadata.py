@@ -9,7 +9,6 @@ import json
 import os
 
 import requests
-import copy
 
 # pylint: disable=too-few-public-methods
 # justification: perfect amount of methods, possibly look at using "collection"
@@ -146,7 +145,6 @@ class QueryMetadata(object):
 
         # create a list of metadata entries to pass to the list upload page
         try:
-            
             # get authorization
             self.set_if_there(configuration, 'auth', self, 'auth')
 
@@ -345,7 +343,7 @@ class QueryMetadata(object):
         try:
             headers = {'content-type': 'application/json'}
             url = self.host + '/uploader'
-            
+
             reply = requests.post(url, headers=headers, data=query, **self.auth)
 
             data = json.loads(reply.content)
@@ -355,7 +353,7 @@ class QueryMetadata(object):
         except Exception, ex:
             err = ex.message + ' query: ' + query
             print err
-            raise Exception (err) 
+            raise Exception(err)
 
 
     def get_display(self, meta):
