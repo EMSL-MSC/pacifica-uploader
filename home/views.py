@@ -22,13 +22,10 @@ from time import sleep
 from django.conf import settings
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.http import HttpResponseRedirect
 
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponseServerError
-
-from django.core.urlresolvers import reverse
 
 from celery.result import AsyncResult
 
@@ -49,8 +46,10 @@ configuration = instrument_server.UploaderConfiguration()
 metadata = None
 # pylint: enable=invalid-name
 
+# pylint: disable=global-variable-not-assigned
+
 # development VERSION
-VERSION = '2.11.1.1.1'
+VERSION = '2.12 4/13/17 8:00 am'
 
 
 def ping_celery():
@@ -97,14 +96,16 @@ def is_current_user(request):
     else:
         print 'session.network_id: Set to NONE'
 
-    return (new_user == session.network_id)
+    return new_user == session.network_id
 
 def validate_user_handler(request):
     """
     checks to see if:
         no one is logged in, in which case log this user in
-        user is logged in and this is the current user, in which case just reload the page (losing context)
-        a user is logged in and this is not that user, in which case block them out
+        user is logged in and this is the current user,
+        in which case just reload the page (losing context)
+        a user is logged in and this is not that user,
+        in which case block them out
     """
 
     print 'validate_user_handler'
@@ -136,7 +137,7 @@ def validate_user_handler(request):
             else:
                 session.touch()
                 return # just reload the page if user is already logged in.
-    
+
     print 'trying to log in:  ' + new_user
     # new valid user, log that bad boy in
     return login(request, new_user)
@@ -177,6 +178,7 @@ def show_initial_status(request):
 
 def print_err(ex):
     """ prints error """
+    ex = ex
     print >> sys.stderr, '-'*60
     print >> sys.stderr, 'Exception:'
     traceback.print_exc(file=sys.stderr)
@@ -242,8 +244,10 @@ def user_logged_in(request):
     """
     checks to see if:
         no one is logged in, in which case log this user in
-        user is logged in and this is the current user, in which case just reload the page (losing context)
-        a user is logged in and this is not that user, in which case block them out
+        user is logged in and this is the current user,
+        in which case just reload the page (losing context)
+        a user is logged in and this is not that user,
+        in which case block them out
     """
 
     print 'user_logged_in'
@@ -302,7 +306,7 @@ def spin_off_upload(request):
     """
     spins the upload process off to a background celery process
     """
-    
+
     # reset timeout
     session.touch()
 
@@ -354,14 +358,14 @@ def spin_off_upload(request):
                                          file_list=tuples,
                                          bundle_size=session.files.bundle_size,
                                          meta_list=meta_list,
-                                         auth = configuration.auth)
+                                         auth=configuration.auth)
         else:  # run local
             tasks.upload_files(ingest_server=configuration.ingest_server,
                                bundle_name=session.bundle_filepath,
                                file_list=tuples,
                                bundle_size=session.files.bundle_size,
                                meta_list=meta_list,
-                               auth = configuration.auth)
+                               auth=configuration.auth)
     except Exception, ex:
         session.is_uploading = False
         return report_err(ex)
@@ -395,10 +399,10 @@ def login_error(request, error_string):
     """
 
     return render_to_response(settings.LOGIN_VIEW,
-                                {'site_version': VERSION,
-                                'instrument': configuration.instrument,
-                                'message': error_string},
-                                RequestContext(request))
+                              {'site_version': VERSION,
+                               'instrument': configuration.instrument,
+                               'message': error_string},
+                              RequestContext(request))
 
 
 
@@ -419,7 +423,8 @@ def login(request, new_user):
     if err != '[]':
         return login_error(request, 'faulty configuration:  ' + err)
 
-    # loads the metadata structure from the config file so we can populate the initial html for the upload page
+    # loads the metadata structure from the config file
+    # so we can populate the initial html for the upload page
     # pylint: disable=invalid-name
     global metadata
     # pylint: enable=invalid-name
@@ -427,7 +432,10 @@ def login(request, new_user):
 
 
     # after login you lose your session context
+    # pylint: disable=invalid-name
     global session
+    # pylint: enable=invalid-name
+
     session = session_data.SessionState()
     session.config = configuration
 
@@ -483,7 +491,6 @@ def logged_in(request):
     which will bounce to the login page
     """
 
-    
     # pylint: disable=invalid-name
     global session
     # pylint: enable=invalid-name
@@ -501,7 +508,7 @@ def logged_in(request):
         session.touch()
         return_val = 'TRUE'
         print 'logged in check returns TRUE'
-    else:        
+    else:
         return_val = 'FALSE'
         print 'logged in check returns FALSE'
 
@@ -542,8 +549,8 @@ def select_changed(request):
     """
 
     if not is_current_user(request):
-       retval = json.dumps([])
-       return HttpResponse(retval, content_type='application/json')
+        retval = json.dumps([])
+        return HttpResponse(retval, content_type='application/json')
 
     # reset timeout
     session.touch()
@@ -609,7 +616,7 @@ def get_children(request):
 
         retval = json.dumps(pathlist)
 
-    except Exception, ex:        
+    except Exception, ex:
         return report_err(ex)
 
     return HttpResponse(retval)
@@ -800,7 +807,7 @@ def get_status():
     # reset timeout
     session.touch()
 
-    if (TaskComm.USE_CELERY):
+    if TaskComm.USE_CELERY:
         if session.upload_process == None:
             return 'Initializing', ''
 
@@ -810,15 +817,15 @@ def get_status():
             # we fail to succeed, expecting an error object
             try:
                 result = result.args[0]
-                val = json.loads(result)
-                val['job_id']
+                #val = json.loads(result)
+                #val['job_id']
                 state = 'DONE'
             except KeyError:
                 # if this isn't a successful upload (no job_id) then just return the args.
                 pass
     else:
         state, result = TaskComm.get_state()
-        
+
     return state, result
 
 
@@ -851,7 +858,7 @@ def incremental_status(request):
                 result = ''
                 retval = json.dumps({'state': state, 'result': result})
                 return HttpResponse(retval)
-            
+
         state, result = get_status()
 
         if state is not None:
