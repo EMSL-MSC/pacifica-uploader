@@ -56,11 +56,11 @@ class SessionState(object):
 
         now = time.time()
         elapsed = now - self.last_touched_time
-        
-        print 'timed_out:  elapsed = ' + str(elapsed) + ' = ' + str(now) + ' - ' +  str(self.last_touched_time)
+
+        print 'time_out:  elapsed = ' + str(elapsed)
 
         timeout = int(self.config.timeout) * 60
-        
+
         print 'timeout limit: ' + str(timeout)
 
         return elapsed > timeout
@@ -83,7 +83,7 @@ class SessionState(object):
         """
         resets a session to a clean state
         """
-        self.user = None
+        # self.user = None
         self.cleanup_upload()
 
     def cleanup_upload(self):
