@@ -18,13 +18,15 @@ class Uploader(object):
     percent_uploaded = 0
     total_uploaded = 0
     total_size = 0
+    auth = {}
 
 
-    def __init__(self, bundle_name='', ingest_server=''):
+    def __init__(self, bundle_name='', ingest_server='', auth = {}):
         """Constructor for FileIngester class."""
         self.ingest_server = ingest_server
         self.bundle_name = bundle_name
         self.total_size = os.path.getsize(bundle_name)
+        self.auth = auth
 
     def read(self, size):
         """Read wrapper for requests that calculates the hashcode inline."""
@@ -58,7 +60,8 @@ class Uploader(object):
         headers['Content-Type'] = 'application/octet-stream'
         headers['Content-Length'] = size_str
 
-        status = requests.post(url, data=self, headers=headers)
+        # status = requests.post(url, data=self, headers=headers)
+        status = requests.post(url, headers=headers, data=self, **self.auth)
 
         self.fileobj.close()
 

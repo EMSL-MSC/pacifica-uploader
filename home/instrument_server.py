@@ -26,6 +26,8 @@ class UploaderConfiguration(object):
     data_dir = ''
     timeout = 30
 
+    auth = {}
+
     # free disk space
     free_space = 0
     free_size_str = ''
@@ -52,6 +54,8 @@ class UploaderConfiguration(object):
 
             if not os.path.isdir(self.target_dir):
                 err_list.append('target directory unmounted')
+
+            self.set_if_there(configuration, 'auth', self, 'auth', err_list)
 
             self.set_if_there(configuration, 'policyServer', self, 'policy_server', err_list)
 

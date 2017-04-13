@@ -148,7 +148,6 @@ class QueryMetadata(object):
         try:
             
             # get authorization
-
             self.set_if_there(configuration, 'auth', self, 'auth')
 
             self.meta_list = []

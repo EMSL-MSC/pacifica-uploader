@@ -353,13 +353,15 @@ def spin_off_upload(request):
                                          bundle_name=session.bundle_filepath,
                                          file_list=tuples,
                                          bundle_size=session.files.bundle_size,
-                                         meta_list=meta_list)
+                                         meta_list=meta_list,
+                                         auth = configuration.auth)
         else:  # run local
             tasks.upload_files(ingest_server=configuration.ingest_server,
                                bundle_name=session.bundle_filepath,
                                file_list=tuples,
                                bundle_size=session.files.bundle_size,
-                               meta_list=meta_list)
+                               meta_list=meta_list,
+                               auth = configuration.auth)
     except Exception, ex:
         session.is_uploading = False
         return report_err(ex)

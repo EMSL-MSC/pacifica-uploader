@@ -48,6 +48,7 @@ def upload_files(ingest_server='',
                  file_list=None,
                  bundle_size=0,
                  meta_list=None,
+                 auth={},
                  tartar=False):
     """
     task created on a separate Celery process to bundle and upload in the background
@@ -96,7 +97,7 @@ def upload_files(ingest_server='',
 
         TaskComm.set_state("PROGRESS", "Starting Upload")
 
-        uploader = Uploader(bundle_name, ingest_server)
+        uploader = Uploader(bundle_name, ingest_server, auth)
         result = uploader.upload_bundle()
 
         TaskComm.set_state("PROGRESS", "Finished Upload")
