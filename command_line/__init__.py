@@ -13,6 +13,8 @@ import stat
 from home import tasks
 from home import session_data
 from home import instrument_server
+from home import QueryMetadata
+
 from home import file_tools
 
 # pylint: disable=unused-argument
@@ -119,11 +121,6 @@ def add_options(parser):
                       dest='proposal', default='',
                       help="Set the Proposal number number to PNUM", metavar='PNUM')
 
-    # Set the group-type/names
-    parser.add_option('-g', '--group', type='string', action='callback',
-                      callback=_parser_add_group,
-                      help="Make files a member of the specified type=name group", metavar='T=N')
-
     # Add a file to the list to be bundled
     parser.add_option('-f', '--file', type='string', action='callback',
                       callback=_add_file_cb,
@@ -142,20 +139,11 @@ def add_options(parser):
                       dest='user', default='',
                       help="Upload as the username USER", metavar='USER')
 
-    # Upload the bundle with password from file
-    parser.add_option('-x', '--passwordfile', type='string', action='store',
-                      dest='passwordfile', default='',
-                      help="Read content of password file as password.", metavar='PWD_FILE')
-
 
 def check_options(parser):
     """
     Performs custom option checks for this module given an OptionParser
     """
-    if parser.values.passwordfile:
-        parser.values.password = open(parser.values.passwordfile, "r").read()
-    else:
-        parser.values.password = getpass("Enter Password:")
 
     if parser.values.tar_dir == 'NONE':
         parser.values.tar_dir = parser.values.work_dir
@@ -186,29 +174,42 @@ def upload_from_options(parser):
 
     # build archive path
     configuration = instrument_server.UploaderConfiguration()
+    configuration.initialize_settings()
     configuration.instrument_short_name = parser.values.instrument
     session.proposal_id = parser.values.proposal
     session.config = configuration
     session.get_archive_tree(None)
 
-    # get the file tuples (local name, archive name) to bundle
-    tuples = session.files.get_bundle_files(parser.values.file_list)
-
     tartar = False
     if parser.values.tartar == 'True':
         tartar = True
+
+    # populate metadata
+    metadata = QueryMetadata.QueryMetadata(configuration.ingest_server)
+
+    node = metadata.get_node('logon')
+    node.value = parser.values.user
+    
+    node = metadata.get_node('instrument')
+    node.value = parser.values.instrument
+    
+    node = metadata.get_node('ProposalByInstrument')
+    node.value = parser.values.proposal
+
+    node = metadata.get_node('EmslUserOfRecord')
+    node.value = parser.values.user
+
+    # get the file tuples (local name, archive name) to bundle
+    tuples = session.files.get_bundle_files(parser.values.file_list)
+
     # pylint: disable=unexpected-keyword-arg
-    # just to be more expicit
-    tasks.upload_files(bundle_name=parser.values.bundle_name,
-                       instrument_name=parser.values.instrument,
-                       proposal=parser.values.proposal,
-                       file_list=tuples,
-                       bundle_size=session.files.bundle_size,
-                       groups=parser.groups,
-                       server=parser.values.server,
-                       user=parser.values.user,
-                       password=parser.values.password,
-                       tartar=tartar)
+    tasks.upload_files(ingest_server=configuration.ingest_server,
+                 bundle_name=parser.values.bundle_name,
+                 file_list=tuples,
+                 bundle_size=session.files.bundle_size,
+                 meta_list=metadata.meta_list,
+                 auth=configuration.auth,
+                 tartar=tartar)
     # pylint: enable=unexpected-keyword-arg
 
 
