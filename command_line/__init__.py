@@ -89,20 +89,14 @@ def add_options(parser):
     """
     Adds custom command line options for this module to an OptionParser
     """
-    parser.groups = {}
-
-    # Upload the bundle to the specified server
-    parser.add_option('-s', '--server', type='string', action='store', dest='server',
-                      default='ingest.my.emsl.pnl.gov',
-                      help="Set the upload server to SERVER", metavar='SERVER')
 
     # Set the directory in which to work
     parser.add_option('-c', '--cwd', type='string', action='store',
-                      dest='work_dir', default=os.getcwd(),
+                      dest='work_dir', default='',
                       help="Change the uploader's working directory to DIR", metavar='DIR')
 
     # Set the directory in which to bundle
-    parser.add_option('-t', '--tar', type='string', action='store', dest='tar_dir', default='NONE',
+    parser.add_option('-t', '--tar', type='string', action='store', dest='tar_dir', default='',
                       help="Set the uploader's tar directory to DIR", metavar='DIR')
 
     # Create a tar file with the bundler, then wrap that tar file in a second
@@ -139,6 +133,11 @@ def add_options(parser):
                       dest='user', default='',
                       help="Upload as the username USER", metavar='USER')
 
+    # Upload the bundle as user
+    parser.add_option('-o', '--userOfRecord', type='string', action='store',
+                      dest='userOfRecord', default='',
+                      help="Upload as the user of record name USEROR", metavar='USEROR')
+
 
 def check_options(parser):
     """
@@ -161,43 +160,58 @@ def upload_from_options(parser):
     # don't clean tar directory
     tasks.CLEAN_TAR = False
 
+    # populate metadata.  Command line arguments override hard-coded config file arguments
+    metadata = QueryMetadata.QueryMetadata(configuration.ingest_server)
+
+    node = metadata.get_node('logon')
+    if parser.values.user == '':
+        parser.values.user = node.value
+    else:
+        node.value = parser.values.user
+
+    node = metadata.get_node('EmslUserOfRecord')
+    if parser.values.userOfRecord == '':
+        parser.values.userOfRecord = node.value
+    else:
+        node.value = parser.values.user
+
+    node = metadata.get_node('instrument')
+    if parser.values.instrument == '':
+        parser.values.instrument = node.value
+    else:
+        node.value = parser.values.instrument
+
+    node = metadata.get_node('ProposalByInstrument')
+    if parser.values.proposal == '':
+        parser.values.proposal = node.value
+    else:
+        node.value = parser.values.proposal
+
+    # defaults for missing command line args
+     # build archive path
+    configuration = instrument_server.UploaderConfiguration()
+    configuration.initialize_settings()
+
     # populate the session so that we are running the same process as the
     # django uploader
     session = session_data.SessionState()
+    session.proposal_id = parser.values.proposal
+    session.config = configuration
+    session.get_archive_tree(None)
 
     # get rid of redundant file paths
     session.files.filter_selected_list(parser.values.file_list)
 
     session.files.data_dir = parser.values.work_dir
+    if session.files.data_dir == '':
+        session.files.data_dir = configuration.data_dir
+
     # add a final separator
     session.files.common_path = os.path.join(parser.values.work_dir, '')
-
-    # build archive path
-    configuration = instrument_server.UploaderConfiguration()
-    configuration.initialize_settings()
-    configuration.instrument_short_name = parser.values.instrument
-    session.proposal_id = parser.values.proposal
-    session.config = configuration
-    session.get_archive_tree(None)
 
     tartar = False
     if parser.values.tartar == 'True':
         tartar = True
-
-    # populate metadata
-    metadata = QueryMetadata.QueryMetadata(configuration.ingest_server)
-
-    node = metadata.get_node('logon')
-    node.value = parser.values.user
-    
-    node = metadata.get_node('instrument')
-    node.value = parser.values.instrument
-    
-    node = metadata.get_node('ProposalByInstrument')
-    node.value = parser.values.proposal
-
-    node = metadata.get_node('EmslUserOfRecord')
-    node.value = parser.values.user
 
     # get the file tuples (local name, archive name) to bundle
     tuples = session.files.get_bundle_files(parser.values.file_list)

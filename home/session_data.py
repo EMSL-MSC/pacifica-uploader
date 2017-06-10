@@ -34,7 +34,7 @@ class SessionState(object):
         """
         constructor for session_data class
         """
-        print 'Session Initializzed'
+        print 'Session Initialized'
 
     def touch(self):
         """
