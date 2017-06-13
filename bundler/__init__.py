@@ -136,7 +136,6 @@ class FileBundler(object):
         """
         meta_str = 'Bundling percent complete: ' + \
             str(int(self.percent_complete))
-        print meta_str
 
         TaskComm.set_state('PROGRESS', meta_str)
 
