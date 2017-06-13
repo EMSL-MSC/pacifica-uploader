@@ -9,11 +9,13 @@ from optparse import OptionParser
 from getpass import getpass
 import datetime
 import stat
+import json
 
 from home import tasks
 from home import session_data
 from home import instrument_server
 from home import QueryMetadata
+from home import task_comm
 
 from home import file_tools
 
@@ -151,31 +153,56 @@ def check_options(parser):
     parser.values.bundle_name = os.path.join(
         parser.values.tar_dir, current_time + ".tar")
 
+def get_user_id(metadata, node, network_id):
+    try:
+        node.value = network_id
+        query = metadata.build_query(node)
+        print query
+        users = metadata.get_list(query)
+        element = users[0]
+        id = element['_id']
+        node.value = id
+    except Exception, err:
+        print 'failed to get Pacifica id for network id ' + network_id
+        raise (err)
+
+    return True
+
 
 def upload_from_options(parser):
     """
     Upload files based upon command line options supecified in an OptionParser
     """
 
+    # defaults for missing command line args
+    configuration = instrument_server.UploaderConfiguration()
+    configuration.initialize_settings()
+
     # don't clean tar directory
     tasks.CLEAN_TAR = False
 
     # populate metadata.  Command line arguments override hard-coded config file arguments
-    metadata = QueryMetadata.QueryMetadata(configuration.ingest_server)
+    metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
+
+    # typically the user of record is picked from a list based on proposal
+    # here, we fetch a specific user from the User table
+    node = metadata.get_node('EmslUserOfRecord')
+    if parser.values.userOfRecord == '':
+        parser.values.userOfRecord = node.value
+    else:
+        node.value = parser.values.userOfRecord
+    logon_node = metadata.get_node('logon')
+    get_user_id(metadata, logon_node, parser.values.userOfRecord)
+    node.value = logon_node.value
 
     node = metadata.get_node('logon')
     if parser.values.user == '':
         parser.values.user = node.value
     else:
         node.value = parser.values.user
+    get_user_id(metadata, node, parser.values.user)
 
-    node = metadata.get_node('EmslUserOfRecord')
-    if parser.values.userOfRecord == '':
-        parser.values.userOfRecord = node.value
-    else:
-        node.value = parser.values.user
-
-    node = metadata.get_node('instrument')
+    node = metadata.get_node('instrumentByID')
     if parser.values.instrument == '':
         parser.values.instrument = node.value
     else:
@@ -187,17 +214,13 @@ def upload_from_options(parser):
     else:
         node.value = parser.values.proposal
 
-    # defaults for missing command line args
-     # build archive path
-    configuration = instrument_server.UploaderConfiguration()
-    configuration.initialize_settings()
-
     # populate the session so that we are running the same process as the
     # django uploader
     session = session_data.SessionState()
-    session.proposal_id = parser.values.proposal
+    # session.proposal_id = parser.values.proposal
     session.config = configuration
-    session.get_archive_tree(None)
+    metadata.user = parser.values.user
+    session.get_archive_tree(metadata)
 
     # get rid of redundant file paths
     session.files.filter_selected_list(parser.values.file_list)
@@ -216,12 +239,17 @@ def upload_from_options(parser):
     # get the file tuples (local name, archive name) to bundle
     tuples = session.files.get_bundle_files(parser.values.file_list)
 
+    meta_list = metadata.create_meta_upload_list()
+
+    # let the task know to simply update and print the state
+    task_comm.TaskComm.USE_CELERY = False
+
     # pylint: disable=unexpected-keyword-arg
     tasks.upload_files(ingest_server=configuration.ingest_server,
                  bundle_name=parser.values.bundle_name,
                  file_list=tuples,
                  bundle_size=session.files.bundle_size,
-                 meta_list=metadata.meta_list,
+                 meta_list=meta_list,
                  auth=configuration.auth,
                  tartar=tartar)
     # pylint: enable=unexpected-keyword-arg
@@ -241,8 +269,12 @@ def main():
         check_options(parser)
         upload_from_options(parser)
     # pylint: disable=broad-except
+
+        state, info = task_comm.TaskComm.get_state()
+        print '%s:  %s' % (state, info)
+
     except Exception as err:
-        print >> sys.stderr, "CLU dieded: %s" % err
+        print >> sys.stderr, 'CLU dieded: %s' % err
     # pylint: enable=broad-except
 
 
