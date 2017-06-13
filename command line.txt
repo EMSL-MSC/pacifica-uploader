@@ -1,1 +1,1 @@
--s test1.my.emsl.pnl.gov  -p 45796 -u d3e889 -i 34075 -c S:\\7_Representative_Data -t E:\\tar -g Tag=bunny -f 2013
+-p 45796 -u d3e889 -i 34075 -c S:\\7_Representative_Data -t E:\\tar -f 2013
