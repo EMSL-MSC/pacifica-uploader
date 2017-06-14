@@ -93,61 +93,82 @@ def add_options(parser):
     """
 
     # Set the directory in which to work
-    parser.add_option('-c', '--cwd', type='string', action='store',
+    parser.add_option('-w', '--workdir', type='string', action='store',
                       dest='work_dir', default='',
-                      help="Change the uploader's working directory to DIR", metavar='DIR')
+                      help='Change the uploader working directory to DIR', metavar='DIR')
 
     # Set the directory in which to bundle
     parser.add_option('-t', '--tar', type='string', action='store', dest='tar_dir', default='',
-                      help="Set the uploader's tar directory to DIR", metavar='DIR')
+                      help='Set the uploader tar directory to DIR', metavar='DIR')
 
     # Create a tar file with the bundler, then wrap that tar file in a second
     # tar file for upload
     parser.add_option('-r', '--tartar', type='string', action='store',
                       dest='tartar', default='False',
-                      help="Upload the file list as a single tar file", metavar='TARTAR')
+                      help='Upload the file list as a single tar file', metavar='TARTAR')
 
     # Set the instrument to use
     parser.add_option('-i', '--instrument', type='string', action='store',
                       dest='instrument', default='',
-                      help="Set used instrument to INST", metavar='INST')
+                      help='Set used instrument to INST', metavar='INST')
 
     # Set the name of the proposal
     parser.add_option('-p', '--proposal', type='string', action='store',
                       dest='proposal', default='',
-                      help="Set the Proposal number number to PNUM", metavar='PNUM')
+                      help='Set the Proposal number number to PNUM', metavar='PNUM')
 
     # Add a file to the list to be bundled
     parser.add_option('-f', '--file', type='string', action='callback',
                       callback=_add_file_cb,
                       dest='file_list', default=[],
-                      help="Add the file FILE to the list to be bundled", metavar='FILE')
+                      help='Add the file FILE to the list to be bundled', metavar='FILE')
 
     # Add a file to the list to be bundled
     parser.add_option('-d', '--directory', type='string', action='callback',
                       callback=_add_directory,
                       dest='file_list', default=[],
-                      help="Add the file or directory FILE to the list to be bundled",
+                      help='Add the file or directory FILE to the list to be bundled',
                       metavar='DIRECTORY')
 
     # Upload the bundle as user
     parser.add_option('-u', '--user', type='string', action='store',
                       dest='user', default='',
-                      help="Upload as the username USER", metavar='USER')
+                      help='Upload as the username USER', metavar='USER')
 
-    # Upload the bundle as user
+    # User of Record (person the upload is done for)
     parser.add_option('-o', '--userOfRecord', type='string', action='store',
                       dest='userOfRecord', default='',
-                      help="Upload as the user of record name USEROR", metavar='USEROR')
+                      help='Upload as the user of record name USEROR', metavar='USEROR')
+
+    #	"auth" : {"cert": ["auth/intermediate/certs/d3e889.cert.pem", "auth/intermediate/private/d3e889-nopassword.key.pem"]},
+
+    # auth cert
+    parser.add_option('-c', '--cert', type='string', action='store',
+                      dest='certification', default='',
+                      help='authorization certification AC', metavar='AC')
+
+    # auth key
+    parser.add_option('-k', '--key', type='string', action='store',
+                      dest='auth_key', default='',
+                      help='authorization key AK', metavar='AK')
 
 
-def check_options(parser):
+def check_options(parser, config):
     """
     Performs custom option checks for this module given an OptionParser
     """
 
     if parser.values.tar_dir == 'NONE':
         parser.values.tar_dir = parser.values.work_dir
+
+    if parser.values.certification == '':
+        parser.error('missing authorization certification')
+
+    if parser.values.auth_key == '':
+        parser.error('missing authorization key')
+
+    auth = '{\"cert\":  [\"%s\", \"%s\"]}' % (parser.values.certification, parser.values.auth_key)
+    config.auth = json.loads(auth)
 
     current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
     parser.values.bundle_name = os.path.join(
@@ -177,6 +198,8 @@ def upload_from_options(parser):
     # defaults for missing command line args
     configuration = instrument_server.UploaderConfiguration()
     configuration.initialize_settings()
+
+    check_options(parser, configuration)
 
     # don't clean tar directory
     tasks.CLEAN_TAR = False
@@ -266,7 +289,6 @@ def main():
         add_usage(parser)
         add_options(parser)
         parser.parse_args()
-        check_options(parser)
         upload_from_options(parser)
     # pylint: disable=broad-except
 
