@@ -168,9 +168,8 @@ def check_options(parser, config, metadata):
         parser.error('missing authorization key')
 
     auth = '{\"cert\":  [\"%s\", \"%s\"]}' % (parser.values.certification, parser.values.auth_key)
-    #config.auth = json.loads(auth)
+    config.auth = json.loads(auth)
     metadata.auth = json.loads(auth)
-
 
     current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
     parser.values.bundle_name = os.path.join(
