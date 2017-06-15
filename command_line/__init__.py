@@ -153,7 +153,7 @@ def add_options(parser):
                       help='authorization key AK', metavar='AK')
 
 
-def check_options(parser, config):
+def check_options(parser, config, metadata):
     """
     Performs custom option checks for this module given an OptionParser
     """
@@ -168,7 +168,9 @@ def check_options(parser, config):
         parser.error('missing authorization key')
 
     auth = '{\"cert\":  [\"%s\", \"%s\"]}' % (parser.values.certification, parser.values.auth_key)
-    config.auth = json.loads(auth)
+    #config.auth = json.loads(auth)
+    metadata.auth = json.loads(auth)
+
 
     current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
     parser.values.bundle_name = os.path.join(
@@ -199,13 +201,14 @@ def upload_from_options(parser):
     configuration = instrument_server.UploaderConfiguration()
     configuration.initialize_settings()
 
-    check_options(parser, configuration)
+    # populate metadata.  Command line arguments override hard-coded config file arguments
+    metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
+
+    check_options(parser, configuration, metadata)
 
     # don't clean tar directory
     tasks.CLEAN_TAR = False
 
-    # populate metadata.  Command line arguments override hard-coded config file arguments
-    metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
 
     # typically the user of record is picked from a list based on proposal
     # here, we fetch a specific user from the User table
