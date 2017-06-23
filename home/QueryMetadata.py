@@ -67,12 +67,12 @@ class QueryMetadata(object):
 
     auth = {}
 
-    def __init__(self, host):
+    def __init__(self, host, config_dir = ''):
         """
         constructor for Query class
         """
         self.host = host
-        self.load_meta()
+        self.load_meta(config_dir)
 
     def build_query(self, meta):
         """
@@ -136,12 +136,12 @@ class QueryMetadata(object):
         if meta_key in meta:
             setattr(obj, attr, meta[meta_key])
 
-    def load_meta(self):
+    def load_meta(self, config_path = ''):
         """
         puts the metadata into a format that can eventually be
         read by the metadata archive
         """
-        configuration = read_config()
+        configuration = read_config(config_path)
 
         # create a list of metadata entries to pass to the list upload page
         try:
@@ -408,11 +408,14 @@ def create_meta_upload(meta):
     return meta_obj
 
 
-def read_config():
+def read_config(config_path = ''):
     """
     read the configuration file
     """
     config_file = 'UploaderConfig.json'
+
+    if config_path!='':
+        config_file = os.path.join(config_path, config_file)
 
     if not os.path.isfile(config_file):
         return ''

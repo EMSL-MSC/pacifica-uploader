@@ -92,6 +92,12 @@ def add_options(parser):
     Adds custom command line options for this module to an OptionParser
     """
 
+    # specify a path to the directory containing the configuration file
+    # if this path is not specified, the uploader will look in the drive where the process is run from
+    parser.add_option('-l', '--configdir', type='string', action='store',
+                      dest='config_dir', default='',
+                      help='Change the path to the configuration file to CONFIG', metavar='CONFIG')
+
     # Set the directory in which to work
     parser.add_option('-w', '--workdir', type='string', action='store',
                       dest='work_dir', default='',
@@ -195,13 +201,14 @@ def upload_from_options(parser):
     """
     Upload files based upon command line options supecified in an OptionParser
     """
+    configdir = parser.values.config_dir
 
     # defaults for missing command line args
     configuration = instrument_server.UploaderConfiguration()
-    configuration.initialize_settings()
+    configuration.initialize_settings(configdir)
 
     # populate metadata.  Command line arguments override hard-coded config file arguments
-    metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
+    metadata = QueryMetadata.QueryMetadata(configuration.policy_server, configdir)
 
     check_options(parser, configuration, metadata)
 

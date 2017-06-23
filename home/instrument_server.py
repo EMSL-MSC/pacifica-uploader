@@ -40,7 +40,7 @@ class UploaderConfiguration(object):
         else:
             err_list.append('Missing ' + key)
 
-    def initialize_settings(self):
+    def initialize_settings(self, config_path = ''):
         """
         if the system hasn't been initialized, do so
         """
@@ -48,7 +48,7 @@ class UploaderConfiguration(object):
 
         if not self.initialized:  # first time through, initialize
 
-            configuration = read_config_file()
+            configuration = read_config_file(config_path)
 
             self.set_if_there(configuration, 'target', self, 'target_dir', err_list)
 
@@ -99,11 +99,16 @@ class UploaderConfiguration(object):
         self.free_size_str = file_tools.size_string(self.free_space)
 
 
-def read_config_file():
+def read_config_file(config_path = ''):
     """
     read the configuration file
     """
+
     config_file = 'UploaderConfig.json'
+    if config_path != '':
+        config_file = os.path.join(config_path, config_file)
+
+    print 'Config file = ' + config_file
 
     with open(config_file, 'r') as config:
         configuration = json.load(config)
