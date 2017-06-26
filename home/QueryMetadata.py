@@ -65,7 +65,6 @@ class QueryMetadata(object):
     host = ''
     user = ''
     meta_list = []
-
     auth = {}
 
     def __init__(self, host):
@@ -73,13 +72,12 @@ class QueryMetadata(object):
         constructor for Query class
         """
         self.host = host
-        self.load_meta()
 
     def build_query(self, meta):
         """
         builds a json query structure:
         {
-            "user": "d3e889",
+            "user": "1234666",
             "columns": [ "name_short", "diplay_name" ],
             "from": "instruments",
             "where" : { "_id": "37654" }
@@ -120,16 +118,6 @@ class QueryMetadata(object):
             upload_list.append(create_meta_upload(meta))
 
         return upload_list
-
-    def initialize_user(self, network_id):
-        """
-        initializes the login node with the network ID so that
-        it can be converted to the user id on meta init.
-        we are assuming all uploaders with have a login
-        """
-        meta = self.get_node('logon')
-        meta.value = network_id
-        self.user = -1
 
     @staticmethod
     def set_if_there(meta, meta_key, obj, attr):
@@ -225,12 +213,6 @@ class QueryMetadata(object):
             # put in format to be used by select2
             choices.append({"id": key, "text": display})
 
-        # special case for logon, need to initialize user
-        if meta.meta_id == 'logon':
-            first = choices[0]
-            meta.value = first['id']
-            self.user = first['id']
-
         meta.browser_field_population['selection_list'] = choices
 
     def update_parents(self, meta):
@@ -268,10 +250,17 @@ class QueryMetadata(object):
                     meta.value = sel_list[0]['id']
 
 
-    def initial_population(self):
+    def initial_population(self, network_id):
         """
         populate all the lists from the policy server for the first time
         """
+
+        # this is a special case, self-referential node that replaces the network id 
+        # with the pacifica id.  We have other ways of getting the pacifica id, but 
+        # leaving this in for now as it follows the basic model for transfering metadata
+        # to the metadata archive.  Refer back to this in time. (dfh)
+        node = self.get_node('logon')
+        node.value = network_id
 
         init_fields = []
 
@@ -337,6 +326,26 @@ class QueryMetadata(object):
 
             self.update_children(child, update_fields)
 
+    def get_Pacifica_user(self, network_id):
+        """
+            user specific to this instance of Pacifica
+        """
+
+        try:
+            headers = {'content-type': 'application/json'}
+            url = self.host + '/status/users/search/' + network_id + '/simple'
+
+            reply = requests.get(url, headers=headers,**self.auth)
+            data = json.loads(reply.content)
+            record = data[0]            
+            id = record['person_id']
+            return id
+
+        except Exception, ex:
+            err = str(ex.message) + ' url: ' + url
+            print err
+            raise Exception (err) 
+
     def get_list(self, query):
         """
             gets a list of items based on the json query structure
@@ -372,18 +381,6 @@ class QueryMetadata(object):
         display = entry['text']
 
         return display
-
-    def get_user_name(self, network_id):
-        """ return the formatted logon user """
-
-        node = self.get_node('logon')
-        #kludgy
-        db_user = node.value
-        node.value = network_id
-        name = self.get_display(node)
-        node.value = db_user
-        return name
-
 
     def populate_metadata_from_form(self, form):
         """
