@@ -24,7 +24,6 @@ class FileManager(object):
     """description of class"""
 
     data_dir = ''
-    bundle_filepath = ''
     bundle_size = 0
     bundle_size_str = ''
 
@@ -38,7 +37,6 @@ class FileManager(object):
         resets a class to a clean state
         """
 
-        self.bundle_filepath = ''
         self.bundle_size = 0
         self.bundle_size_str = ''
         self.common_path = ''
