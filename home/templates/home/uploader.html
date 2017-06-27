@@ -22,8 +22,9 @@
                           {% endif %}
                      {% endfor %}
 
-
-                    <p class="smallprint"><a href="/logout">kitty? Click here to Logout</a></p>
+                    
+                    <p class="smallprint"><a href="/logout">Not You? Click here to Logout</a></p>
+                    <p class="smallprint">v2.11.1.1.2 3/6/ 1:15pm>
                 </div>
             </div>
 
@@ -38,7 +39,7 @@
                                 {% if meta.display_type == 'select'  %}
                                     <div class="full_width_block">
                                         <label for="{{meta.meta_id}}" style="display:block;">{{meta.display_title}}</label>
-                                        <select id="{{meta.meta_id}}" name="{{meta.meta_id}}" class="main_page_selector">
+                                        <select id="{{meta.meta_id}}" name="{{meta.meta_id}}" class="main_page_selector"> 
                                             {#<option selected="selected" value="34002">thing1</option>#}
                                             {#{% for sel in meta.select_list %}
                                                 <option value="{{sel.key}}">{{sel.display}}</option>
@@ -55,7 +56,7 @@
                                     <li>
                                        <label for="{{meta.meta_id}}" style="display:block;">{{meta.display_title}}</label>
                                        <input type="text" id="{{meta.meta_id}}" style="width:80%;border-width:1px;" name="{{meta.meta_id}}" value = "{{meta.value}}">
-                                    </li>
+                                    </li>                                
                                 {% endif %}
                             {% endfor %}
                             </ul>
@@ -82,7 +83,7 @@
                                     </li>
                                 </ul>
                             </div>
-                            <div style="text-align: center; position: absolute; top:0; right:0;">
+                            <div style="text-align: center; position: absolute; top:0; right:0;">  
                               <input type="submit" name="upload_btn" id="upload_btn" value="Upload Files &amp; Metadata" />
                               <div id="message">
                                   <p class = "tight">
@@ -103,7 +104,7 @@
                             </ul>
                           </div>
                         </div>
-
+                        
                     </fieldset>
                 </form>
             </div>

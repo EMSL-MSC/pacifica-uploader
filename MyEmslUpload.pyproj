@@ -5,14 +5,14 @@
     <Name>MyEmslUpload</Name>
     <RootNamespace>MyEmslUpload</RootNamespace>
     <IsWindowsApplication>False</IsWindowsApplication>
-    <InterpreterId>{9a7a9026-48c1-4688-9d5d-e5699d47d074}</InterpreterId>
+    <InterpreterId>{2af0f10d-7135-4994-9156-5d01c9c11b7e}</InterpreterId>
     <InterpreterVersion>2.7</InterpreterVersion>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <DjangoSettingsModule>UploadServer.settings</DjangoSettingsModule>
     <PythonRunWebServerCommandArguments>runserver --settings $(DjangoSettingsModule) %SERVER_PORT% $(CommandLineArguments)</PythonRunWebServerCommandArguments>
     <WebBrowserUrl>
     </WebBrowserUrl>
-    <WebBrowserPort>9001</WebBrowserPort>
+    <WebBrowserPort>9999</WebBrowserPort>
     <CommandLineArguments>
     </CommandLineArguments>
     <PythonDebugWebServerCommandType>script</PythonDebugWebServerCommandType>
@@ -262,7 +262,7 @@
     <Content Include="UploadServer\paths.txt" />
   </ItemGroup>
   <ItemGroup>
-    <InterpreterReference Include="{9a7a9026-48c1-4688-9d5d-e5699d47d074}\2.7" />
+    <InterpreterReference Include="{2af0f10d-7135-4994-9156-5d01c9c11b7e}\2.7" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.Django.targets" />
   <!-- Specify pre- and post-build commands in the BeforeBuild and 

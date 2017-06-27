@@ -34,12 +34,15 @@ class SessionState(object):
         """
         constructor for session_data class
         """
+        print 'Session Initialized'
 
     def touch(self):
         """
         resets time out
         """
         self.last_touched_time = time.time()
+
+        print '************* good touch by ' + self.network_id + '! *************'
 
     def is_timed_out(self):
         """
@@ -54,9 +57,15 @@ class SessionState(object):
         now = time.time()
         elapsed = now - self.last_touched_time
 
-        timeout = self.config.timeout * 60
+        print 'time_out:  elapsed = ' + str(elapsed)
+
+        timeout = int(self.config.timeout) * 60
+
+        print 'timeout limit: ' + str(timeout)
 
         return elapsed > timeout
+
+
 
     def set_session_root(self, filepath):
         """
@@ -74,7 +83,7 @@ class SessionState(object):
         """
         resets a session to a clean state
         """
-        self.user = None
+        # self.user = None
         self.cleanup_upload()
 
     def cleanup_upload(self):

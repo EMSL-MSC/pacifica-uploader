@@ -9,7 +9,6 @@ import json
 import os
 
 import requests
-import copy
 
 # pylint: disable=too-few-public-methods
 # justification: perfect amount of methods, possibly look at using "collection"
@@ -66,12 +65,14 @@ class QueryMetadata(object):
     user = ''
     meta_list = []
 
-    def __init__(self, host):
+    auth = {}
+
+    def __init__(self, host, config_dir = ''):
         """
         constructor for Query class
         """
         self.host = host
-        self.load_meta()
+        self.load_meta(config_dir)
 
     def build_query(self, meta):
         """
@@ -135,15 +136,18 @@ class QueryMetadata(object):
         if meta_key in meta:
             setattr(obj, attr, meta[meta_key])
 
-    def load_meta(self):
+    def load_meta(self, config_path = ''):
         """
         puts the metadata into a format that can eventually be
         read by the metadata archive
         """
-        configuration = read_config()
+        configuration = read_config(config_path)
 
         # create a list of metadata entries to pass to the list upload page
         try:
+            # get authorization
+            self.set_if_there(configuration, 'auth', self, 'auth')
+
             self.meta_list = []
             for meta in configuration['metadata']:
 
@@ -195,6 +199,9 @@ class QueryMetadata(object):
                           ]}
         """
 
+        print 'build_selection_list, query_result is'
+        print query_result
+
         meta.browser_field_population['meta_id'] = meta.meta_id
 
         # build the list of choices
@@ -212,7 +219,7 @@ class QueryMetadata(object):
             else:
                 display = ''
 
-             # put in format to be used by select2
+            # put in format to be used by select2
             choices.append({"id": key, "text": display})
 
         # special case for logon, need to initialize user
@@ -333,14 +340,20 @@ class QueryMetadata(object):
         """
         #try:
 
-        headers = {'content-type': 'application/json'}
-        url = self.host + '/uploader'
+        try:
+            headers = {'content-type': 'application/json'}
+            url = self.host + '/uploader'
 
-        reply = requests.post(url, headers=headers, data=query)
+            reply = requests.post(url, headers=headers, data=query, **self.auth)
 
-        data = json.loads(reply.content)
+            data = json.loads(reply.content)
 
-        return data
+            return data
+
+        except Exception, ex:
+            err = ex.message + ' query: ' + query
+            print err
+            raise Exception(err)
 
 
     def get_display(self, meta):
@@ -395,11 +408,14 @@ def create_meta_upload(meta):
     return meta_obj
 
 
-def read_config():
+def read_config(config_path = ''):
     """
     read the configuration file
     """
     config_file = 'UploaderConfig.json'
+
+    if config_path!='':
+        config_file = os.path.join(config_path, config_file)
 
     if not os.path.isfile(config_file):
         return ''

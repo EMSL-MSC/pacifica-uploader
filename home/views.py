@@ -22,13 +22,10 @@ from time import sleep
 from django.conf import settings
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.http import HttpResponseRedirect
 
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponseServerError
-
-from django.core.urlresolvers import reverse
 
 from celery.result import AsyncResult
 
@@ -49,8 +46,10 @@ configuration = instrument_server.UploaderConfiguration()
 metadata = None
 # pylint: enable=invalid-name
 
+# pylint: disable=global-variable-not-assigned
+
 # development VERSION
-VERSION = '2.11.1.1.1'
+VERSION = '2.12 4/13/17 8:00 am'
 
 
 def ping_celery():
@@ -71,21 +70,49 @@ def ping_celery():
 
     return False
 
-def validate_user_handler(request):
-    """
-    checks to see if:
-        no one is logged in, in which case log this user in
-        user is logged in and this is the current user, in which case just reload the page (losing context)
-        a user is logged in and this is not that user, in which case block them out
-    """
+def user_from_request(request):
+    """ returns the user if in meta """
 
     if 'HTTP_AUTHORIZATION' in request.META:
         auth = request.META['HTTP_AUTHORIZATION']
         scheme, creds = re.split(r'\s+', auth)
         if scheme.lower() != 'basic':
             raise ValueError('Unknown auth scheme \"%s\"' % scheme)
-        new_user = base64.b64decode(creds).split(':', 1)[0]
+        user = base64.b64decode(creds).split(':', 1)[0]
+        print 'user_from_request: ' + user
+        return user
     else:
+        return None
+
+def is_current_user(request):
+    """ is this the user currently logged in? """
+
+    new_user = user_from_request(request)
+
+    print 'is_current_user: ' +  new_user
+
+    if session.network_id:
+        print 'session.network_id: ' + session.network_id
+    else:
+        print 'session.network_id: Set to NONE'
+
+    return new_user == session.network_id
+
+def validate_user_handler(request):
+    """
+    checks to see if:
+        no one is logged in, in which case log this user in
+        user is logged in and this is the current user,
+        in which case just reload the page (losing context)
+        a user is logged in and this is not that user,
+        in which case block them out
+    """
+
+    print 'validate_user_handler'
+
+    new_user = user_from_request(request)
+
+    if not new_user:
         render = login_error(request, 'missing authorization')
         return render
 
@@ -95,13 +122,20 @@ def validate_user_handler(request):
     if session:
         # check to see if there is an existing user logged in
         if session.network_id and session.is_logged_in:
-            # if the current user is still logged in and this is not that
-            # user, throw an error
+
+            # if the current user is still logged in and this is not that user
             if new_user != session.network_id:
-                name = metadata.get_user_name(session.network_id)
-                return login_error(request,
-                                    'User %s is currently logged in' % name)
+                 # if timed out, log out, don't show page
+                if session.is_timed_out():
+                    logout(request)
+                else:
+                    #commenting this out temporarily to see if it fixes the query error
+                    #name = metadata.get_user_name(session.network_id)
+                    #return login_error(request,
+                    #                    'User %s is currently logged in' % name)
+                    return login_error(request, 'Another user is currently logged in')
             else:
+                session.touch()
                 return # just reload the page if user is already logged in.
 
     print 'trying to log in:  ' + new_user
@@ -137,10 +171,14 @@ def show_initial_status(request):
     """
     shows the status page with no message
     """
+    # reset timeout
+    session.touch()
+
     return show_status_insert(request, '')
 
 def print_err(ex):
     """ prints error """
+    ex = ex
     print >> sys.stderr, '-'*60
     print >> sys.stderr, 'Exception:'
     traceback.print_exc(file=sys.stderr)
@@ -156,6 +194,10 @@ def set_data_root(request):
     """
     explicitly set the data root
     """
+
+    # reset timeout
+    session.touch()
+
     try:
         mode = request.POST.get('mode')
 
@@ -185,6 +227,9 @@ def show_status_insert(request, message):
     """
     show the status of the existing upload task
     """
+    # reset timeout
+    session.touch()
+
     session.current_time = datetime.datetime.now().strftime('%m.%d.%Y.%H.%M.%S')
 
     return render_to_response('home/status_insert.html',
@@ -195,11 +240,50 @@ def show_status_insert(request, message):
                                'free_size': configuration.free_size_str},
                               RequestContext(request))
 
+def user_logged_in(request):
+    """
+    checks to see if:
+        no one is logged in, in which case log this user in
+        user is logged in and this is the current user,
+        in which case just reload the page (losing context)
+        a user is logged in and this is not that user,
+        in which case block them out
+    """
+
+    print 'user_logged_in'
+
+    new_user = user_from_request(request)
+
+    if not new_user:
+        return False
+
+    # pylint: disable=invalid-name
+    global session
+    # pylint: enable=invalid-name
+    if session:
+        # check to see if there is an existing user logged in
+        if session.network_id and session.is_logged_in:
+
+            # if the current user is still logged in
+            if new_user == session.network_id:
+                 # if timed out, log out, don't show page
+                if session.is_timed_out():
+                    logout(request)
+                else:
+                    return True
+    return False
 
 def post_upload_metadata(request):
     """
     populates the upload metadata from the upload form
     """
+
+    if not user_logged_in(request):
+        return HttpResponse(json.dumps('failed'), content_type='application/json')
+
+    # reset timeout
+    session.touch()
+
     # do this here because the async call from the browser
     # may call for a status before spin_off_upload is started
     session.is_uploading = True
@@ -222,6 +306,9 @@ def spin_off_upload(request):
     """
     spins the upload process off to a background celery process
     """
+
+    # reset timeout
+    session.touch()
 
     # initialize the task state
     if not TaskComm.USE_CELERY:
@@ -270,13 +357,15 @@ def spin_off_upload(request):
                                          bundle_name=session.bundle_filepath,
                                          file_list=tuples,
                                          bundle_size=session.files.bundle_size,
-                                         meta_list=meta_list)
+                                         meta_list=meta_list,
+                                         auth=configuration.auth)
         else:  # run local
             tasks.upload_files(ingest_server=configuration.ingest_server,
                                bundle_name=session.bundle_filepath,
                                file_list=tuples,
                                bundle_size=session.files.bundle_size,
-                               meta_list=meta_list)
+                               meta_list=meta_list,
+                               auth=configuration.auth)
     except Exception, ex:
         session.is_uploading = False
         return report_err(ex)
@@ -288,6 +377,9 @@ def upload_files(request):
     """
     view for upload process spawn
     """
+    # reset timeout
+    session.touch()
+
     # use this flag to determine status of upload in incremental status
     session.is_uploading = True
 
@@ -307,10 +399,10 @@ def login_error(request, error_string):
     """
 
     return render_to_response(settings.LOGIN_VIEW,
-                                {'site_version': VERSION,
-                                'instrument': configuration.instrument,
-                                'message': error_string},
-                                RequestContext(request))
+                              {'site_version': VERSION,
+                               'instrument': configuration.instrument,
+                               'message': error_string},
+                              RequestContext(request))
 
 
 
@@ -323,13 +415,16 @@ def login(request, new_user):
     """
 
 
+    print '*** login ***'
+
     # initialize server settings from scratch
     configuration.initialized = False
     err = configuration.initialize_settings()
     if err != '[]':
         return login_error(request, 'faulty configuration:  ' + err)
 
-    # loads the metadata structure from the config file so we can populate the initial html for the upload page
+    # loads the metadata structure from the config file
+    # so we can populate the initial html for the upload page
     # pylint: disable=invalid-name
     global metadata
     # pylint: enable=invalid-name
@@ -337,7 +432,10 @@ def login(request, new_user):
 
 
     # after login you lose your session context
+    # pylint: disable=invalid-name
     global session
+    # pylint: enable=invalid-name
+
     session = session_data.SessionState()
     session.config = configuration
 
@@ -362,17 +460,59 @@ def login(request, new_user):
     return
 
 # pylint: disable=unused-argument
-# justification: django required
+# justification: django required'
 def logout(request):
     """
     logs the user out and returns to the main page
     which will bounce to the login page
     """
 
-    session.network_id = None
-    session.is_logged_in = False
+    # pylint: disable=invalid-name
+    global session
+    # pylint: enable=invalid-name
+
+    print 'logout'
+
+    if is_current_user(request):
+
+        print 'this is the current user, setting the session.network_id to None'
+        session.network_id = None
+        session.is_logged_in = False
+    else:
+        print 'this is NOT the current user, leaving the session.network_id alone'
 
     return login_error(request, "Logged out")
+
+# pylint: disable=unused-argument
+# justification: django required
+def logged_in(request):
+    """
+    logs the user out and returns to the main page
+    which will bounce to the login page
+    """
+
+    # pylint: disable=invalid-name
+    global session
+    # pylint: enable=invalid-name
+
+    print 'logged_in. timeout is: ' + str(session.config.timeout)
+
+    # timeout check.
+    # this will clear the user
+    if session.is_timed_out():
+        logout(request)
+
+    if is_current_user(request):
+        # if this is the current user, they must have touched the browser
+        # so, reset the timer
+        session.touch()
+        return_val = 'TRUE'
+        print 'logged in check returns TRUE'
+    else:
+        return_val = 'FALSE'
+        print 'logged in check returns FALSE'
+
+    return HttpResponse(return_val)
 
 
 # pylint: disable=unused-argument
@@ -381,6 +521,10 @@ def initialize_fields(request):
     """
     initializes the metadata fields
     """
+
+    # reset timeout
+    session.touch()
+
     # start from scratch on first load and subsequent reloads of page
     # pylint: disable=invalid-name
     global metadata
@@ -404,6 +548,10 @@ def select_changed(request):
     get the updated metadata on a select field change
     """
 
+    if not is_current_user(request):
+        retval = json.dumps([])
+        return HttpResponse(retval, content_type='application/json')
+
     # reset timeout
     session.touch()
 
@@ -420,6 +568,10 @@ def get_children(request):
     """
     get the children of a parent directory, used for lazy loading
     """
+
+    # reset timeout
+    session.touch()
+
     try:
         # return empty list on error, folder permissions, etc.
         pathlist = []
@@ -539,6 +691,10 @@ def return_bundle(tree, message):
     """
     formats the return message from get_bundle
     """
+
+    # reset timeout
+    session.touch()
+
     # validate that the currently selected bundle will fit in the target space
     upload_enabled = session.validate_space_available()
     # disable the upload if there isn't enough space in the intermediate
@@ -571,8 +727,12 @@ def get_bundle(request):
     # reset timeout
     session.touch()
 
+    tree = []
+
     try:
         session.files.error_string = ''
+
+        print 'get pseudo directory'
 
         tree, lastnode = session.get_archive_tree(metadata)
         session.files.bundle_size = 0
@@ -624,6 +784,10 @@ def get_state(request):
         uploading
         idle
     """
+
+    # reset timeout
+    session.touch()
+
     state = 'idle'
     if session.is_logged_in:
         state = 'logged in: '
@@ -640,7 +804,10 @@ def get_state(request):
 def get_status():
     """    get status from backend    """
 
-    if (TaskComm.USE_CELERY):
+    # reset timeout
+    session.touch()
+
+    if TaskComm.USE_CELERY:
         if session.upload_process == None:
             return 'Initializing', ''
 
@@ -650,8 +817,8 @@ def get_status():
             # we fail to succeed, expecting an error object
             try:
                 result = result.args[0]
-                val = json.loads(result)
-                val['job_id']
+                #val = json.loads(result)
+                #val['job_id']
                 state = 'DONE'
             except KeyError:
                 # if this isn't a successful upload (no job_id) then just return the args.
@@ -666,13 +833,14 @@ def incremental_status(request):
     """
     updates the status page with the current status of the background upload process
     """
+
+    # reset timeout
+    session.touch()
+
     if TaskComm.USE_CELERY:
         if session.upload_process == None:
             retval = json.dumps({'state': '', 'result': ''})
             return HttpResponse(retval)
-
-    # reset timeout
-    session.touch()
 
     try:
         if request.POST:

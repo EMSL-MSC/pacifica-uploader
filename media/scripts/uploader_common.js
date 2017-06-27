@@ -10,22 +10,10 @@ function setup_upload_tree() {
 }
 
 //**********************************************************************
-// timer for auto logout
-var timeoutID;
 
 
 function logOutAndBack() {
-    //alert("Logging you out");
-    var jqobject = $.ajax("/logout")
-    .done(function (data) {
-        var logoutPage = data;
-            // uh, this opens two login windows
-            //window.open("/login", '_blank');
-            window.location.href = '/';
-    })
-    .fail(function (obj, textStatus, error) {
-        $('#currState').html('Unknown');
-    })
+    window.location.href = '/logout';
 }
 
 function logOut() {
@@ -36,27 +24,22 @@ function logOut() {
     })
 }
 
-function setLogoutTimer() {
-    // 10 minutes hardcoded for now
-    timeoutID = window.setTimeout(logOutAndBack, 600000);
+function still_logged_in() {
+
+    $.post("/loggedIn/", "{}",
+        function (data) {
+            var statStr = data;
+            if (statStr == "FALSE")
+                logOutAndBack();
+        })
+    .fail(function (xhr, textStatus, errorThrown) {
+        // errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
+        // window.open(errtext, '_blank');
+        console.log(xhr.responseText);
+    });
+
 }
 
-function clearLogoutTimer() {
-    window.clearTimeout(timeoutID);
-}
-
-function resetTimeout() {
-    clearLogoutTimer();
-    setLogoutTimer();
-}
-
-window.onload = function () {
-    resetTimeout();
-};
-
-window.onbeforeunload = function (event) {
-    //logOut();
-};
 
 $(window).on("load", function () { initializeFields() });
 
@@ -64,7 +47,7 @@ $(window).on("load", function () { initializeFields() });
 
     function FilterSingleBranch(clickedNode, parentNodes) {
 
-        resetTimeout();
+        still_logged_in();
 
         // handles the edge of a single tree branch selected where each subfolder
         // contains one folder only
@@ -98,7 +81,7 @@ $(window).on("load", function () { initializeFields() });
 
     function loadUploadTree(selected) {
 
-        resetTimeout();
+        still_logged_in();
 
         var upload = $("#uploadFiles").fancytree("getTree");
         var root = $("#uploadFiles").fancytree("getRootNode");
@@ -134,17 +117,26 @@ $(window).on("load", function () { initializeFields() });
                 document.getElementById("upload_btn").disabled = !enabled;
             })
             .fail(function (xhr, textStatus, errorThrown ) {
-                errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
-                window.open(errtext, '_self');
-            });
+                // errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
+                // window.open(errtext, '_blank');
+                console.log(xhr.responseText);
+            })
+            .always(function(){
+                $("#uploadFiles").height('auto');
+            })
 
         root.setExpanded(true);
     }
 
+
+
     $(function () {
         $.ajaxSetup({
             cache: false,
-            beforeSend: function(xhr, settings) {
+            beforeSend: function (xhr, settings) {
+                //if (!logged_in) {
+                //    xhr.abort();
+                //}
                 function getCookie(name) {
                     var cookieValue = null;
                     if (document.cookie && document.cookie != '') {
@@ -159,6 +151,7 @@ $(window).on("load", function () { initializeFields() });
                         }
                     }
                     return cookieValue;
+
                 }
                 if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
                     // Only send the token to relative URLs i.e. locally.
@@ -201,7 +194,7 @@ $(window).on("load", function () { initializeFields() });
                 if (!respondToSelect)
                     return;
 
-                resetTimeout();
+                still_logged_in();
 
                 node = data.node;
                 var tree = $("#tree").fancytree("getTree");
@@ -222,7 +215,7 @@ $(window).on("load", function () { initializeFields() });
             },
             click: function (event, data) {
 
-                resetTimeout();
+                still_logged_in();
 
                 var anchor, idx, inc,
                     tree = data.tree,
@@ -330,8 +323,6 @@ $(window).on("load", function () { initializeFields() });
             });
         }
 
-
-
         $("#tree").contextmenu({
             delegate: "span.fancytree-node",
             //      menu: "#options",
@@ -370,7 +361,7 @@ $(window).on("load", function () { initializeFields() });
             select: function (event, ui) {
                 var node = $.ui.fancytree.getNode(ui.target);
 
-                resetTimeout();
+                still_logged_in();
 
                 switch (ui.cmd)
                 {
@@ -417,9 +408,6 @@ $(window).on("load", function () { initializeFields() });
 
         $("form").submit(function (event) {
 
-            // stop the logout timer
-            clearLogoutTimer();
-
             event.preventDefault();
 
             var tree = $("#tree").fancytree("getTree");
@@ -441,18 +429,25 @@ $(window).on("load", function () { initializeFields() });
             // populate session data before showing the status page
             $.post("/postData/", { form: JSON.stringify(frm) },
                 function (data) {
+                    if (data != "success") {
+                        alert("user is locked out");
+                        still_logged_in();
+                        return;
+                    }
+
                     $.post("/upload/", { files: JSON.stringify(fileList) },
-                        function (data) { })
+                        function (data) {
+                            var page = "/showStatus";
+
+                            $.get(page, function (status_data) {
+                                $('#status_info_container').html(status_data);
+                            });
+                        })
                         .fail(function (jqXHR, textStatus, errorThrown) {
                             alert(jqXHR.responseText);
                         });
                 });
 
-                    var page = "/showStatus";
-
-                    $.get(page, function (status_data) {
-                        $('#status_info_container').html(status_data);
-                    });
 
                     $('#status_info_container').dialog({
                         autoOpen: true,
@@ -478,15 +473,9 @@ $(window).on("load", function () { initializeFields() });
                             });
 
                             respondToSelect = true;
-
-
                             selected = tree.getSelectedNodes(stopOnParents = true);
 
-
                             loadUploadTree(selected);
-
-                            // restart the logout timer
-                            resetTimeout();
                         }
                     });
 
@@ -494,6 +483,10 @@ $(window).on("load", function () { initializeFields() });
 
 
         $('select').on("change", function (event) {
+
+            // test github
+            still_logged_in();
+
             var el = $(event.target)
 
             // the element id that maps to a metadata object
@@ -511,8 +504,9 @@ $(window).on("load", function () { initializeFields() });
                     updateFields(data);
                 })
             .fail(function (xhr, textStatus, errorThrown) {
-                errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
-                window.open(errtext, '_self');
+                // errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
+                // window.open(errtext, '_blank');
+                console.log(xhr.responseText);
             });
         });
     });

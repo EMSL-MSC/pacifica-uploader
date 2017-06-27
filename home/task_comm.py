@@ -46,6 +46,8 @@ class TaskComm(object):
             ret = {'state':state, 'info':info}
 
             current_task.info = json.dumps(ret)
+        else:
+            print '%s:  %s' % (t_state, t_msg)
 
 
 
