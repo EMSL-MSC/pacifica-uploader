@@ -49,7 +49,7 @@ metadata = None
 # pylint: disable=global-variable-not-assigned
 
 # development VERSION
-VERSION = '2.12 4/13/17 8:00 am'
+VERSION = 'version 2.1.0'
 
 
 def ping_celery():
@@ -163,7 +163,8 @@ def populate_upload_page(request):
     # Render the upload page with the meta (just the render format) and the default root directory
     return render_to_response('home/uploader.html',
                               {'data_root': session.files.data_dir,
-                               'metaList': metadata.meta_list},
+                               'metaList': metadata.meta_list,
+                               'version': VERSION},
                               RequestContext(request))
 
 
