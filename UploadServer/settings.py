@@ -83,14 +83,9 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.RemoteUserMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-)
-
-AUTHENTICATION_BACKENDS = (
-    'django.contrib.auth.backends.RemoteUserBackend',
 )
 
 ROOT_URLCONF = 'UploadServer.urls'
@@ -122,10 +117,15 @@ USE_L10N = True
 USE_TZ = True
 
 #Session stuff
+#SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 #SESSION_COOKIE_AGE = 3 * 30
 SESSION_SAVE_EVERY_REQUEST = True
+
+# added to make admin work?
+SESSION_COOKIE_SECURE = False
+
 
 
 # Static files (CSS, JavaScript, Images)
