@@ -259,6 +259,7 @@ class QueryMetadata(object):
         # with the pacifica id.  We have other ways of getting the pacifica id, but 
         # leaving this in for now as it follows the basic model for transfering metadata
         # to the metadata archive.  Refer back to this in time. (dfh)
+
         node = self.get_node('logon')
         node.value = network_id
 
@@ -270,7 +271,7 @@ class QueryMetadata(object):
                 self.update_parents(meta)
                 if any(meta.browser_field_population):
                     init_fields.append(meta.browser_field_population)
-
+        
         return init_fields
 
 
@@ -350,7 +351,6 @@ class QueryMetadata(object):
         """
             gets a list of items based on the json query structure
         """
-        #try:
 
         try:
             headers = {'content-type': 'application/json'}
