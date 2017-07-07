@@ -4,8 +4,10 @@ Configuration specific to an instrument
 
 import json
 import os
+import psutil
 
 from home.task_comm import TaskComm
+
 from home import file_tools
 
 class UploaderConfiguration(object):
@@ -15,12 +17,16 @@ class UploaderConfiguration(object):
 
     initialized = False
 
+    instrument = ''
+
     policy_server = ''
     ingest_server = ''
     status_server = ''
     target_dir = ''
     data_dir = ''
     timeout = 30
+
+    auth = {}
 
     @staticmethod
     def set_if_there(config, key, obj, attr, err_list):
@@ -30,7 +36,7 @@ class UploaderConfiguration(object):
         else:
             err_list.append('Missing ' + key)
 
-    def initialize_settings(self):
+    def initialize_settings(self, config_path = ''):
         """
         if the system hasn't been initialized, do so
         """
@@ -38,12 +44,14 @@ class UploaderConfiguration(object):
 
         if not self.initialized:  # first time through, initialize
 
-            configuration = read_config_file()
+            configuration = read_config_file(config_path)
 
             self.set_if_there(configuration, 'target', self, 'target_dir', err_list)
 
             if not os.path.isdir(self.target_dir):
                 err_list.append('target directory unmounted')
+
+            self.set_if_there(configuration, 'auth', self, 'auth', err_list)
 
             self.set_if_there(configuration, 'policyServer', self, 'policy_server', err_list)
 
@@ -73,11 +81,30 @@ class UploaderConfiguration(object):
         return err_str
 
 
-def read_config_file():
+    def update_free_space(self):
+        """
+        update the amount of free space currently available
+        this should go in file_tools
+        """
+        # get the disk usage
+        space = psutil.disk_usage(self.target_dir)
+
+        # give ourselves a cushion for other processes
+        self.free_space = int(.9 * space.free)
+
+        self.free_size_str = file_tools.size_string(self.free_space)
+
+
+def read_config_file(config_path = ''):
     """
     read the configuration file
     """
+
     config_file = 'UploaderConfig.json'
+    if config_path != '':
+        config_file = os.path.join(config_path, config_file)
+
+    print 'Config file = ' + config_file
 
     with open(config_file, 'r') as config:
         configuration = json.load(config)
