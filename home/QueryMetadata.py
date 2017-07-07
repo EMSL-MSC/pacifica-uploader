@@ -336,6 +336,12 @@ class QueryMetadata(object):
             headers = {'content-type': 'application/json'}
             url = self.host + '/status/users/search/' + network_id + '/simple'
 
+            certlist = self.auth['cert']
+            for path in certlist:
+                exists = os.path.isfile(path)
+                if not exists:
+                    raise Exception('Authorization file not found')
+
             reply = requests.get(url, headers=headers,**self.auth)
             data = json.loads(reply.content)
             record = data[0]            
@@ -343,9 +349,9 @@ class QueryMetadata(object):
             return id
 
         except Exception, ex:
-            err = str(ex.message) + ' url: ' + url
+            err = str(ex.strerror) + ': url: ' + url
             print err
-            raise Exception (err) 
+            raise Exception (err)
 
     def get_list(self, query):
         """
