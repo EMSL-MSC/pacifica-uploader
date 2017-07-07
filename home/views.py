@@ -10,6 +10,7 @@ Django views, handle requests from the client side pages
 
 from __future__ import absolute_import
 
+import psutil
 import json
 import datetime
 import os
@@ -125,10 +126,6 @@ def populate_upload_page(request):
 
     if not pacifica_user:
         return login_error(request, "Pacifica user is not found")
-
-    # update the free space when the page is loaded
-    # move to file_tools dfh
-    configuration.update_free_space()
 
     # Render the upload page with the meta (just the render format) and the default root directory
     return render_to_response('home/uploader.html',
@@ -577,13 +574,13 @@ def make_leaf(title, path, files):
             'data': {'size': size}}
 
 
-def add_branch(branches, subdirectories, title, path):
+def add_branch(branches, subdirectories, title, path, files):
     """
     recursively insert branch into a tree structure
     """
     # if we are at a leaf, add the leaf to the children list
     if len(subdirectories) < 2:
-        leaf = make_leaf(title, path)
+        leaf = make_leaf(title, path, files)
         if leaf:
             branches.append(leaf)
         return
@@ -593,52 +590,70 @@ def add_branch(branches, subdirectories, title, path):
     for branch in branches:
         if branch['title'] == branch_name:
             children = branch['children']
-            add_branch(children, subdirectories[1:], title, path)
+            add_branch(children, subdirectories[1:], title, path, files)
             return
 
     # not found, add the branch
     branch = {'title': branch_name, 'key': 1,
               'folder': True, 'expanded': True, 'children': []}
     children = branch['children']
-    add_branch(children, subdirectories[1:], title, path)
+    add_branch(children, subdirectories[1:], title, path, files)
     branches.append(branch)
 
 
-def make_tree(tree, subdirectories, partial_path, title, path):
+def make_tree(tree, subdirectories, partial_path, title, path, files):
     '''
     recursively split filepaths
     '''
 
     if not partial_path:
         children = tree['children']
-        add_branch(children, subdirectories, title, path)
+        add_branch(children, subdirectories, title, path, files)
         return
 
     head, tail = os.path.split(partial_path)
 
     # prepend the tail
     subdirectories.insert(0, tail)
-    make_tree(tree, subdirectories, head, title, path)
+    make_tree(tree, subdirectories, head, title, path, files)
 
-def validate_space_available(files):
+def update_free_space(request):
+        """
+        update the amount of free space currently available
+        this should go in file_tools
+        """
+        # get the disk usage
+        space = psutil.disk_usage(configuration.target_dir)
+
+        # give ourselves a cushion for other processes
+        free_space = int(.9 * space.free)
+        free_size_str = file_tools.size_string(free_space)
+        
+        request.session['free_space'] = free_space
+        request.session['free_size_str'] = free_size_str
+        request.session.modified = True
+
+
+def validate_space_available(request):
     """
     check the bundle size agains space available
     """
 
-    configuration.update_free_space()
+    update_free_space(request)
 
-    if files.bundle_size == 0:
+    if request.session['bundle_size'] == 0:
         return True
-    return files.bundle_size < config.free_space
+    return request.session['bundle_size'] < request.session['free_space']
 
-def return_bundle(tree, message):
+def return_bundle(request, tree, message):
     """
     formats the return message from get_bundle
     """
     files = FileManager()
-
+    
     # validate that the currently selected bundle will fit in the target space
-    upload_enabled = validate_space_available()
+    upload_enabled = validate_space_available(request)
+
     # disable the upload if there isn't enough space in the intermediate
     # directory
     tree[0]['enabled'] = upload_enabled
@@ -648,21 +663,22 @@ def return_bundle(tree, message):
             'Reduce the size of the data set or contact an administrator' \
             'to help address this issue.'
 
-    files.bundle_size_str = file_tools.size_string(files.bundle_size)
+    free = request.session['free_size_str']
+    size = request.session['bundle_size_str']
     if message != '':
-        tree[0]['data'] = 'Bundle: %s, Free: %s, Warning: %s' % (
-            files.bundle_size_str, configuration.free_size_str, message)
+        tree[0]['data'] = 'Bundle: %s, Free: %s, Warning: %s' % (size, free, message)
     else:
-        tree[0]['data'] = 'Bundle: %s, Free: %s' % (
-            files.bundle_size_str, configuration.free_size_str)
+        tree[0]['data'] = 'Bundle: %s, Free: %s' % (size, free)
 
     retval = json.dumps(tree)
     return HttpResponse(retval, content_type='application/json')
 
-def get_archive_tree( meta):
+def get_archive_tree(request):
     """
     returns a nested structure that can be used to populate fancytree
     """
+
+    meta = fresh_meta_obj(request)
 
     newlist = sorted(meta.meta_list, key=lambda x: x.directory_order)
 
@@ -691,7 +707,8 @@ def get_archive_tree( meta):
         # concatenate the archive path
         archive_path = os.path.join(archive_path, node_name)
 
-    files.archive_path = archive_path
+    request.session['archive_path'] = archive_path
+    request.session.modified = True
 
     return tree, lastnode
 
@@ -707,21 +724,24 @@ def get_bundle(request):
         files.error_string = ''
 
         print 'get pseudo directory'
-        metadata = fresh_meta_obj(request)
-        tree, lastnode = get_archive_tree(metadata)
+        tree, lastnode = get_archive_tree(request)
         files.bundle_size = 0
+
+        request.session['bundle_size'] = files.bundle_size
+        request.session['bundle_size_str'] = file_tools.size_string(files.bundle_size)
+        request.session.modified = True
 
         pathstring = request.POST.get('packet')
 
         # can get a request with 0 paths, return empty bundle
         if not pathstring:
-            return return_bundle(tree, '')
+            return return_bundle(request, tree, '')
 
         paths = json.loads(pathstring)
 
         # if no paths, return the empty archive structure
         if not paths:
-            return return_bundle(tree, '')
+            return return_bundle(request, tree, '')
 
         common_path = request.session['data_dir']
 
@@ -738,13 +758,17 @@ def get_bundle(request):
             # tree structure
             clipped_path = itempath.replace(common_path, '')
             subdirs = []
-            make_tree(lastnode, subdirs, clipped_path, item, itempath)
+            make_tree(lastnode, subdirs, clipped_path, item, itempath, files)
 
-        return return_bundle(tree, files.error_string)
+        request.session['bundle_size'] = files.bundle_size
+        request.session['bundle_size_str'] = file_tools.size_string(files.bundle_size)
+        request.session.modified = True
+
+        return return_bundle(request, tree, files.error_string)
 
     except Exception, ex:
         print_err(ex)
-        return return_bundle(tree, 'get_bundle failed:  ' + ex.message)
+        return return_bundle(request, tree, 'get_bundle failed:  ' + ex.message)
 
 global upload_process
 
