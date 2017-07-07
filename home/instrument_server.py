@@ -17,18 +17,12 @@ class UploaderConfiguration(object):
 
     initialized = False
 
-    instrument = ''
-
     policy_server = ''
     ingest_server = ''
     status_server = ''
     target_dir = ''
     data_dir = ''
     timeout = 30
-
-    # free disk space
-    free_space = 0
-    free_size_str = ''
 
     @staticmethod
     def set_if_there(config, key, obj, attr, err_list):
@@ -79,20 +73,6 @@ class UploaderConfiguration(object):
         err_str = json.dumps(err_list)
 
         return err_str
-
-
-    def update_free_space(self):
-        """
-        update the amount of free space currently available
-        this should go in file_tools
-        """
-        # get the disk usage
-        space = psutil.disk_usage(self.target_dir)
-
-        # give ourselves a cushion for other processes
-        self.free_space = int(.9 * space.free)
-
-        self.free_size_str = file_tools.size_string(self.free_space)
 
 
 def read_config_file():
