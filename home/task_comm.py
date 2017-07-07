@@ -37,6 +37,8 @@ class TaskComm(object):
         cls.state['TASK_STATE'] = t_state
         cls.state['TASK_INFO'] = t_msg
 
+        print t_state + ': ' + t_msg
+
         if cls.USE_CELERY:
             # send message to the front end
             current_task.update_state(state=t_state, meta={'result': t_msg})
