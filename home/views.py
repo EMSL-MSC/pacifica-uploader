@@ -188,17 +188,24 @@ def show_status_insert(request, message):
     """
     show the status of the existing upload task
     """
-    bundle_size_str = request.session['bundle_size']
+    bundle_size_str = request.session['bundle_size_str']
+    free_size_str = request.session['free_size_str']
     return render_to_response('home/status_insert.html',
                               {'status': message,
                                'bundle_size': bundle_size_str,
-                               'free_size': configuration.free_size_str},
+                               'free_size': free_size_str},
                               RequestContext(request))
 
-def post_upload_metadata(request, metadata):
+def post_upload_metadata(request):
     """
     populates the upload metadata from the upload form
+    ripping out, left in for now to keep js structure on browser side
     """
+    set_uploading(request, True)
+
+    print 'post meta'
+
+    return HttpResponse(json.dumps('success'), content_type='application/json')
 
     # do this here because the async call from the browser
     # may call for a status before spin_off_upload is started
@@ -250,11 +257,12 @@ def spin_off_upload(request):
         is_alive = ping_celery()
         print 'Celery lives = %s' % (is_alive)
         if not is_alive:
-            rset_uploading(request, False)
+            set_uploading(request, False)
             return HttpResponseServerError(json.dumps('Celery is dead'),
                                            content_type='application/json')
 
     try:
+        file_manager.common_path = request.session['common_path']
         file_manager.archive_path = request.session['archive_path']
         tuples = file_manager.get_bundle_files(files)
 
@@ -265,9 +273,13 @@ def spin_off_upload(request):
         metadata = fresh_meta_obj(request)
 
         # fill the metadata object with the latest updates
-        err = post_upload_metadata(request, metadata)
-        if err:
-            return HttpResponse(json.dumps('failed to upload'), content_type='application/json')
+        data = request.POST.get('form')
+        try:
+            form = json.loads(data)
+            metadata.populate_metadata_from_form(form)
+
+        except Exception, ex:
+            return report_err(ex)
 
         meta_list = metadata.create_meta_upload_list()
 
@@ -280,6 +292,7 @@ def spin_off_upload(request):
                                          bundle_size=file_manager.bundle_size,
                                          meta_list=meta_list,
                                          auth=configuration.auth)
+            request.session['upload_process'] = upload_process.task_id
         else:  # run local
             tasks.upload_files(ingest_server=configuration.ingest_server,
                                bundle_name=bundle_filepath,
@@ -764,6 +777,7 @@ def get_bundle(request):
             subdirs = []
             make_tree(lastnode, subdirs, clipped_path, item, itempath, files)
 
+        request.session['common_path'] = files.common_path
         request.session['bundle_size'] = files.bundle_size
         request.session['bundle_size_str'] = file_tools.size_string(files.bundle_size)
         request.session.modified = True
@@ -774,11 +788,14 @@ def get_bundle(request):
         print_err(ex)
         return return_bundle(request, tree, 'get_bundle failed:  ' + ex.message)
 
-global upload_process
+def get_celery_process(request):
+    id = request.session['upload_process']
+    res = AsyncResult(id)
+    return res
 
 # pylint: disable=unused-argument
 # justification: django required
-def get_state(request):
+def xxxget_state(request):
     """
     returns the status of the uploader
         logged_in
@@ -786,7 +803,7 @@ def get_state(request):
         idle
     """
 
-    global upload_process
+    upload_process = get_celery_process(request)
 
     state = 'idle'
 
@@ -799,7 +816,7 @@ def get_state(request):
     retval = json.dumps({'state': state})
     return HttpResponse(retval)
 
-def get_status():
+def get_status(upload_process):
     """    get status from backend    """
 
     if (TaskComm.USE_CELERY):
@@ -835,6 +852,8 @@ def incremental_status(request):
     updates the status page with the current status of the background upload process
     """
 
+    upload_process = get_celery_process(request)
+
     if TaskComm.USE_CELERY:
         if upload_process == None:
             retval = json.dumps({'state': '', 'result': ''})
@@ -857,7 +876,7 @@ def incremental_status(request):
                 retval = json.dumps({'state': state, 'result': result})
                 return HttpResponse(retval)
             
-        state, result = get_status()
+        state, result = get_status(upload_process)
 
         if state is not None:
             if state == 'DONE':
