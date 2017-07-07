@@ -195,15 +195,14 @@ def show_status_insert(request, message):
                                'free_size': configuration.free_size_str},
                               RequestContext(request))
 
-def post_upload_metadata(request):
+def post_upload_metadata(request, metadata):
     """
     populates the upload metadata from the upload form
     """
-    global is_uploading
 
     # do this here because the async call from the browser
     # may call for a status before spin_off_upload is started
-    is_uploading = True
+    set_uploading(request, True)
 
     data = request.POST.get('form')
     try:
@@ -211,7 +210,7 @@ def post_upload_metadata(request):
 
         metadata.populate_metadata_from_form(form)
 
-        return HttpResponse(json.dumps('success'), content_type='application/json')
+        return
 
     except Exception, ex:
         return report_err(ex)
@@ -222,8 +221,6 @@ def spin_off_upload(request):
     """
     spins the upload process off to a background celery process
     """
-
-    global is_uploading
 
     file_manager = FileManager()
 
@@ -245,7 +242,7 @@ def spin_off_upload(request):
         return HttpResponseBadRequest(json.dumps('missing files in post'),
                                       content_type='application/json')
 
-    is_uploading = True
+    set_uploading(request, True)
 
     if TaskComm.USE_CELERY:
         # check to see if background celery process is alive
@@ -253,15 +250,24 @@ def spin_off_upload(request):
         is_alive = ping_celery()
         print 'Celery lives = %s' % (is_alive)
         if not is_alive:
-            is_uploading = False
+            rset_uploading(request, False)
             return HttpResponseServerError(json.dumps('Celery is dead'),
                                            content_type='application/json')
 
     try:
+        file_manager.archive_path = request.session['archive_path']
         tuples = file_manager.get_bundle_files(files)
 
         bundle_filepath = os.path.join(
             configuration.target_dir, current_time() + '.tar')
+
+        # load the metadata object with the most recent updates
+        metadata = fresh_meta_obj(request)
+
+        # fill the metadata object with the latest updates
+        err = post_upload_metadata(request, metadata)
+        if err:
+            return HttpResponse(json.dumps('failed to upload'), content_type='application/json')
 
         meta_list = metadata.create_meta_upload_list()
 
@@ -272,16 +278,17 @@ def spin_off_upload(request):
                                          bundle_name=bundle_filepath,
                                          file_list=tuples,
                                          bundle_size=file_manager.bundle_size,
-                                         meta_list=meta_list)
+                                         meta_list=meta_list,
+                                         auth=configuration.auth)
         else:  # run local
             tasks.upload_files(ingest_server=configuration.ingest_server,
                                bundle_name=bundle_filepath,
                                file_list=tuples,
                                bundle_size=file_manager.bundle_size,
-                               meta_list=meta_list)
+                               meta_list=meta_list,
+                               auth=configuration.auth)
     except Exception, ex:
-        is_uploading = False
-        return report_err(ex)
+        set_uploading(request, False)
 
     return HttpResponse(json.dumps('success'), content_type='application/json')
 
@@ -291,10 +298,8 @@ def upload_files(request):
     view for upload process spawn
     """
 
-    global is_uploading
-
     # use this flag to determine status of upload in incremental status
-    is_uploading = True
+    set_uploading(request, True)
 
     reply = spin_off_upload(request)
 
@@ -313,7 +318,6 @@ def login_error(request, error_string):
 
     return render_to_response(settings.LOGIN_VIEW,
                                 {'site_version': VERSION,
-                                'instrument': configuration.instrument,
                                 'message': error_string},
                                 RequestContext(request))
 
@@ -819,15 +823,17 @@ def get_status():
         
     return state, result
 
-global is_uploading
+def set_uploading(request, value):
+    request.session['is_uploading'] = value
+    request.session.modified = True
+
+def get_uploading(request):
+    return request.session['is_uploading']
 
 def incremental_status(request):
     """
     updates the status page with the current status of the background upload process
     """
-
-    global upload_process
-    global is_uploading
 
     if TaskComm.USE_CELERY:
         if upload_process == None:
@@ -841,11 +847,11 @@ def incremental_status(request):
             cleanup_upload()
             state = 'CANCELLED'
             result = ''
-            is_uploading = False
+            set_uploading(request, False)
 
             print state
         else:
-            if not is_uploading:
+            if not get_uploading(request):
                 state = 'CANCELLED'
                 result = ''
                 retval = json.dumps({'state': state, 'result': result})
@@ -862,7 +868,7 @@ def incremental_status(request):
                 # create URL for status server
                 result = configuration.status_server + str(job_id)
 
-                is_uploading = False
+                set_uploading(request, False)
 
         # create json structure
         retval = json.dumps({'state': state, 'result': result})
