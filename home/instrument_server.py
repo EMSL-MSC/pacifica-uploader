@@ -4,10 +4,8 @@ Configuration specific to an instrument
 
 import json
 import os
-import psutil
 
 from home.task_comm import TaskComm
-
 from home import file_tools
 
 class UploaderConfiguration(object):
