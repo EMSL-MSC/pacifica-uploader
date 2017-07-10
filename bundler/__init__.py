@@ -134,9 +134,7 @@ class FileBundler(object):
         """
         update the task state with the progress of the bundle
         """
-        meta_str = 'Bundling percent complete: ' + \
-            str(int(self.percent_complete))
-        print meta_str
+        meta_str = 'Bundling percent complete: ' + str(int(self.percent_complete))
 
         TaskComm.set_state('PROGRESS', meta_str)
 
@@ -286,7 +284,7 @@ def bundle(bundle_name='', file_list=None, bundle_size=0, meta_list=None):
     bundler.bundle_metadata(meta_str)
 
     #print >> sys.stderr, "Finished bundling"
-    TaskComm.set_state('PROGRESS', "Bundling complete")
+    TaskComm.set_state('PROGRESS', 'Bundling complete')
 
 
 def main():

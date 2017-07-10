@@ -18,13 +18,16 @@ class Uploader(object):
     percent_uploaded = 0
     total_uploaded = 0
     total_size = 0
+    auth = {}
 
-
-    def __init__(self, bundle_name='', ingest_server=''):
+    def __init__(self, bundle_name='', ingest_server='', auth=None):
         """Constructor for FileIngester class."""
         self.ingest_server = ingest_server
         self.bundle_name = bundle_name
         self.total_size = os.path.getsize(bundle_name)
+        self.auth = auth
+
+        TaskComm.set_state("PROGRESS", 'Uploader Initialized')
 
     def read(self, size):
         """Read wrapper for requests that calculates the hashcode inline."""
@@ -38,8 +41,7 @@ class Uploader(object):
             percent = 100.0
 
         if percent - self.percent_uploaded > 5:
-            status = {
-                'Status': "upload percent complete: " + str(int(percent))}
+            status = 'upload percent complete: ' + str(int(percent))
             TaskComm.set_state("PROGRESS", status)
             self.percent_uploaded = percent
 
@@ -58,7 +60,9 @@ class Uploader(object):
         headers['Content-Type'] = 'application/octet-stream'
         headers['Content-Length'] = size_str
 
-        status = requests.post(url, data=self, headers=headers)
+        TaskComm.set_state("PROGRESS", 'Uploader Request')
+        status = requests.post(url, headers=headers, data=self, **self.auth)
+        TaskComm.set_state("PROGRESS", 'Uploader End Request')
 
         self.fileobj.close()
 
