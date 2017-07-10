@@ -115,7 +115,9 @@ class QueryMetadata(object):
         upload_list = []
 
         for meta in self.meta_list:
-            upload_list.append(create_meta_upload(meta))
+            node = create_meta_upload(meta)
+            if node:
+                upload_list.append(node)
 
         return upload_list
 
@@ -394,9 +396,14 @@ class QueryMetadata(object):
         """
         for meta in self.meta_list:
             try:
-                value = form[meta.meta_id]
-                if value:
-                    meta.value = value
+
+                if meta.meta_id != 'logon':
+                    value = form[meta.meta_id]
+                    if value:
+                        meta.value = value
+                else:
+                    # special case, set this to the Pacifica user instead of the Network ID
+                    meta.value = self.user
             except KeyError:
                 pass
 
@@ -405,6 +412,9 @@ def create_meta_upload(meta):
     creates an object that ultimately the metadata server will be able to
     use to store the value of this metadata field
     """
+    if meta.destination_table == '':
+        return None
+
     meta_obj = {}
     meta_obj['destinationTable'] = meta.destination_table
     if meta.key != "":
