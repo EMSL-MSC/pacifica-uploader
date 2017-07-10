@@ -37,7 +37,7 @@ class TaskComm(object):
         cls.state['TASK_STATE'] = t_state
         cls.state['TASK_INFO'] = t_msg
 
-        print t_state + ': ' + t_msg
+        print str(t_state) + ': ' + str(t_msg)
 
         if cls.USE_CELERY:
             # send message to the front end
@@ -46,15 +46,12 @@ class TaskComm(object):
             state = cls.state['TASK_STATE']
             info = cls.state['TASK_INFO']
             ret = {'state':state, 'info':info}
-
             current_task.info = json.dumps(ret)
-
-
 
 def task_error(t_msg):
     """
     sets the task state to FAILURE
     also log the error here
     """
-    print 'FAILURE: ' + t_msg
+    # print 'FAILURE: ' + t_msg
     TaskComm.set_state('FAILURE', t_msg)
