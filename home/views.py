@@ -52,7 +52,7 @@ configuration = instrument_server.UploaderConfiguration()
 # pylint: enable=invalid-name
 
 # development VERSION
-VERSION = '2.2.1'
+VERSION = '2.2.2'
 
 
 def ping_celery():
@@ -287,12 +287,13 @@ def spin_off_upload(request):
         if TaskComm.USE_CELERY:
             upload_process = \
                 tasks.upload_files.delay(ingest_server=configuration.ingest_server,
-                                         bundle_name=bundle_filepath,
-                                         file_list=tuples,
-                                         bundle_size=file_manager.bundle_size,
-                                         meta_list=meta_list,
-                                         auth=configuration.auth)
+                               bundle_name=bundle_filepath,
+                               file_list=tuples,
+                               bundle_size=file_manager.bundle_size,
+                               meta_list=meta_list,
+                               auth=configuration.auth)
             request.session['upload_process'] = upload_process.task_id
+            request.session.modified = True
         else:  # run local
             tasks.upload_files(ingest_server=configuration.ingest_server,
                                bundle_name=bundle_filepath,
@@ -486,6 +487,11 @@ def initialize_fields(request):
     updates = metadata.initial_population(network_id)
 
     retval = json.dumps(updates)
+
+    # clean the selection lists from the metadata list
+    # so that our header isn't freaking huge
+    for meta in metadata.meta_list:
+        meta.browser_field_population['selection_list'] = []
 
     # set the metadata string variable to pass metadata state back to the browser
     list_string = pickle.dumps(metadata.meta_list)
@@ -789,9 +795,12 @@ def get_bundle(request):
         return return_bundle(request, tree, 'get_bundle failed:  ' + ex.message)
 
 def get_celery_process(request):
-    id = request.session['upload_process']
-    res = AsyncResult(id)
-    return res
+    try:
+        id = request.session['upload_process']
+        res = AsyncResult(id)
+        return res
+    except:
+        return None
 
 # pylint: disable=unused-argument
 # justification: django required
@@ -837,7 +846,7 @@ def get_status(upload_process):
                 pass
     else:
         state, result = TaskComm.get_state()
-        
+
     return state, result
 
 def set_uploading(request, value):
@@ -852,18 +861,18 @@ def incremental_status(request):
     updates the status page with the current status of the background upload process
     """
 
-    upload_process = get_celery_process(request)
+    upload_process = None
 
     if TaskComm.USE_CELERY:
-        if upload_process == None:
-            retval = json.dumps({'state': '', 'result': ''})
+        upload_process = get_celery_process(request)
+        if not upload_process:
+            retval = json.dumps({'state': 'WAITING', 'result': 'waiting for upload to spin up'})
             return HttpResponse(retval)
 
     try:
         if request.POST:
             if upload_process:
                 upload_process.revoke(terminate=True)
-            cleanup_upload()
             state = 'CANCELLED'
             result = ''
             set_uploading(request, False)
@@ -875,7 +884,7 @@ def incremental_status(request):
                 result = ''
                 retval = json.dumps({'state': state, 'result': result})
                 return HttpResponse(retval)
-            
+        
         state, result = get_status(upload_process)
 
         if state is not None:
