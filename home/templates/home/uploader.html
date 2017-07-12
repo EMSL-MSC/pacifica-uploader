@@ -13,8 +13,9 @@
     <body>
         <div class="page_content">
             {% include "includes/view_header.html" %}
+
             <div id="header_container">
-                <h1 class="underline">MyEMSL File Upload</h1>
+                <h1 class="underline">MyEMSL File Upload (Version {{site_version}})</h1>
                 <div id="login_id_container">
                      {% for meta in metaList %}
                           {% if meta.display_type == 'logged_on'  %}
@@ -22,9 +23,7 @@
                           {% endif %}
                      {% endfor %}
 
-                    
                     <p class="smallprint"><a href="/logout">Not You? Click here to Logout</a></p>
-                    <p class="smallprint">v2.11.1.1.2 3/6/ 1:15pm>
                 </div>
             </div>
 
