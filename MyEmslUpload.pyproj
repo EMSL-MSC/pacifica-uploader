@@ -67,6 +67,9 @@
     <Compile Include="manage.py" />
     <Compile Include="uploader\__init__.py" />
     <Compile Include="UploadServer\celery.py" />
+    <Compile Include="DatabaseCreate.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="UploadServer\settings.py" />
     <Compile Include="home\tar_man.py">
       <SubType>Code</SubType>

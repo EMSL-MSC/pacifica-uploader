@@ -47,13 +47,13 @@
             "queryFields": ["_id", "name_short"]
         },		
         {		
-            "metaID": "ProposalByInstrument",
+            "metaID": "ProposalByProposal",
             "sourceTable": "proposals",
-            "value": "",
+            "value": "45796",
 			"destinationTable": "Transactions.proposal",
             "displayTitle": "Proposal",
             "displayType": "select",
-            "queryDependency": { "instrument_id": "instrumentByID" },
+            "queryDependency": { "_id": "ProposalByProposal" },
 			"valueField": "_id",
             "queryFields": [ "_id", "title" ],
 			"diplayFormat": "%(_id)s %(title)s"
@@ -61,11 +61,11 @@
         {
             "sourceTable": "proposals",
             "metaID": "ProposalDirectory",
-            "value": "",
+            "value": "45796",
             "displayType": "directoryTree",
 			"diplayFormat": "Dave is a twit %(_id)s", 
 			"directoryOrder": 0,		
-            "queryDependency": { "_id": "ProposalByInstrument" },
+            "queryDependency": { "_id": "ProposalDirectory" },
 			"valueField": "_id",
             "queryFields": [ "_id"]
         },
@@ -77,7 +77,7 @@
             "displayType": "select",
 			"key": "User of Record",
 			"value": "d3e889",
-            "queryDependency": { "proposal_id": "ProposalByInstrument" },
+            "queryDependency": { "proposal_id": "ProposalByProposal" },
 			"valueField": "_id",
             "queryFields": [ "first_name", "last_name", "_id"],
 			"diplayFormat": "%(first_name)s %(last_name)s"

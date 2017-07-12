@@ -72,8 +72,7 @@ def upload_files(ingest_server='',
         TaskComm.set_state("PROGRESS", "Starting Bundle/Upload Process")
 
         bundle(bundle_name=bundle_name,
-               file_list=file_list,
-               meta_list=meta_list,
+               file_list=file_list,               meta_list=meta_list,
                bundle_size=bundle_size)
 
         TaskComm.set_state("PROGRESS", "Completed Bundling")
