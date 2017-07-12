@@ -52,7 +52,7 @@ configuration = instrument_server.UploaderConfiguration()
 # pylint: enable=invalid-name
 
 # development VERSION
-VERSION = '2.2.2'
+VERSION = '2.2.3'
 
 
 def ping_celery():
@@ -84,7 +84,7 @@ def user_from_request(request):
         user = base64.b64decode(creds).split(':', 1)[0]
 
         # temp kludge because of large data sets being transferred for super users
-        user = 'd3g909'
+        # user = 'd3g909'
 
         print 'user_from_request: ' + user
         return user
