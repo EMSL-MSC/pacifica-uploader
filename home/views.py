@@ -130,6 +130,7 @@ def populate_upload_page(request):
     # Render the upload page with the meta (just the render format) and the default root directory
     return render_to_response('home/uploader.html',
                               {'data_root': configuration.data_dir,
+                               'site_version': VERSION,
                                'metaList': metadata.meta_list},
                               RequestContext(request))
 
