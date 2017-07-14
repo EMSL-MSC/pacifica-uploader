@@ -434,7 +434,9 @@ $(window).on("load", function () { initializeFields() });
                         return;
                     }
 
-                    $.post("/upload/", { files: JSON.stringify(fileList) },
+                    var args = { form: JSON.stringify(frm), files: JSON.stringify(fileList) }
+
+                    $.post("/upload/", args,
                         function (data) {
                             var page = "/showStatus";
 

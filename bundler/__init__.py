@@ -285,7 +285,7 @@ def bundle(bundle_name='', file_list=None, bundle_size=0, meta_list=None):
     bundler.bundle_metadata(meta_str)
 
     #print >> sys.stderr, "Finished bundling"
-    TaskComm.set_state('PROGRESS', "Bundling complete")
+    TaskComm.set_state('PROGRESS', 'Bundling complete')
 
 
 def main():

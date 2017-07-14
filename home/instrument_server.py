@@ -28,10 +28,6 @@ class UploaderConfiguration(object):
 
     auth = {}
 
-    # free disk space
-    free_space = 0
-    free_size_str = ''
-
     @staticmethod
     def set_if_there(config, key, obj, attr, err_list):
         """ assigns config values """

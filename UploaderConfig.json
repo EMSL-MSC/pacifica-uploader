@@ -2,13 +2,13 @@
     "dataRoot": "S:\\7_Representative_Data",
     "target": "E:\\tar",
     "timeout": "1",
-    "statusServer": "http://dmlb2000.emsl.pnl.gov:8192/status_api/view/",
-    "policyServer": "https://policyng.emsl.pnl.gov:8443",
-	"ingestServer": "http://127.0.0.1:8066",
+    "statusServer": "https://statusdev.my.emsl.pnl.gov:/status_api/view/",
+    "policyServer": "https://policydev.my.emsl.pnl.gov",
+	"ingestServer": "https://ingestdev.my.emsl.pnl.gov",
 	"timezone":  "",
     "use_celery": "True",
 		
-	"auth" : {"cert": ["auth/cert/certs/derek.cert.pem", "auth/cert/private/derek-nopasswd.key.pem"]},
+	"auth" : {"cert": ["auth/intermediate/certs/d3e889.cert.pem", "auth/intermediate/private/d3e889-nopassword.key.pem"]},
 
 
     "metadata": [
@@ -16,7 +16,7 @@
 			"metaID": "logon",
 			"sourceTable": "users",
 			"destinationTable": "Transactions.submitter",
-			"value": "",
+			"value": "d3e889",
 			"displayType": "logged_on",
 			"displayTitle": "Currently Logged On",			
 			"valueField": "_id",
@@ -53,7 +53,7 @@
 			"destinationTable": "Transactions.proposal",
             "displayTitle": "Proposal",
             "displayType": "select",
-            "queryDependency": { "instrument_id": "instrumentByID" },
+            "queryDependency": { "_id": "ProposalByInstrument" },
 			"valueField": "_id",
             "queryFields": [ "_id", "title" ],
 			"diplayFormat": "%(_id)s %(title)s"
@@ -61,7 +61,7 @@
         {
             "sourceTable": "proposals",
             "metaID": "ProposalDirectory",
-            "value": "",
+            "value": "45796",
             "displayType": "directoryTree",
 			"diplayFormat": "Dave is a twit %(_id)s", 
 			"directoryOrder": 0,		

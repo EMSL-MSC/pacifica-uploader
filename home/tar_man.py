@@ -8,9 +8,7 @@ import json
 
 
 def job_list_from_dir(directory):
-    """
-    gets a list of jobs based on the files in the tar directory
-    """
+    """gets a list of jobs based on the files in the tar directory."""
     dir_files = os.listdir(directory)
     jobs = []
 

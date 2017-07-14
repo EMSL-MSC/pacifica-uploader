@@ -10,6 +10,7 @@ Django views, handle requests from the client side pages
 
 from __future__ import absolute_import
 
+import psutil
 import json
 import datetime
 import os
@@ -17,6 +18,7 @@ import base64
 import re
 import sys
 import traceback
+import cPickle as pickle
 from time import sleep
 
 from django.conf import settings
@@ -29,27 +31,27 @@ from django.http import HttpResponseServerError
 
 from celery.result import AsyncResult
 
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+from django.contrib import auth
+from django.contrib.auth.decorators import login_required
+
 from home.task_comm import TaskComm
 from home import tasks
-from home import session_data
 from home import file_tools
 from home import instrument_server
 from home import QueryMetadata
-
-# pylint: disable=invalid-name
-# session is global need to fix later
-session = session_data.SessionState()
+from home.file_tools import FileManager
 
 # server is instrument uploader specific information
 configuration = instrument_server.UploaderConfiguration()
 
-metadata = None
 # pylint: enable=invalid-name
 
 # pylint: disable=global-variable-not-assigned
 
 # development VERSION
-VERSION = 'version 2.1.0'
+VERSION = '2.2.3'
 
 
 def ping_celery():
@@ -79,101 +81,62 @@ def user_from_request(request):
         if scheme.lower() != 'basic':
             raise ValueError('Unknown auth scheme \"%s\"' % scheme)
         user = base64.b64decode(creds).split(':', 1)[0]
+
+        # temp kludge because of large data sets being transferred for super users
+        # user = 'd3g909'
+
         print 'user_from_request: ' + user
         return user
     else:
         return None
 
-def is_current_user(request):
-    """ is this the user currently logged in? """
+def initialize_config():
+    """ load configuration if not currently loaded """
 
-    new_user = user_from_request(request)
+    # initialize server settings from scratch
+    err = configuration.initialize_settings()
+    if err != '[]':
+        return err
 
-    print 'is_current_user: ' +  new_user
-
-    if session.network_id:
-        print 'session.network_id: ' + session.network_id
-    else:
-        print 'session.network_id: Set to NONE'
-
-    return new_user == session.network_id
-
-def validate_user_handler(request):
-    """
-    checks to see if:
-        no one is logged in, in which case log this user in
-        user is logged in and this is the current user,
-        in which case just reload the page (losing context)
-        a user is logged in and this is not that user,
-        in which case block them out
-    """
-
-    print 'validate_user_handler'
-
-    new_user = user_from_request(request)
-
-    if not new_user:
-        render = login_error(request, 'missing authorization')
-        return render
-
-    # pylint: disable=invalid-name
-    global session
-    # pylint: enable=invalid-name
-    if session:
-        # check to see if there is an existing user logged in
-        if session.network_id and session.is_logged_in:
-
-            # if the current user is still logged in and this is not that user
-            if new_user != session.network_id:
-                 # if timed out, log out, don't show page
-                if session.is_timed_out():
-                    logout(request)
-                else:
-                    #commenting this out temporarily to see if it fixes the query error
-                    #name = metadata.get_user_name(session.network_id)
-                    #return login_error(request,
-                    #                    'User %s is currently logged in' % name)
-                    return login_error(request, 'Another user is currently logged in')
-            else:
-                session.touch()
-                return # just reload the page if user is already logged in.
-
-    print 'trying to log in:  ' + new_user
-    # new valid user, log that bad boy in
-    return login(request, new_user)
-
+# @login_required(login_url=settings.LOGIN_URL)
 def populate_upload_page(request):
     """
-    formats the main uploader page
+    formats the main uploader page with authorized user metadata
     """
 
-    validation_redirect = validate_user_handler(request)
-    if validation_redirect:
-        return validation_redirect
+    retval = login(request)
+    if retval:
+        return login_error(request, retval)
 
-    # reset timeout
-    session.touch()
+    network_user = user_from_request(request)
+    if not network_user:
+        return login_error(request, "Network user is not authorized")
 
-    request.session.modified = True
+    if not configuration.initialized:
+        err = initialize_config()
+        if err:
+            return login_error(request, 'faulty configuration:  ' + err)
 
-    # update the free space when the page is loaded
-    # move to file_tools dfh
-    configuration.update_free_space()
+    # metadata to initialize the layout of the main page
+    metadata = fresh_meta_obj(request);
+
+    # get the Pacifica user
+    pacifica_user = metadata.get_Pacifica_user(network_user)
+
+    if not pacifica_user:
+        return login_error(request, "Pacifica user is not found")
 
     # Render the upload page with the meta (just the render format) and the default root directory
     return render_to_response('home/uploader.html',
-                              {'data_root': session.files.data_dir,
-                               'metaList': metadata.meta_list,
-                               'version': VERSION},
+                              {'data_root': configuration.data_dir,
+                               'site_version': VERSION,
+                               'metaList': metadata.meta_list},
                               RequestContext(request))
-
 
 def show_initial_status(request):
     """
     shows the status page with no message
     """
-    # reset timeout
-    session.touch()
 
     return show_status_insert(request, '')
 
@@ -196,25 +159,22 @@ def set_data_root(request):
     explicitly set the data root
     """
 
-    # reset timeout
-    session.touch()
-
     try:
         mode = request.POST.get('mode')
 
         # if empty root, restore the original
         if mode == 'restore':
-            session.restore_session_root()
+            request.session['data_dir'] = configuration.data_dir
         else:
             parent = request.POST.get('parent')
             if not parent:
                 return HttpResponseServerError(json.dumps('missing root directory'),
                                                content_type='application/json')
-            session.set_session_root(parent)
+            request.session['data_dir'] = parent
 
-        time = os.path.getmtime(session.files.data_dir)
+        time = os.path.getmtime(request.session['data_dir'])
 
-        node = [{'title': session.files.data_dir, 'key': session.files.data_dir, 'folder': True,
+        node = [{'title': request.session['data_dir'], 'key': request.session['data_dir'], 'folder': True,
                  'lazy': True, 'data': {'time': time}}]
 
         return HttpResponse(json.dumps(node), content_type='application/json')
@@ -222,72 +182,35 @@ def set_data_root(request):
     except Exception, ex:
         return report_err(ex)
 
-
+def current_time():
+    return datetime.datetime.now().strftime('%m.%d.%Y.%H.%M.%S')
 
 def show_status_insert(request, message):
     """
     show the status of the existing upload task
     """
-    # reset timeout
-    session.touch()
-
-    session.current_time = datetime.datetime.now().strftime('%m.%d.%Y.%H.%M.%S')
-
+    bundle_size_str = request.session['bundle_size_str']
+    free_size_str = request.session['free_size_str']
     return render_to_response('home/status_insert.html',
                               {'status': message,
-                               'metaList': metadata. meta_list,
-                               'current_time': session.current_time,
-                               'bundle_size': session.files.bundle_size_str,
-                               'free_size': configuration.free_size_str},
+                               'bundle_size': bundle_size_str,
+                               'free_size': free_size_str},
                               RequestContext(request))
-
-def user_logged_in(request):
-    """
-    checks to see if:
-        no one is logged in, in which case log this user in
-        user is logged in and this is the current user,
-        in which case just reload the page (losing context)
-        a user is logged in and this is not that user,
-        in which case block them out
-    """
-
-    print 'user_logged_in'
-
-    new_user = user_from_request(request)
-
-    if not new_user:
-        return False
-
-    # pylint: disable=invalid-name
-    global session
-    # pylint: enable=invalid-name
-    if session:
-        # check to see if there is an existing user logged in
-        if session.network_id and session.is_logged_in:
-
-            # if the current user is still logged in
-            if new_user == session.network_id:
-                 # if timed out, log out, don't show page
-                if session.is_timed_out():
-                    logout(request)
-                else:
-                    return True
-    return False
 
 def post_upload_metadata(request):
     """
     populates the upload metadata from the upload form
+    ripping out, left in for now to keep js structure on browser side
     """
+    set_uploading(request, True)
 
-    if not user_logged_in(request):
-        return HttpResponse(json.dumps('failed'), content_type='application/json')
+    print 'post meta'
 
-    # reset timeout
-    session.touch()
+    return HttpResponse(json.dumps('success'), content_type='application/json')
 
     # do this here because the async call from the browser
     # may call for a status before spin_off_upload is started
-    session.is_uploading = True
+    set_uploading(request, True)
 
     data = request.POST.get('form')
     try:
@@ -295,8 +218,7 @@ def post_upload_metadata(request):
 
         metadata.populate_metadata_from_form(form)
 
-        session.current_time = datetime.datetime.now().strftime('%m.%d.%Y.%H.%M.%S')
-        return HttpResponse(json.dumps('success'), content_type='application/json')
+        return
 
     except Exception, ex:
         return report_err(ex)
@@ -308,8 +230,7 @@ def spin_off_upload(request):
     spins the upload process off to a background celery process
     """
 
-    # reset timeout
-    session.touch()
+    file_manager = FileManager()
 
     # initialize the task state
     if not TaskComm.USE_CELERY:
@@ -329,7 +250,7 @@ def spin_off_upload(request):
         return HttpResponseBadRequest(json.dumps('missing files in post'),
                                       content_type='application/json')
 
-    session.is_uploading = True
+    set_uploading(request, True)
 
     if TaskComm.USE_CELERY:
         # check to see if background celery process is alive
@@ -337,39 +258,52 @@ def spin_off_upload(request):
         is_alive = ping_celery()
         print 'Celery lives = %s' % (is_alive)
         if not is_alive:
-            session.is_uploading = False
+            set_uploading(request, False)
             return HttpResponseServerError(json.dumps('Celery is dead'),
                                            content_type='application/json')
 
     try:
-        tuples = session.files.get_bundle_files(files)
+        file_manager.common_path = request.session['common_path']
+        file_manager.archive_path = request.session['archive_path']
+        tuples = file_manager.get_bundle_files(files)
 
-        session.current_time = datetime.datetime.now().strftime('%m.%d.%Y.%H.%M.%S')
+        bundle_filepath = os.path.join(
+            configuration.target_dir, current_time() + '.tar')
 
-        session.bundle_filepath = os.path.join(
-            configuration.target_dir, session.current_time + '.tar')
+        # load the metadata object with the most recent updates
+        metadata = fresh_meta_obj(request)
+
+        # fill the metadata object with the latest updates
+        data = request.POST.get('form')
+        try:
+            form = json.loads(data)
+            metadata.populate_metadata_from_form(form)
+
+        except Exception, ex:
+            return report_err(ex)
 
         meta_list = metadata.create_meta_upload_list()
 
         # spin this off as a background process and load the status page
         if TaskComm.USE_CELERY:
-            session.upload_process = \
+            upload_process = \
                 tasks.upload_files.delay(ingest_server=configuration.ingest_server,
-                                         bundle_name=session.bundle_filepath,
-                                         file_list=tuples,
-                                         bundle_size=session.files.bundle_size,
-                                         meta_list=meta_list,
-                                         auth=configuration.auth)
+                               bundle_name=bundle_filepath,
+                               file_list=tuples,
+                               bundle_size=file_manager.bundle_size,
+                               meta_list=meta_list,
+                               auth=configuration.auth)
+            request.session['upload_process'] = upload_process.task_id
+            request.session.modified = True
         else:  # run local
             tasks.upload_files(ingest_server=configuration.ingest_server,
-                               bundle_name=session.bundle_filepath,
+                               bundle_name=bundle_filepath,
                                file_list=tuples,
-                               bundle_size=session.files.bundle_size,
+                               bundle_size=file_manager.bundle_size,
                                meta_list=meta_list,
                                auth=configuration.auth)
     except Exception, ex:
-        session.is_uploading = False
-        return report_err(ex)
+        set_uploading(request, False)
 
     return HttpResponse(json.dumps('success'), content_type='application/json')
 
@@ -378,11 +312,9 @@ def upload_files(request):
     """
     view for upload process spawn
     """
-    # reset timeout
-    session.touch()
 
     # use this flag to determine status of upload in incremental status
-    session.is_uploading = True
+    set_uploading(request, True)
 
     reply = spin_off_upload(request)
 
@@ -400,64 +332,94 @@ def login_error(request, error_string):
     """
 
     return render_to_response(settings.LOGIN_VIEW,
-                              {'site_version': VERSION,
-                               'instrument': configuration.instrument,
-                               'message': error_string},
-                              RequestContext(request))
+                                {'site_version': VERSION,
+                                'message': error_string},
+                                RequestContext(request))
 
+def login_user_locally(request):
+    """
+    if we have a new user, let's create a new Django user and log them in
+    This is a dummy account so we can use the session middleware
+    """
 
+    # check to see if the user is already logged in
+    #if (request.user.is_authenticated()):
+    #    return
 
-def login(request, new_user):
+    username = user_from_request(request)
+    if not username:
+        return 'unable to authorize anonymous user'
+
+    password = 'Pacifica'
+
+    # does this user exist?
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        user = None
+
+    if user is None:
+        #create a new user
+        user = User.objects.create_user(username=username, password=password)
+    else:
+        # set default password, overwriting and dangling users in database
+        user.set_password(password)
+
+    user.save()
+
+    # we now have a local user that matches the already validated Pacifica user
+    # authenticate and log them in locally
+    user = authenticate(username=username, password=password)
+    if user:
+        if user.is_active:
+            auth.login(request, user)
+    else:
+        return "Unable to create user"
+
+def login(request):
     """
     Logs the user in
-    If the login fails for whatever reason, invalid for instrument, etc.,
+    If the login fails for whatever reason, authentication, invalid for instrument, etc.,
     returns to login page with error.
     Otherwise, gets the user data to populate the main page
     """
 
+    logged_in = request.user.is_authenticated()
 
-    print '*** login ***'
+    # initialize server settings if they are not
+    if not configuration.initialized:
+        err = configuration.initialize_settings()
+        if err != '[]':
+            return ('faulty configuration:  ' + err)
 
-    # initialize server settings from scratch
-    configuration.initialized = False
-    err = configuration.initialize_settings()
-    if err != '[]':
-        return login_error(request, 'faulty configuration:  ' + err)
+    # timeout
+    #SESSION_COOKIE_AGE = configuration.timeout * 60
 
-    # loads the metadata structure from the config file
-    # so we can populate the initial html for the upload page
-    # pylint: disable=invalid-name
-    global metadata
-    # pylint: enable=invalid-name
-    metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
+    # the user has passed Pacifica authentication so log them in locally for a session
+    err_str = login_user_locally(request)
+    if err_str:
+        return (err_str)
 
+    # did that work?
+    logged_in = request.user.is_authenticated
+    logged_in = request.user.is_authenticated()
+    if not request.user.is_authenticated():
+        return ('Problem with local authentication')
 
-    # after login you lose your session context
-    # pylint: disable=invalid-name
-    global session
-    # pylint: enable=invalid-name
+    request.session['data_dir'] = configuration.data_dir
+    request.session.modified = True
 
-    session = session_data.SessionState()
-    session.config = configuration
+    # ok, passed all local authorization tests, valid user data is loaded
 
-    # initialize the data dir for the session to the configured default
-    # check to see if needed dfh
-    session.files.data_dir = session.config.data_dir
+    #try:
+    #    tasks.clean_target_directory(configuration.target_dir,
+    #                                 configuration.server_path,
+    #                                 session.current_user,
+    #                                 session.password)
+    #except:
+    #    return login_error(request, "failed to clear tar directory")
 
-    # try:
-    #    tasks.clean_target_directory(configuration.target_dir)
-    # except:
-    #    return
-
-    # keep a copy of the user so we can keep other users from stepping on them
-    session.network_id = new_user
-    session.is_logged_in = True
-    session.touch()
-
-    # current assumption for a single user system is that we have been called through the / url
-    # which is the populate page
-    # which accepts a 'none' as a valid login or NOP
-    # if we made it this far, this must meet our definition of truth
+    #return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
     return
 
 # pylint: disable=unused-argument
@@ -467,20 +429,6 @@ def logout(request):
     logs the user out and returns to the main page
     which will bounce to the login page
     """
-
-    # pylint: disable=invalid-name
-    global session
-    # pylint: enable=invalid-name
-
-    print 'logout'
-
-    if is_current_user(request):
-
-        print 'this is the current user, setting the session.network_id to None'
-        session.network_id = None
-        session.is_logged_in = False
-    else:
-        print 'this is NOT the current user, leaving the session.network_id alone'
 
     return login_error(request, "Logged out")
 
@@ -492,54 +440,64 @@ def logged_in(request):
     which will bounce to the login page
     """
 
-    # pylint: disable=invalid-name
-    global session
-    # pylint: enable=invalid-name
+    return HttpResponse('TRUE')
 
-    print 'logged_in. timeout is: ' + str(session.config.timeout)
+def fresh_meta_obj(request):
+    metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
+    metadata.load_meta()
 
-    # timeout check.
-    # this will clear the user
-    if session.is_timed_out():
-        logout(request)
+    network_id = user_from_request(request)
 
-    if is_current_user(request):
-        # if this is the current user, they must have touched the browser
-        # so, reset the timer
-        session.touch()
-        return_val = 'TRUE'
-        print 'logged in check returns TRUE'
+    # get the Pacifica user, hopefully just once
+    if 'metaStr' in request.session:
+        unicode_string = request.session['metaStr']
+        meta_string = unicode_string.encode('ascii','ignore')
+        meta_list = pickle.loads(meta_string)
+        metadata.meta_list = meta_list
     else:
-        return_val = 'FALSE'
-        print 'logged in check returns FALSE'
+        meta_string = pickle.dumps(metadata.meta_list)
+        request.session['metaStr'] = meta_string
+        request.session.modified = True
 
-    return HttpResponse(return_val)
+    # get the Pacifica user, hopefully just once
+    if 'PacificaUser' in request.session:
+        pacifica_user = request.session['PacificaUser']
+    else:
+        pacifica_user = metadata.get_Pacifica_user(network_id)
+        request.session['PacificaUser'] = pacifica_user
+        request.session.modified = True
 
+    metadata.user = pacifica_user
+    return metadata
 
 # pylint: disable=unused-argument
 # justification: django required
 def initialize_fields(request):
     """
     initializes the metadata fields
+    start from scratch on first load and subsequent reloads of page
     """
 
-    # reset timeout
-    session.touch()
+    # populates metadata for the current user
+    # replace this call with Pacifica_user from cookie, dfh
+    network_id = user_from_request(request)
 
     # start from scratch on first load and subsequent reloads of page
-    # pylint: disable=invalid-name
-    global metadata
-    # pylint: enable=invalid-name
-    metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
+    metadata = fresh_meta_obj(request)
 
-    # populates metadata for the current user
-    # to have a common model for init and reload we need to set
-    # the network id here
-    metadata.initialize_user(session.network_id)
-
-    updates = metadata.initial_population()
+    updates = metadata.initial_population(network_id)
 
     retval = json.dumps(updates)
+
+    # clean the selection lists from the metadata list
+    # so that our header isn't freaking huge
+    for meta in metadata.meta_list:
+        meta.browser_field_population['selection_list'] = []
+
+    # set the metadata string variable to pass metadata state back to the browser
+    list_string = pickle.dumps(metadata.meta_list)
+    request.session['metaStr'] = list_string;
+    request.session.modified = True
 
     return HttpResponse(retval, content_type='application/json')
 
@@ -549,17 +507,15 @@ def select_changed(request):
     get the updated metadata on a select field change
     """
 
-    if not is_current_user(request):
-        retval = json.dumps([])
-        return HttpResponse(retval, content_type='application/json')
+    # clean metadata object
+    metadata = fresh_meta_obj(request)
 
-    # reset timeout
-    session.touch()
-
+    # create the base metadata object and load with defaults
     form = json.loads(request.body)
 
+    # fill in the dependencies for changed fields
     updates = metadata.populate_dependencies(form)
-
+    
     retval = json.dumps(updates)
 
     return HttpResponse(retval, content_type='application/json')
@@ -570,9 +526,6 @@ def get_children(request):
     get the children of a parent directory, used for lazy loading
     """
 
-    # reset timeout
-    session.touch()
-
     try:
         # return empty list on error, folder permissions, etc.
         pathlist = []
@@ -581,11 +534,12 @@ def get_children(request):
         parent = request.GET.get('parent')
         if not parent:
             return retval
-
-        if not session.files.accessible(parent):
+        
+        files = FileManager()
+        if not files.accessible(parent):
             return retval
 
-        session.files.error_string = ''
+        files.error_string = ''
 
         if os.path.isdir(parent):
             lazy_list = os.listdir(parent)
@@ -603,7 +557,7 @@ def get_children(request):
                 mod_time = datetime.datetime.fromtimestamp(
                     time).strftime('%m/%d/%Y %I:%M%p')
 
-                if session.files.accessible(itempath):
+                if files.accessible(itempath):
                     if os.path.isfile(itempath):
                         title = \
                             ('%s <span class="fineprint"> [Last Modified %s ]</span>') % \
@@ -623,19 +577,19 @@ def get_children(request):
     return HttpResponse(retval)
 
 
-def make_leaf(title, path):
+def make_leaf(title, path, files):
     '''
     return a populated tree leaf
     '''
-    if session.files.accessible(path):
+    if files.accessible(path):
         if os.path.isfile(path):
             size = os.path.getsize(path)
             is_folder = False
         elif os.path.isdir(path):
-            size = session.files.get_size(path)
+            size = files.get_size(path)
             is_folder = True
 
-    session.files.bundle_size += size
+    files.bundle_size += size
 
     size_string = file_tools.size_string(size)
     return {'title': title + ' (' + size_string + ')',
@@ -644,13 +598,13 @@ def make_leaf(title, path):
             'data': {'size': size}}
 
 
-def add_branch(branches, subdirectories, title, path):
+def add_branch(branches, subdirectories, title, path, files):
     """
     recursively insert branch into a tree structure
     """
     # if we are at a leaf, add the leaf to the children list
     if len(subdirectories) < 2:
-        leaf = make_leaf(title, path)
+        leaf = make_leaf(title, path, files)
         if leaf:
             branches.append(leaf)
         return
@@ -660,44 +614,70 @@ def add_branch(branches, subdirectories, title, path):
     for branch in branches:
         if branch['title'] == branch_name:
             children = branch['children']
-            add_branch(children, subdirectories[1:], title, path)
+            add_branch(children, subdirectories[1:], title, path, files)
             return
 
     # not found, add the branch
     branch = {'title': branch_name, 'key': 1,
               'folder': True, 'expanded': True, 'children': []}
     children = branch['children']
-    add_branch(children, subdirectories[1:], title, path)
+    add_branch(children, subdirectories[1:], title, path, files)
     branches.append(branch)
 
 
-def make_tree(tree, subdirectories, partial_path, title, path):
+def make_tree(tree, subdirectories, partial_path, title, path, files):
     '''
     recursively split filepaths
     '''
 
     if not partial_path:
         children = tree['children']
-        add_branch(children, subdirectories, title, path)
+        add_branch(children, subdirectories, title, path, files)
         return
 
     head, tail = os.path.split(partial_path)
 
     # prepend the tail
     subdirectories.insert(0, tail)
-    make_tree(tree, subdirectories, head, title, path)
+    make_tree(tree, subdirectories, head, title, path, files)
+
+def update_free_space(request):
+        """
+        update the amount of free space currently available
+        this should go in file_tools
+        """
+        # get the disk usage
+        space = psutil.disk_usage(configuration.target_dir)
+
+        # give ourselves a cushion for other processes
+        free_space = int(.9 * space.free)
+        free_size_str = file_tools.size_string(free_space)
+        
+        request.session['free_space'] = free_space
+        request.session['free_size_str'] = free_size_str
+        request.session.modified = True
 
 
-def return_bundle(tree, message):
+def validate_space_available(request):
+    """
+    check the bundle size agains space available
+    """
+
+    update_free_space(request)
+
+    if request.session['bundle_size'] == 0:
+        return True
+    return request.session['bundle_size'] < request.session['free_space']
+
+def return_bundle(request, tree, message):
     """
     formats the return message from get_bundle
     """
-
-    # reset timeout
-    session.touch()
-
+    files = FileManager()
+    
     # validate that the currently selected bundle will fit in the target space
-    upload_enabled = session.validate_space_available()
+    upload_enabled = validate_space_available(request)
+
     # disable the upload if there isn't enough space in the intermediate
     # directory
     tree[0]['enabled'] = upload_enabled
@@ -707,59 +687,93 @@ def return_bundle(tree, message):
             'Reduce the size of the data set or contact an administrator' \
             'to help address this issue.'
 
-    session.files.bundle_size_str = file_tools.size_string(
-        session.files.bundle_size)
+    free = request.session['free_size_str']
+    size = request.session['bundle_size_str']
     if message != '':
-        tree[0]['data'] = 'Bundle: %s, Free: %s, Warning: %s' % (
-            session.files.bundle_size_str, configuration.free_size_str, message)
+        tree[0]['data'] = 'Bundle: %s, Free: %s, Warning: %s' % (size, free, message)
     else:
-        tree[0]['data'] = 'Bundle: %s, Free: %s' % (
-            session.files.bundle_size_str, configuration.free_size_str)
+        tree[0]['data'] = 'Bundle: %s, Free: %s' % (size, free)
 
     retval = json.dumps(tree)
     return HttpResponse(retval, content_type='application/json')
 
+def get_archive_tree(request):
+    """
+    returns a nested structure that can be used to populate fancytree
+    """
+
+    meta = fresh_meta_obj(request)
+
+    newlist = sorted(meta.meta_list, key=lambda x: x.directory_order)
+
+    nodes = []
+    for node in newlist:
+        if node.directory_order is not None:
+            display = meta.get_display(node)
+            nodes.append(display)
+
+    tree = []
+    children = tree
+    lastnode = {}
+    archive_path = ''
+
+    for node_name in nodes:
+        node = {"title": node_name,
+                "key": 1,
+                "folder": True,
+                "expanded": True,
+                "children": [],
+                "data": ""}
+        children.append(node)
+        children = node['children']
+        lastnode = node
+
+        # concatenate the archive path
+        archive_path = os.path.join(archive_path, node_name)
+
+    request.session['archive_path'] = archive_path
+    request.session.modified = True
+
+    return tree, lastnode
 
 def get_bundle(request):
     """
     return a tree structure containing directories and files to be uploaded
     """
-
-    # reset timeout
-    session.touch()
+    files = FileManager()
 
     tree = []
 
     try:
-        session.files.error_string = ''
+        files.error_string = ''
 
         print 'get pseudo directory'
+        tree, lastnode = get_archive_tree(request)
+        files.bundle_size = 0
 
-        tree, lastnode = session.get_archive_tree(metadata)
-        session.files.bundle_size = 0
+        request.session['bundle_size'] = files.bundle_size
+        request.session['bundle_size_str'] = file_tools.size_string(files.bundle_size)
+        request.session.modified = True
 
         pathstring = request.POST.get('packet')
 
         # can get a request with 0 paths, return empty bundle
         if not pathstring:
-            return return_bundle(tree, '')
+            return return_bundle(request, tree, '')
 
         paths = json.loads(pathstring)
 
         # if no paths, return the empty archive structure
         if not paths:
-            return return_bundle(tree, '')
+            return return_bundle(request, tree, '')
 
-        # this actually should be done already by getting parent nodes
-        # filtered = session.files.filter_selected_list(paths)
-
-        common_path = session.files.data_dir
+        common_path = request.session['data_dir']
 
         # add a final separator
         common_path = os.path.join(common_path, '')
 
         # used later to modify arc names
-        session.files.common_path = common_path
+        files.common_path = common_path
 
         for itempath in paths:
             # title
@@ -768,17 +782,30 @@ def get_bundle(request):
             # tree structure
             clipped_path = itempath.replace(common_path, '')
             subdirs = []
-            make_tree(lastnode, subdirs, clipped_path, item, itempath)
+            make_tree(lastnode, subdirs, clipped_path, item, itempath, files)
 
-        return return_bundle(tree, session.files.error_string)
+        request.session['common_path'] = files.common_path
+        request.session['bundle_size'] = files.bundle_size
+        request.session['bundle_size_str'] = file_tools.size_string(files.bundle_size)
+        request.session.modified = True
+
+        return return_bundle(request, tree, files.error_string)
 
     except Exception, ex:
         print_err(ex)
-        return return_bundle(tree, 'get_bundle failed:  ' + ex.message)
+        return return_bundle(request, tree, 'get_bundle failed:  ' + ex.message)
+
+def get_celery_process(request):
+    try:
+        id = request.session['upload_process']
+        res = AsyncResult(id)
+        return res
+    except:
+        return None
 
 # pylint: disable=unused-argument
 # justification: django required
-def get_state(request):
+def xxxget_state(request):
     """
     returns the status of the uploader
         logged_in
@@ -786,34 +813,28 @@ def get_state(request):
         idle
     """
 
-    # reset timeout
-    session.touch()
+    upload_process = get_celery_process(request)
 
     state = 'idle'
-    if session.is_logged_in:
-        state = 'logged in: '
 
-    if session.upload_process:
-        print session.upload_process.task_id
-        res = AsyncResult(session.upload_process.task_id)
+    if upload_process:
+        print upload_process.task_id
+        res = AsyncResult(upload_process.task_id)
         if not res.ready():
             state += 'uploading'
 
     retval = json.dumps({'state': state})
     return HttpResponse(retval)
 
-def get_status():
+def get_status(upload_process):
     """    get status from backend    """
 
-    # reset timeout
-    session.touch()
-
-    if TaskComm.USE_CELERY:
-        if session.upload_process == None:
+    if (TaskComm.USE_CELERY):
+        if upload_process == None:
             return 'Initializing', ''
 
-        state = session.upload_process.state
-        result = session.upload_process.result
+        state = upload_process.state
+        result = upload_process.result
         if state == 'FAILURE':
             # we fail to succeed, expecting an error object
             try:
@@ -829,38 +850,43 @@ def get_status():
 
     return state, result
 
+def set_uploading(request, value):
+    request.session['is_uploading'] = value
+    request.session.modified = True
+
+def get_uploading(request):
+    return request.session['is_uploading']
 
 def incremental_status(request):
     """
     updates the status page with the current status of the background upload process
     """
 
-    # reset timeout
-    session.touch()
+    upload_process = None
 
     if TaskComm.USE_CELERY:
-        if session.upload_process == None:
-            retval = json.dumps({'state': '', 'result': ''})
+        upload_process = get_celery_process(request)
+        if not upload_process:
+            retval = json.dumps({'state': 'WAITING', 'result': 'waiting for upload to spin up'})
             return HttpResponse(retval)
 
     try:
         if request.POST:
-            if session.upload_process:
-                session.upload_process.revoke(terminate=True)
-            session.cleanup_upload()
+            if upload_process:
+                upload_process.revoke(terminate=True)
             state = 'CANCELLED'
             result = ''
-            session.is_uploading = False
+            set_uploading(request, False)
 
             print state
         else:
-            if not session.is_uploading:
+            if not get_uploading(request):
                 state = 'CANCELLED'
                 result = ''
                 retval = json.dumps({'state': state, 'result': result})
                 return HttpResponse(retval)
-
-        state, result = get_status()
+        
+        state, result = get_status(upload_process)
 
         if state is not None:
             if state == 'DONE':
@@ -871,9 +897,7 @@ def incremental_status(request):
                 # create URL for status server
                 result = configuration.status_server + str(job_id)
 
-                # if we have successfully uploaded, cleanup the lists
-                session.cleanup_upload()
-                session.is_uploading = False
+                set_uploading(request, False)
 
         # create json structure
         retval = json.dumps({'state': state, 'result': result})

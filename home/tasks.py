@@ -72,8 +72,7 @@ def upload_files(ingest_server='',
         TaskComm.set_state("PROGRESS", "Starting Bundle/Upload Process")
 
         bundle(bundle_name=bundle_name,
-               file_list=file_list,
-               meta_list=meta_list,
+               file_list=file_list,               meta_list=meta_list,
                bundle_size=bundle_size)
 
         TaskComm.set_state("PROGRESS", "Completed Bundling")
@@ -95,9 +94,12 @@ def upload_files(ingest_server='',
                    meta_list=meta_list,
                    bundle_size=bundle_size)
 
-        TaskComm.set_state("PROGRESS", "Starting Upload")
+        TaskComm.set_state("PROGRESS", "Starting Uploady: " + str(bundle_name) + ": " + ingest_server + ": " + str(auth))
 
         uploader = Uploader(bundle_name, ingest_server, auth)
+
+        TaskComm.set_state("PROGRESS", "Uploader Initialized")
+
         result = uploader.upload_bundle()
 
         TaskComm.set_state("PROGRESS", "Finished Upload")
@@ -126,6 +128,8 @@ def upload_files(ingest_server='',
         print >> sys.stderr, '-'*60
         traceback.print_exc(file=sys.stderr)
         print >> sys.stderr, '-'*60
-        task_error('tasks: upload_files :' + ex.message)
-        print 'Task exception: ' + ex.message
+
+        task_error('tasks: upload_files :' + str(ex.message))
+        print 'Task exception: ' + str(ex.message)
+
         raise ex

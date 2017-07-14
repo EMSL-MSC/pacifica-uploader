@@ -13,8 +13,9 @@
     <body>
         <div class="page_content">
             {% include "includes/view_header.html" %}
+
             <div id="header_container">
-                <h1 class="underline">MyEMSL File Upload ({{version}})</h1>
+                <h1 class="underline">MyEMSL File Upload (Version {{site_version}})</h1>
                 <div id="login_id_container">
                      {% for meta in metaList %}
                           {% if meta.display_type == 'logged_on'  %}
@@ -22,7 +23,6 @@
                           {% endif %}
                      {% endfor %}
 
-                    
                     <p class="smallprint"><a href="/logout">Not You? Click here to Logout</a></p>
                 </div>
             </div>
@@ -30,7 +30,7 @@
             <div class="themed">
                 <form method="post" enctype="multipart/form-data">
 	                {% csrf_token %}
-
+                    
                     <fieldset style="min-height:170px;">
                         <legend>Metadata</legend>
 
@@ -53,7 +53,6 @@
                             {% for meta in metaList %}
                                 {% if meta.display_type == 'enter'  %}
                                     <li>
-                                       <label for="{{meta.meta_id}}" style="display:block;">{{meta.display_title}}</label>
                                        <input type="text" id="{{meta.meta_id}}" style="width:80%;border-width:1px;" name="{{meta.meta_id}}" value = "{{meta.value}}">
                                     </li>                                
                                 {% endif %}

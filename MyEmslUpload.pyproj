@@ -39,6 +39,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="bundler\__init__.py" />
+    <Compile Include="command_line\__init__.py" />
     <Compile Include="home\admin.py" />
     <Compile Include="home\file_tools.py">
       <SubType>Code</SubType>
@@ -66,6 +67,9 @@
     <Compile Include="manage.py" />
     <Compile Include="uploader\__init__.py" />
     <Compile Include="UploadServer\celery.py" />
+    <Compile Include="DatabaseCreate.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="UploadServer\settings.py" />
     <Compile Include="home\tar_man.py">
       <SubType>Code</SubType>
@@ -76,6 +80,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bundler\" />
+    <Folder Include="command_line\" />
     <Folder Include="home\" />
     <Folder Include="home\templates\" />
     <Folder Include="home\templates\home\" />

@@ -208,31 +208,31 @@ def upload_from_options(parser):
     configuration.initialize_settings(configdir)
 
     # populate metadata.  Command line arguments override hard-coded config file arguments
-    metadata = QueryMetadata.QueryMetadata(configuration.policy_server, configdir)
+    metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
+    metadata.load_meta()
 
     check_options(parser, configuration, metadata)
 
     # don't clean tar directory
     tasks.CLEAN_TAR = False
 
-
     # typically the user of record is picked from a list based on proposal
     # here, we fetch a specific user from the User table
     node = metadata.get_node('EmslUserOfRecord')
     if parser.values.userOfRecord == '':
-        parser.values.userOfRecord = node.value
+        network_user = node.value
     else:
-        node.value = parser.values.userOfRecord
-    logon_node = metadata.get_node('logon')
-    get_user_id(metadata, logon_node, parser.values.userOfRecord)
-    node.value = logon_node.value
+        network_user = parser.values.userOfRecord
+
+    node.value = metadata.get_Pacifica_user(network_user)
 
     node = metadata.get_node('logon')
     if parser.values.user == '':
-        parser.values.user = node.value
+         network_user = node.value
     else:
-        node.value = parser.values.user
-    get_user_id(metadata, node, parser.values.user)
+        network_user = parser.values.user
+
+    node.value = metadata.get_Pacifica_user(network_user)
 
     node = metadata.get_node('instrumentByID')
     if parser.values.instrument == '':
@@ -246,30 +246,27 @@ def upload_from_options(parser):
     else:
         node.value = parser.values.proposal
 
-    # populate the session so that we are running the same process as the
+    # populate so that we are running the same process as the
     # django uploader
-    session = session_data.SessionState()
-    # session.proposal_id = parser.values.proposal
-    session.config = configuration
-    metadata.user = parser.values.user
-    session.get_archive_tree(metadata)
+
+    file_manager = file_tools.FileManager()
 
     # get rid of redundant file paths
-    session.files.filter_selected_list(parser.values.file_list)
+    files = file_manager.filter_selected_list(parser.values.file_list)
 
-    session.files.data_dir = parser.values.work_dir
-    if session.files.data_dir == '':
-        session.files.data_dir = configuration.data_dir
+    file_manager.data_dir = parser.values.work_dir
+    if file_manager.data_dir == '':
+        file_manager.data_dir = configuration.data_dir
 
     # add a final separator
-    session.files.common_path = os.path.join(parser.values.work_dir, '')
+    file_manager.common_path = os.path.join(parser.values.work_dir, '')
 
     tartar = False
     if parser.values.tartar == 'True':
         tartar = True
 
     # get the file tuples (local name, archive name) to bundle
-    tuples = session.files.get_bundle_files(parser.values.file_list)
+    tuples = file_manager.get_bundle_files(files)
 
     meta_list = metadata.create_meta_upload_list()
 
@@ -280,7 +277,7 @@ def upload_from_options(parser):
     tasks.upload_files(ingest_server=configuration.ingest_server,
                  bundle_name=parser.values.bundle_name,
                  file_list=tuples,
-                 bundle_size=session.files.bundle_size,
+                 bundle_size=file_manager.bundle_size,
                  meta_list=meta_list,
                  auth=configuration.auth,
                  tartar=tartar)
