@@ -127,7 +127,7 @@ class QueryMetadata(object):
         if meta_key in meta:
             setattr(obj, attr, meta[meta_key])
 
-    def load_meta(self):
+    def load_meta(self, ):
         """
         puts the metadata into a format that can eventually be
         read by the metadata archive
@@ -424,11 +424,14 @@ def create_meta_upload(meta):
     return meta_obj
 
 
-def read_config():
+def read_config(config_path = ''):
     """
     read the configuration file
     """
     config_file = 'UploaderConfig.json'
+
+    if config_path!='':
+        config_file = os.path.join(config_path, config_file)
 
     if not os.path.isfile(config_file):
         return ''
