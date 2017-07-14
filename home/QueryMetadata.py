@@ -127,12 +127,12 @@ class QueryMetadata(object):
         if meta_key in meta:
             setattr(obj, attr, meta[meta_key])
 
-    def load_meta(self, ):
+    def load_meta(self, config_path = ''):
         """
         puts the metadata into a format that can eventually be
         read by the metadata archive
         """
-        configuration = read_config()
+        configuration = read_config(config_path)
 
         # get authorization
 
