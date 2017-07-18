@@ -798,6 +798,7 @@ def get_bundle(request):
 def get_celery_process(request):
     try:
         id = request.session['upload_process']
+        print 'Process id:  ' + id
         res = AsyncResult(id)
         return res
     except:
