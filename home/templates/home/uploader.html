@@ -53,8 +53,9 @@
                             {% for meta in metaList %}
                                 {% if meta.display_type == 'enter'  %}
                                     <li>
+                                       <label for="{{meta.meta_id}}" style="display:block;">{{meta.display_title}}</label>
                                        <input type="text" id="{{meta.meta_id}}" style="width:80%;border-width:1px;" name="{{meta.meta_id}}" value = "{{meta.value}}">
-                                    </li>                                
+                                    </li>
                                 {% endif %}
                             {% endfor %}
                             </ul>
