@@ -39,6 +39,7 @@ from django.contrib.auth.decorators import login_required
 from home.task_comm import TaskComm
 from home import tasks
 from home import file_tools
+from home import tar_man
 from home import instrument_server
 from home import QueryMetadata
 from home.file_tools import FileManager
@@ -189,8 +190,19 @@ def show_status_insert(request, message):
     """
     show the status of the existing upload task
     """
-    bundle_size_str = request.session['bundle_size_str']
-    free_size_str = request.session['free_size_str']
+
+    # this is occasionally throwing a key error and I don't know why
+    try:
+        bundle_size_str = request.session['bundle_size_str']
+    except KeyError:
+        bundle_size_str = 'key error'
+
+    # this is occasionally throwing a key error and I don't know why
+    try:
+        free_size_str = request.session['free_size_str']
+    except KeyError:
+        free_size_str = 'key error'
+
     return render_to_response('home/status_insert.html',
                               {'status': message,
                                'bundle_size': bundle_size_str,
@@ -745,6 +757,9 @@ def get_bundle(request):
     tree = []
 
     try:
+
+        tar_man.clean_target_directory(configuration.target_dir)
+
         files.error_string = ''
 
         print 'get pseudo directory'

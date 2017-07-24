@@ -6,6 +6,9 @@ import os
 import time
 import json
 
+monitor = False
+CLEAN_TAR = True
+
 
 def job_list_from_dir(directory):
     """gets a list of jobs based on the files in the tar directory."""
@@ -46,15 +49,6 @@ def rename_tar_file(directory, old_name, job_id):
     if os.path.isfile(old_name):
         os.rename(old_name, new_name)
 
-# pylint: disable=unused-argument
-def job_status(job_list=None):
-    """
-    checks the status of existing job
-    tbd
-    """
-    return []
-# pylint: enable=unused-argument
-
 
 def remove_orphans(directory):
     """
@@ -80,33 +74,35 @@ def clean_target_directory(target_dir=''):
     """
     deletes local files that have made it to the archive
     """
+    global CLEAN_TAR
+    global monitor
 
-    # remove old files that were not uploaded
-    remove_orphans(target_dir)
-
-    # get job list from file
-    jobs = job_list_from_dir(target_dir)
-
-    if not jobs:
+    if not CLEAN_TAR:
         return
 
-    # get jobs state from database
-    jobs_state = job_status(job_list=jobs)
-
-    if not jobs_state:
+    # prevent re-entrance if the directory is already being cleaned by another user
+    if monitor:
         return
 
-    info = json.loads(jobs_state)
+    monitor = True
 
-    for job in jobs:
-        try:
-            job_state = info[job]
-            if job_state is not None:
-                state_index = job_state['state']
-                val = int(state_index)
-                if val > 4:
-                    remove_tar_file(target_dir, job)
-        # pylint: disable=broad-except
-        except Exception:
+    try:
+        # remove old files that were not uploaded
+        remove_orphans(target_dir)
+
+        # get job list from file
+        jobs = job_list_from_dir(target_dir)
+
+        if not jobs:
+            monitor = False
+            return
+
+        for job in jobs:
             remove_tar_file(target_dir, job)
-        # pylint: enable=broad-except
+
+    except Exception:
+        monitor = False
+        return
+            # pylint: enable=broad-except
+
+    monitor = False

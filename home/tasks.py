@@ -13,17 +13,6 @@ from bundler import bundle
 from home.tar_man import rename_tar_file
 from home.task_comm import TaskComm, task_error
 
-CLEAN_TAR = True
-
-
-def job_status():
-    """
-    checks the status of existing job
-    tbd
-    """
-    return []
-
-
 # tag to show this def as a celery task
 @shared_task
 def ping():
@@ -63,10 +52,6 @@ def upload_files(ingest_server='',
             return
 
         TaskComm.set_state("PROGRESS", "Cleaning previous uploads")
-
-        # clean tar directory
-        #if CLEAN_TAR:
-        #   clean_target_directory(target_dir)
 
         # initial state pushed through celery
         TaskComm.set_state("PROGRESS", "Starting Bundle/Upload Process")
