@@ -24,30 +24,12 @@ function logOut() {
     })
 }
 
-function still_logged_in() {
-
-    $.post("/loggedIn/", "{}",
-        function (data) {
-            var statStr = data;
-            if (statStr == "FALSE")
-                logOutAndBack();
-        })
-    .fail(function (xhr, textStatus, errorThrown) {
-        // errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
-        // window.open(errtext, '_blank');
-        console.log(xhr.responseText);
-    });
-
-}
-
 
 $(window).on("load", function () { initializeFields() });
 
     //**********************************************************************
 
     function FilterSingleBranch(clickedNode, parentNodes) {
-
-        still_logged_in();
 
         // handles the edge of a single tree branch selected where each subfolder
         // contains one folder only
@@ -81,8 +63,6 @@ $(window).on("load", function () { initializeFields() });
 
     function loadUploadTree(selected) {
 
-        still_logged_in();
-
         var upload = $("#uploadFiles").fancytree("getTree");
         var root = $("#uploadFiles").fancytree("getRootNode");
 
@@ -102,8 +82,9 @@ $(window).on("load", function () { initializeFields() });
         }
 
         var pkt = JSON.stringify(fileList);
+        var frm = $("form").serializeFormJSON();
 
-        var posted = { packet: pkt };
+        var posted = { packet: pkt , form: JSON.stringify(frm)};
         $.post("/getBundle/", posted,
             function (data) {
                 //alert('success');
@@ -194,7 +175,6 @@ $(window).on("load", function () { initializeFields() });
                 if (!respondToSelect)
                     return;
 
-                still_logged_in();
 
                 node = data.node;
                 var tree = $("#tree").fancytree("getTree");
@@ -214,8 +194,6 @@ $(window).on("load", function () { initializeFields() });
                 loadUploadTree(filtered);
             },
             click: function (event, data) {
-
-                still_logged_in();
 
                 var anchor, idx, inc,
                     tree = data.tree,
@@ -361,8 +339,6 @@ $(window).on("load", function () { initializeFields() });
             select: function (event, ui) {
                 var node = $.ui.fancytree.getNode(ui.target);
 
-                still_logged_in();
-
                 switch (ui.cmd)
                 {
                     case "reroute":
@@ -430,7 +406,6 @@ $(window).on("load", function () { initializeFields() });
                 function (data) {
                     if (data != "success") {
                         alert("user is locked out");
-                        still_logged_in();
                         return;
                     }
 
@@ -484,9 +459,6 @@ $(window).on("load", function () { initializeFields() });
 
 
         $('select').on("change", function (event) {
-
-            // test github
-            still_logged_in();
 
             var el = $(event.target)
 
