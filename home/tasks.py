@@ -114,7 +114,7 @@ def upload_files(ingest_server='',
         traceback.print_exc(file=sys.stderr)
         print >> sys.stderr, '-'*60
 
-        task_error('tasks: upload_files :' + str(ex.message))
-        print 'Task exception: ' + str(ex.message)
+        task_error('tasks: upload_files :' + str(ex.message) + ':  ' + result)
+        print 'Task exception: ' + str(ex.message) + ':  ' + result
 
         raise ex

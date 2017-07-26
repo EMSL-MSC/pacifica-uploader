@@ -47,13 +47,13 @@ class TaskComm(object):
             info = cls.state['TASK_INFO']
             ret = {'state':state, 'info':info}
             current_task.info = json.dumps(ret)
-        else:
-            print '%s:  %s' % (t_state, t_msg)
+        
+        print '%s:  %s' % (t_state, t_msg)
 
 def task_error(t_msg):
     """
     sets the task state to FAILURE
     also log the error here
     """
-    # print 'FAILURE: ' + t_msg
+    print 'FAILURE: ' + t_msg
     TaskComm.set_state('FAILURE', t_msg)
