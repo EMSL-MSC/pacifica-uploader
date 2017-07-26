@@ -52,7 +52,7 @@ configuration = instrument_server.UploaderConfiguration()
 # pylint: disable=global-variable-not-assigned
 
 # development VERSION
-VERSION = '2.2.3'
+VERSION = '2.2.4, branch "resolve_message_conflicts'
 
 
 def ping_celery():
@@ -217,23 +217,23 @@ def post_upload_metadata(request):
     set_uploading(request, True)
 
     print 'post meta'
-
+    # stubbed out
     return HttpResponse(json.dumps('success'), content_type='application/json')
 
-    # do this here because the async call from the browser
-    # may call for a status before spin_off_upload is started
-    set_uploading(request, True)
+    ## do this here because the async call from the browser
+    ## may call for a status before spin_off_upload is started
+    #set_uploading(request, True)
 
-    data = request.POST.get('form')
-    try:
-        form = json.loads(data)
+    #data = request.POST.get('form')
+    #try:
+    #    form = json.loads(data)
 
-        metadata.populate_metadata_from_form(form)
+    #    metadata.populate_metadata_from_form(form)
 
-        return
+    #    return
 
-    except Exception, ex:
-        return report_err(ex)
+    #except Exception, ex:
+    #    return report_err(ex)
 
 # pylint: disable=too-many-return-statements
 # justification: disagreement with style
@@ -285,15 +285,6 @@ def spin_off_upload(request):
         # load the metadata object with the most recent updates
         metadata = fresh_meta_obj(request)
 
-        # fill the metadata object with the latest updates
-        data = request.POST.get('form')
-        try:
-            form = json.loads(data)
-            metadata.populate_metadata_from_form(form)
-
-        except Exception, ex:
-            return report_err(ex)
-
         meta_list = metadata.create_meta_upload_list()
 
         # spin this off as a background process and load the status page
@@ -307,6 +298,7 @@ def spin_off_upload(request):
                                auth=configuration.auth)
             request.session['upload_process'] = upload_process.task_id
             request.session.modified = True
+            print 'setting process id to:  ' + request.session['upload_process'];
         else:  # run local
             tasks.upload_files(ingest_server=configuration.ingest_server,
                                bundle_name=bundle_filepath,
@@ -461,15 +453,15 @@ def fresh_meta_obj(request):
     network_id = user_from_request(request)
 
     # get the Pacifica user, hopefully just once
-    if 'metaStr' in request.session:
-        unicode_string = request.session['metaStr']
-        meta_string = unicode_string.encode('ascii','ignore')
-        meta_list = pickle.loads(meta_string)
-        metadata.meta_list = meta_list
-    else:
-        meta_string = pickle.dumps(metadata.meta_list)
-        request.session['metaStr'] = meta_string
-        request.session.modified = True
+    #if 'metaStr' in request.session:
+    #    unicode_string = request.session['metaStr']
+    #    meta_string = unicode_string.encode('ascii','ignore')
+    #    meta_list = pickle.loads(meta_string)
+    #    metadata.meta_list = meta_list
+    #else:
+    #    meta_string = pickle.dumps(metadata.meta_list)
+    #    request.session['metaStr'] = meta_string
+    #    request.session.modified = True
 
     # get the Pacifica user, hopefully just once
     if 'PacificaUser' in request.session:
@@ -480,6 +472,17 @@ def fresh_meta_obj(request):
         request.session.modified = True
 
     metadata.user = pacifica_user
+
+    # fill the metadata object with the latest updates
+    try:
+        data = request.POST.get('form')
+        if data:
+            form = json.loads(data)
+            metadata.populate_metadata_from_form(form)
+
+    except Exception, ex:
+        return report_err(ex)
+
     return metadata
 
 # pylint: disable=unused-argument
@@ -507,9 +510,9 @@ def initialize_fields(request):
         meta.browser_field_population['selection_list'] = []
 
     # set the metadata string variable to pass metadata state back to the browser
-    list_string = pickle.dumps(metadata.meta_list)
-    request.session['metaStr'] = list_string;
-    request.session.modified = True
+    #list_string = pickle.dumps(metadata.meta_list)
+    #request.session['metaStr'] = list_string;
+    #request.session.modified = True
 
     return HttpResponse(retval, content_type='application/json')
 
@@ -880,6 +883,8 @@ def incremental_status(request):
     upload_process = None
 
     if TaskComm.USE_CELERY:
+        print 'getting process id:  ' + request.session['upload_process'];
+
         upload_process = get_celery_process(request)
         if not upload_process:
             retval = json.dumps({'state': 'WAITING', 'result': 'waiting for upload to spin up'})
@@ -921,5 +926,5 @@ def incremental_status(request):
 
     except Exception, ex:
         print_err(ex)
-        retval = json.dumps({'state': 'Status Error', 'result': ex.message})
+        retval = json.dumps({'state': 'Status Error', 'result': ex.message + ':  ' + result})
         return HttpResponse(retval)
