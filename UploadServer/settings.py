@@ -22,7 +22,9 @@ BROKER_PORT = getenv('BROKER_PORT', 5672)
 BROKER_VHOST = getenv('BROKER_VHOST', 'Uploader')
 BROKER_USER = getenv('BROKER_USER', 'guest')
 BROKER_PASS = getenv('BROKER_PASS', 'guest')
-BROKER_URL = 'amqp://{user}:{password}@{server}:{port}/{vhost}'.format(
+BROKER_TRANSPORT = getenv('BROKER_TRANSPORT', 'amqp')
+BROKER_URL = '{transport}://{user}:{password}@{server}:{port}/{vhost}'.format(
+    transport=BROKER_TRANSPORT,
     user=BROKER_USER,
     password=BROKER_PASS,
     server=BROKER_SERVER,
@@ -30,7 +32,7 @@ BROKER_URL = 'amqp://{user}:{password}@{server}:{port}/{vhost}'.format(
     vhost=BROKER_VHOST
 )
 
-CELERY_RESULT_BACKEND = 'amqp'
+CELERY_RESULT_BACKEND = getenv('CELERY_BACKEND', 'amqp')
 
 CELERYD_STATE_DB = "celery_worker_state"
 
