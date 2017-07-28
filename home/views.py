@@ -404,8 +404,8 @@ def login(request):
     if err_str:
         return (err_str)
 
-    # did that work?
-    logged_in = request.user.is_authenticated
+    ## did that work?
+    #logged_in = request.user.is_authenticated
     logged_in = request.user.is_authenticated()
     if not request.user.is_authenticated():
         return ('Problem with local authentication')
@@ -438,13 +438,13 @@ def logout(request):
 
 # pylint: disable=unused-argument
 # justification: django required
-def logged_in(request):
-    """
-    logs the user out and returns to the main page
-    which will bounce to the login page
-    """
+#def logged_in(request):
+#    """
+#    logs the user out and returns to the main page
+#    which will bounce to the login page
+#    """
 
-    return HttpResponse('TRUE')
+#    return HttpResponse('TRUE')
 
 def fresh_meta_obj(request):
     metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
@@ -821,29 +821,6 @@ def get_celery_process(request):
     except:
         return None
 
-# pylint: disable=unused-argument
-# justification: django required
-def xxxget_state(request):
-    """
-    returns the status of the uploader
-        logged_in
-        uploading
-        idle
-    """
-
-    upload_process = get_celery_process(request)
-
-    state = 'idle'
-
-    if upload_process:
-        print upload_process.task_id
-        res = AsyncResult(upload_process.task_id)
-        if not res.ready():
-            state += 'uploading'
-
-    retval = json.dumps({'state': state})
-    return HttpResponse(retval)
-
 def get_status(upload_process):
     """    get status from backend    """
 
@@ -857,8 +834,8 @@ def get_status(upload_process):
             # we fail to succeed, expecting an error object
             try:
                 result = result.args[0]
-                #val = json.loads(result)
-                #val['job_id']
+                val = json.loads(result)
+                val['job_id']
                 state = 'DONE'
             except KeyError:
                 # if this isn't a successful upload (no job_id) then just return the args.
@@ -926,5 +903,5 @@ def incremental_status(request):
 
     except Exception, ex:
         print_err(ex)
-        retval = json.dumps({'state': 'Status Error', 'result': ex.message + ':  ' + result})
+        retval = json.dumps({'state': 'Status Error', 'result': ex.message})
         return HttpResponse(retval)
