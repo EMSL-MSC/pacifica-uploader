@@ -400,60 +400,49 @@ $(window).on("load", function () { initializeFields() });
             }
 
             var frm = $("form").serializeFormJSON();
+            var args = { form: JSON.stringify(frm), files: JSON.stringify(fileList) }
 
-            // populate session data before showing the status page
-            $.post("/postData/", { form: JSON.stringify(frm) },
+            $.post("/upload/", args,
                 function (data) {
-                    if (data != "success") {
-                        alert("user is locked out");
-                        return;
-                    }
+                    var page = "/showStatus";
 
-                    var args = { form: JSON.stringify(frm), files: JSON.stringify(fileList) }
+                    $.get(page, function (status_data) {
+                        $('#status_info_container').html(status_data);
 
-                    $.post("/upload/", args,
-                        function (data) {
-                            var page = "/showStatus";
+                        $('#status_info_container').dialog({
+                            autoOpen: true,
+                            modal: true,
+                            width: 500,
+                            title: "Upload Status",
+                            buttons: {
+                                "Cancel Upload": function () {
+                                    $.post("/incStatus/", "Cancel Upload",
+                                    function (data) {
+                                        $('#status_info_container').dialog('close');
+                                    });
+                                }
+                            },
+                            close: function (event, ui) {
+                                // stop the status update timer
+                                window.clearTimeout(statusTimeoutHandler);
 
-                            $.get(page, function (status_data) {
-                                $('#status_info_container').html(status_data);
-                            });
-                        })
-                        .fail(function (jqXHR, textStatus, errorThrown) {
-                            alert(jqXHR.responseText);
-                        });
-                });
+                                respondToSelect = false;
 
-
-                    $('#status_info_container').dialog({
-                        autoOpen: true,
-                        modal: true,
-                        width: 500,
-                        title: "Upload Status",
-                        buttons: {
-                            "Cancel Upload": function () {
-                                $.post("/incStatus/", "Cancel Upload",
-                                function (data) {
-                                    $('#status_info_container').dialog('close');
+                                selected.forEach(function (node) {
+                                    node.setSelected(false);
                                 });
+
+                                respondToSelect = true;
+                                selected = tree.getSelectedNodes(stopOnParents = true);
+
+                                loadUploadTree(selected);
                             }
-                        },
-                        close: function (event, ui) {
-                            // stop the status update timer
-                            window.clearTimeout(statusTimeoutHandler);
-
-                            respondToSelect = false;
-
-                            selected.forEach(function (node) {
-                                node.setSelected(false);
-                            });
-
-                            respondToSelect = true;
-                            selected = tree.getSelectedNodes(stopOnParents = true);
-
-                            loadUploadTree(selected);
-                        }
+                        });
                     });
+                })
+                .fail(function(jqXHR, textStatus, errorThrown) {
+                    alert(jqXHR.responseText);
+                });
 
         });
 
