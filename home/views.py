@@ -100,7 +100,7 @@ def initialize_config():
         return err
 
 # @login_required(login_url=settings.LOGIN_URL)
-def populate_upload_page(request):
+def populate_upload_page(request, testmode=False):
     """
     formats the main uploader page with authorized user metadata
     """
@@ -131,8 +131,13 @@ def populate_upload_page(request):
     return render_to_response('home/uploader.html',
                               {'data_root': configuration.data_dir,
                                'site_version': VERSION,
-                               'metaList': metadata.meta_list},
+                               'metaList': metadata.meta_list,
+                               'testmode': testmode},
                               RequestContext(request))
+
+def test(request):
+    """ render the page in test mode """
+    return populate_upload_page(request, testmode=True)
 
 def show_initial_status(request):
     """
