@@ -14,6 +14,8 @@
         <div class="page_content">
             {% include "includes/view_header.html" %}
 
+
+
             <div id="header_container">
                 <h1 class="underline">MyEMSL File Upload (Version {{site_version}})</h1>
                 <div id="login_id_container">
@@ -22,16 +24,21 @@
                                <p><em><span id="{{meta.meta_id}}"></span></em></p>
                           {% endif %}
                      {% endfor %}
-
                     <p class="smallprint"><a href="/logout">Not You? Click here to Logout</a></p>
                 </div>
             </div>
+
+            {% if testmode %}
+                <label for="testmode" style="display:block;">Running in Test Mode</label>
+                <input type="text" id="testmode" style="width:80%;border-width:1px;" name="testmode" value = "testmode">
+            {% endif %}
 
             <div class="themed">
                 <form method="post" enctype="multipart/form-data">
 	                {% csrf_token %}
                     
                     <fieldset style="min-height:170px;">
+
                         <legend>Metadata</legend>
 
                             {% for meta in metaList %}
@@ -39,10 +46,6 @@
                                     <div class="full_width_block">
                                         <label for="{{meta.meta_id}}" style="display:block;">{{meta.display_title}}</label>
                                         <select id="{{meta.meta_id}}" name="{{meta.meta_id}}" class="main_page_selector"> 
-                                            {#<option selected="selected" value="34002">thing1</option>#}
-                                            {#{% for sel in meta.select_list %}
-                                                <option value="{{sel.key}}">{{sel.display}}</option>
-                                            {% endfor %}#}
                                         </select>
                                     </div>
                                 {% endif %}
