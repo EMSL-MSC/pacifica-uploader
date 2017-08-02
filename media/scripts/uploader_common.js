@@ -96,6 +96,9 @@ $(window).on("load", function () { initializeFields() });
 
                 var enabled = data[0]["enabled"];
                 document.getElementById("upload_btn").disabled = !enabled;
+
+                // if in test mode, upload now
+                test_bundlehandler()
             })
             .fail(function (xhr, textStatus, errorThrown ) {
                 // errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
@@ -258,6 +261,9 @@ $(window).on("load", function () { initializeFields() });
                 var node = data.node;
 
                 SortByName(node);
+
+                // testmode stuff
+                test_loadhandler(node);
             }
         });
 
@@ -436,6 +442,8 @@ $(window).on("load", function () { initializeFields() });
                                 selected = tree.getSelectedNodes(stopOnParents = true);
 
                                 loadUploadTree(selected);
+
+                                test_reload();
                             }
                         });
                     });

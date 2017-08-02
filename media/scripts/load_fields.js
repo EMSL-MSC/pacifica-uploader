@@ -1,11 +1,69 @@
 ﻿
-    var respondToSelect = true;
+var bundled = false;
 
-    //$(document).ready(function () {
+function test_upload() {
+        // start a test loop to upload multiple times
 
-    //    // Function code here.
+        // initialize flags
+        bundled = false;
+        var tree = $("#tree").fancytree("getTree");
+        var root = $("#tree").fancytree("getRootNode");
+        child = root.getFirstChild();
 
-    //});
+        child.setExpanded();
+    }
+
+    function test_loadhandler(node) {
+        // assumption is there will be a 
+        // "test" directory under the top directory
+
+        // bail if we are not in testmode
+        if (!isTestMode()) return;
+
+        if (node.title == "root") return;
+
+        var mychildren = node.getChildren();
+
+        if (mychildren.length < 1) alert("root dir empty");
+
+        // select "test"
+        mychildren.forEach(function (child) {
+            if (child.title == "test") {
+                child.setSelected();
+            }
+        });
+    }
+    
+    function test_bundlehandler() {
+        // upload the bundle
+
+        // bail if we are not in testmode
+        if (!isTestMode()) return;
+
+        //only handle this event once
+        if (bundled) return;
+        bundled = true;
+
+        setTimeout(function () {
+            $("#upload_btn").click();
+        }, 1);
+    }
+
+    function test_reload() {
+        // reload form, start new test
+
+        // bail if we are not in testmode
+        if (!isTestMode()) return;
+
+        location.reload();
+    }
+
+    function isTestMode() {
+        if (document.getElementById("testmode") != null)
+            return true;
+        else
+            return false;
+    }
 
     function initializeFields() {
 
@@ -14,7 +72,9 @@
         $.post("/initializeFields/", "{}",
             function (data) {
                 updateFields(data);
-                console.log("yay");
+                console.log("initial fields loaded");
+                if (isTestMode())
+                    test_upload();
             })
         .fail(function (xhr, textStatus, errorThrown) {
             errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
