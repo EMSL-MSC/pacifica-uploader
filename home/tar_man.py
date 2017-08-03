@@ -5,6 +5,7 @@ manages the tar directory to keep it from overflowing
 import os
 import time
 import json
+import traceback
 
 monitor = False
 CLEAN_TAR = True
@@ -40,14 +41,19 @@ def rename_tar_file(directory, old_name, job_id):
     """
     rename tar files with a job id so that we can start tracking status in the archive
     """
-    new_name = str(job_id) + '_uploaded.tar'
-    new_name = os.path.join(directory, new_name)
+    try:
+        new_name = str(job_id) + '_uploaded.tar'
+        new_name = os.path.join(directory, new_name)
 
-    print old_name
-    print new_name
+        print old_name
+        print new_name
 
-    if os.path.isfile(old_name):
-        os.rename(old_name, new_name)
+        if os.path.isfile(old_name):
+            os.rename(old_name, new_name)
+    except Exception, ex:
+        print ex.message
+        print traceback.format_exc()
+        raise Exception (ex.message + ':  ' + traceback.format_exc());
 
 
 def remove_orphans(directory):
