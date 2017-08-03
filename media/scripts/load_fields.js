@@ -1,9 +1,12 @@
 ﻿
 var bundled = false;
+var testCount = 0
 
-function test_upload() {
-        // start a test loop to upload multiple times
-
+    function test_upload() {
+        // entry point of async loop
+        document.getElementById("testmode").value = "test " + testCount.toString();
+        testCount++;
+        
         // initialize flags
         bundled = false;
         var tree = $("#tree").fancytree("getTree");
