@@ -284,8 +284,9 @@ def spin_off_upload(request):
         file_manager.archive_path = request.session['archive_path']
         tuples = file_manager.get_bundle_files(files)
 
-        bundle_filepath = os.path.join(
-            configuration.target_dir, current_time() + '.tar')
+        user = user_from_request(request)
+        bundle_filepath = user + current_time() + '.tar'
+        bundle_filepath = os.path.join(configuration.target_dir, bundle_filepath)
 
         # load the metadata object with the most recent updates
         metadata = fresh_meta_obj(request)
@@ -835,18 +836,43 @@ def get_status(upload_process):
 
         state = upload_process.state
         result = upload_process.result
+
+        # every nth time, an standard error slips through with a PROGRESS state
+        # kludging a filter for now, need to track down why (dfh)
+        try:
+            message = result.message
+            state = 'FAILURE'
+        except:
+            pass
+
         if state == 'FAILURE':
-            # we fail to succeed, expecting an error object
+            # we throw a standard error on completion, expecting an error object
+            # this needs to be revisited, was done to keep the task alive long enough to read 
+            # the final state.  may not be needed anymore (dfh)
             try:
+                # for debug purposes
+                error = result
+
                 result = result.args[0]
-                val = json.loads(result)
-                val['job_id']
-                state = 'DONE'
+                try:
+                    val = json.loads(result)
+                    val['job_id']
+                    state = 'DONE'
+                except Exception:
+                    # must be a real error
+                    print result
             except KeyError:
                 # if this isn't a successful upload (no job_id) then just return the args.
                 pass
     else:
         state, result = TaskComm.get_state()
+
+    # error check
+    try:
+        err = json.dumps({'state': state, 'result': result})
+    except Exception, ex:
+        print ex.message
+
 
     return state, result
 
@@ -888,9 +914,17 @@ def incremental_status(request):
                 retval = json.dumps({'state': state, 'result': result})
                 return HttpResponse(retval)
         
-        state, result = get_status(upload_process)
+        try:
+            state, result = get_status(upload_process)
+        except Exception, ex:
+            state, result = get_status(upload_process)
+            retval = json.dumps({'state': 'ERROR', 'result': ex.message})
+            return HttpResponse(retval)
 
         if state is not None:
+            if state == 'REVOKED':
+                result = ''
+
             if state == 'DONE':
                 ingest_result = json.loads(result)
                 job_id = ingest_result['job_id']
@@ -908,5 +942,5 @@ def incremental_status(request):
 
     except Exception, ex:
         print_err(ex)
-        retval = json.dumps({'state': 'Status Error', 'result': ex.message})
+        retval = json.dumps({'state': 'Status Error', 'result': ex.message + ':  ' + result})
         return HttpResponse(retval)
