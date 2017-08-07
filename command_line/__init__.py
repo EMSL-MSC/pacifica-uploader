@@ -214,7 +214,7 @@ def upload_from_options(parser):
     check_options(parser, configuration, metadata)
 
     # don't clean tar directory
-    tasks.CLEAN_TAR = False
+    tar_man.CLEAN_TAR = False
 
     # typically the user of record is picked from a list based on proposal
     # here, we fetch a specific user from the User table
@@ -302,7 +302,7 @@ def main():
         print '%s:  %s' % (state, info)
 
     except Exception as err:
-        print >> sys.stderr, 'CLU dieded: %s' % err
+        print >> sys.stderr, 'Command Line Uploader error: %s: %s' % (err,  traceback.format_exc())
     # pylint: enable=broad-except
 
 
