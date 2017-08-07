@@ -36,6 +36,8 @@ from django.contrib.auth import authenticate
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 
+from celery.task.control import inspect
+
 from home.task_comm import TaskComm
 from home import tasks
 from home import file_tools
@@ -189,7 +191,7 @@ def set_data_root(request):
         return report_err(ex)
 
 def current_time():
-    return datetime.datetime.now().strftime('%m.%d.%Y.%H.%M.%S')
+    return datetime.datetime.now().strftime('%m.%d.%Y.%H.%M.%S.%f')
 
 def show_status_insert(request, message):
     """
