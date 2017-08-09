@@ -9,6 +9,8 @@ import json
 import os
 
 import requests
+import traceback
+
 
 # pylint: disable=too-few-public-methods
 # justification: perfect amount of methods, possibly look at using "collection"
@@ -194,31 +196,35 @@ class QueryMetadata(object):
                           {"id":"34003", "text" :"invalid3"}
                           ]}
         """
+        try:
+            print 'build_selection_list, query_result is'
+            print query_result
 
-        print 'build_selection_list, query_result is'
-        print query_result
+            meta.browser_field_population['meta_id'] = meta.meta_id
 
-        meta.browser_field_population['meta_id'] = meta.meta_id
+            # build the list of choices
+            choices = []
+            for result in query_result:
+                # result is a hash of column identifiers and values
+                # first get the key field if any
+                try:
+                    key = result[meta.value_field]
+                except KeyError:
+                    key = ''
 
-        # build the list of choices
-        choices = []
-        for result in query_result:
-            # result is a hash of column identifiers and values
-            # first get the key field if any
-            try:
-                key = result[meta.value_field]
-            except KeyError:
-                key = ''
+                if meta.display_format != '':
+                    display = meta.display_format % result
+                else:
+                    display = ''
 
-            if meta.display_format != '':
-                display = meta.display_format % result
-            else:
-                display = ''
+                # put in format to be used by select2
+                choices.append({"id": key, "text": display})
 
-            # put in format to be used by select2
-            choices.append({"id": key, "text": display})
-
-        meta.browser_field_population['selection_list'] = choices
+            meta.browser_field_population['selection_list'] = choices
+        except Exception, ex:
+            err = str(ex.message) + ': query result: ' + str(query_result) + ':  ' + traceback.format_exc()
+            print err
+            raise Exception (err)
 
     def update_parents(self, meta):
         """
@@ -354,7 +360,7 @@ class QueryMetadata(object):
             return id
 
         except Exception, ex:
-            err = str(ex.strerror) + ': url: ' + url
+            err = str(ex.message) + ': query result: ' + reply.content + ':  ' + traceback.format_exc()
             print err
             raise Exception (err)
 
@@ -374,9 +380,9 @@ class QueryMetadata(object):
             return data
 
         except Exception, ex:
-            err = str(ex.message) + ' query: ' + query
+            err = str(ex.message) + ': query: ' + query + ': result: ' + reply.content + ':  ' + traceback.format_exc()
             print err
-            raise Exception(err)
+            raise Exception (err)
 
 
     def get_display(self, meta):
