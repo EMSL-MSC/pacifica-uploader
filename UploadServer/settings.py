@@ -121,7 +121,10 @@ USE_TZ = True
 SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 #SESSION_COOKIE_AGE = 3 * 30
-SESSION_SAVE_EVERY_REQUEST = True
+
+# see if this gets rid of sqlite lockup
+SESSION_SAVE_EVERY_REQUEST = False
+#SESSION_SAVE_EVERY_REQUEST = True
 
 # added to make admin work?
 SESSION_COOKIE_SECURE = False
