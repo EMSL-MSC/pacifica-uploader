@@ -85,9 +85,6 @@ def user_from_request(request):
             raise ValueError('Unknown auth scheme \"%s\"' % scheme)
         user = base64.b64decode(creds).split(':', 1)[0]
 
-        # temp kludge because of large data sets being transferred for super users
-        # user = 'd3g909'
-
         print 'user_from_request: ' + user
         return user
     else:
@@ -422,16 +419,6 @@ def login(request):
     request.session.modified = True
 
     # ok, passed all local authorization tests, valid user data is loaded
-
-    #try:
-    #    tasks.clean_target_directory(configuration.target_dir,
-    #                                 configuration.server_path,
-    #                                 session.current_user,
-    #                                 session.password)
-    #except:
-    #    return login_error(request, "failed to clear tar directory")
-
-    #return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
     return
 
 # pylint: disable=unused-argument
@@ -459,17 +446,6 @@ def fresh_meta_obj(request):
     metadata.load_meta()
 
     network_id = user_from_request(request)
-
-    # get the Pacifica user, hopefully just once
-    #if 'metaStr' in request.session:
-    #    unicode_string = request.session['metaStr']
-    #    meta_string = unicode_string.encode('ascii','ignore')
-    #    meta_list = pickle.loads(meta_string)
-    #    metadata.meta_list = meta_list
-    #else:
-    #    meta_string = pickle.dumps(metadata.meta_list)
-    #    request.session['metaStr'] = meta_string
-    #    request.session.modified = True
 
     # get the Pacifica user, hopefully just once
     if 'PacificaUser' in request.session:
@@ -516,11 +492,6 @@ def initialize_fields(request):
     # so that our header isn't freaking huge
     for meta in metadata.meta_list:
         meta.browser_field_population['selection_list'] = []
-
-    # set the metadata string variable to pass metadata state back to the browser
-    #list_string = pickle.dumps(metadata.meta_list)
-    #request.session['metaStr'] = list_string;
-    #request.session.modified = True
 
     return HttpResponse(retval, content_type='application/json')
 
@@ -822,6 +793,7 @@ def get_bundle(request):
         return return_bundle(request, tree, 'get_bundle failed:  ' + ex.message)
 
 def get_celery_process(request):
+    """ retrieves the celery process id from the session """
     try:
         id = request.session['upload_process']
         res = AsyncResult(id)
@@ -874,6 +846,7 @@ def get_status(upload_process):
         err = json.dumps({'state': state, 'result': result})
     except Exception, ex:
         print ex.message
+        result = 'could not convert to json: ' + str(result)
 
 
     return state, result
