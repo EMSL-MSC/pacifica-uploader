@@ -24,30 +24,12 @@ function logOut() {
     })
 }
 
-function still_logged_in() {
-
-    $.post("/loggedIn/", "{}",
-        function (data) {
-            var statStr = data;
-            if (statStr == "FALSE")
-                logOutAndBack();
-        })
-    .fail(function (xhr, textStatus, errorThrown) {
-        // errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
-        // window.open(errtext, '_blank');
-        console.log(xhr.responseText);
-    });
-
-}
-
 
 $(window).on("load", function () { initializeFields() });
 
     //**********************************************************************
 
     function FilterSingleBranch(clickedNode, parentNodes) {
-
-        still_logged_in();
 
         // handles the edge of a single tree branch selected where each subfolder
         // contains one folder only
@@ -81,8 +63,6 @@ $(window).on("load", function () { initializeFields() });
 
     function loadUploadTree(selected) {
 
-        still_logged_in();
-
         var upload = $("#uploadFiles").fancytree("getTree");
         var root = $("#uploadFiles").fancytree("getRootNode");
 
@@ -102,8 +82,9 @@ $(window).on("load", function () { initializeFields() });
         }
 
         var pkt = JSON.stringify(fileList);
+        var frm = $("form").serializeFormJSON();
 
-        var posted = { packet: pkt };
+        var posted = { packet: pkt , form: JSON.stringify(frm)};
         $.post("/getBundle/", posted,
             function (data) {
                 //alert('success');
@@ -115,6 +96,9 @@ $(window).on("load", function () { initializeFields() });
 
                 var enabled = data[0]["enabled"];
                 document.getElementById("upload_btn").disabled = !enabled;
+
+                // if in test mode, upload now
+                test_bundlehandler()
             })
             .fail(function (xhr, textStatus, errorThrown ) {
                 // errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
@@ -194,7 +178,6 @@ $(window).on("load", function () { initializeFields() });
                 if (!respondToSelect)
                     return;
 
-                still_logged_in();
 
                 node = data.node;
                 var tree = $("#tree").fancytree("getTree");
@@ -214,8 +197,6 @@ $(window).on("load", function () { initializeFields() });
                 loadUploadTree(filtered);
             },
             click: function (event, data) {
-
-                still_logged_in();
 
                 var anchor, idx, inc,
                     tree = data.tree,
@@ -280,6 +261,9 @@ $(window).on("load", function () { initializeFields() });
                 var node = data.node;
 
                 SortByName(node);
+
+                // testmode stuff
+                test_loadhandler(node);
             }
         });
 
@@ -361,8 +345,6 @@ $(window).on("load", function () { initializeFields() });
             select: function (event, ui) {
                 var node = $.ui.fancytree.getNode(ui.target);
 
-                still_logged_in();
-
                 switch (ui.cmd)
                 {
                     case "reroute":
@@ -424,69 +406,56 @@ $(window).on("load", function () { initializeFields() });
             }
 
             var frm = $("form").serializeFormJSON();
+            var args = { form: JSON.stringify(frm), files: JSON.stringify(fileList) }
 
-            // populate session data before showing the status page
-            $.post("/postData/", { form: JSON.stringify(frm) },
+            $.post("/upload/", args,
                 function (data) {
-                    if (data != "success") {
-                        alert("user is locked out");
-                        still_logged_in();
-                        return;
-                    }
+                    var page = "/showStatus";
 
-                    var args = { form: JSON.stringify(frm), files: JSON.stringify(fileList) }
+                    $.get(page, function (status_data) {
+                        $('#status_info_container').html(status_data);
 
-                    $.post("/upload/", args,
-                        function (data) {
-                            var page = "/showStatus";
+                        $('#status_info_container').dialog({
+                            autoOpen: true,
+                            modal: true,
+                            width: 500,
+                            title: "Upload Status",
+                            buttons: {
+                                "Cancel Upload": function () {
+                                    $.post("/incStatus/", "Cancel Upload",
+                                    function (data) {
+                                        $('#status_info_container').dialog('close');
+                                    });
+                                }
+                            },
+                            close: function (event, ui) {
+                                // stop the status update timer
+                                window.clearTimeout(statusTimeoutHandler);
 
-                            $.get(page, function (status_data) {
-                                $('#status_info_container').html(status_data);
-                            });
-                        })
-                        .fail(function (jqXHR, textStatus, errorThrown) {
-                            alert(jqXHR.responseText);
-                        });
-                });
+                                respondToSelect = false;
 
-
-                    $('#status_info_container').dialog({
-                        autoOpen: true,
-                        modal: true,
-                        width: 500,
-                        title: "Upload Status",
-                        buttons: {
-                            "Cancel Upload": function () {
-                                $.post("/incStatus/", "Cancel Upload",
-                                function (data) {
-                                    $('#status_info_container').dialog('close');
+                                selected.forEach(function (node) {
+                                    node.setSelected(false);
                                 });
+
+                                respondToSelect = true;
+                                selected = tree.getSelectedNodes(stopOnParents = true);
+
+                                loadUploadTree(selected);
+
+                                test_reload();
                             }
-                        },
-                        close: function (event, ui) {
-                            // stop the status update timer
-                            window.clearTimeout(statusTimeoutHandler);
-
-                            respondToSelect = false;
-
-                            selected.forEach(function (node) {
-                                node.setSelected(false);
-                            });
-
-                            respondToSelect = true;
-                            selected = tree.getSelectedNodes(stopOnParents = true);
-
-                            loadUploadTree(selected);
-                        }
+                        });
                     });
+                })
+                .fail(function(jqXHR, textStatus, errorThrown) {
+                    alert(jqXHR.responseText);
+                });
 
         });
 
 
         $('select').on("change", function (event) {
-
-            // test github
-            still_logged_in();
 
             var el = $(event.target)
 

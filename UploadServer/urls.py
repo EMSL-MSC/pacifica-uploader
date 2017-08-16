@@ -29,7 +29,8 @@ urlpatterns = patterns('',
                        url(r'^selectChanged/', 'home.views.select_changed', name='selectChanged'),
                        url(r'^login/$', 'home.views.login'),
                        url(r'^loggedIn/$', 'home.views.logged_in'),
-                       url(r'^logout/$', 'home.views.logout'),)
+                       url(r'^logout/$', 'home.views.logout'),
+                       url(r'^test/$', 'home.views.test'),)
 
 urlpatterns += patterns('', (r'^media/(?P<path>.*)$', \
     'django.views.static.serve', {'document_root': settings.MEDIA_ROOT}))

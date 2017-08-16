@@ -54,7 +54,9 @@ class Uploader(object):
         self.fileobj = open(bundle_path, 'rb')
         size_str = str(self.total_size)
         self.fileobj.seek(0)
-        url = self.ingest_server + '/upload'
+
+        # adding unique data string to hopefully avoid cache issues
+        url = self.ingest_server + '/upload?' + self.bundle_name
 
         headers = {}
         headers['Content-Type'] = 'application/octet-stream'

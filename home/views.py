@@ -36,9 +36,12 @@ from django.contrib.auth import authenticate
 from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 
+from celery.task.control import inspect
+
 from home.task_comm import TaskComm
 from home import tasks
 from home import file_tools
+from home import tar_man
 from home import instrument_server
 from home import QueryMetadata
 from home.file_tools import FileManager
@@ -51,7 +54,7 @@ configuration = instrument_server.UploaderConfiguration()
 # pylint: disable=global-variable-not-assigned
 
 # development VERSION
-VERSION = '2.2.3'
+VERSION = '2.2.5, branch "resolve_message_conflicts, 7/28'
 
 
 def ping_celery():
@@ -82,9 +85,6 @@ def user_from_request(request):
             raise ValueError('Unknown auth scheme \"%s\"' % scheme)
         user = base64.b64decode(creds).split(':', 1)[0]
 
-        # temp kludge because of large data sets being transferred for super users
-        # user = 'd3g909'
-
         print 'user_from_request: ' + user
         return user
     else:
@@ -99,7 +99,7 @@ def initialize_config():
         return err
 
 # @login_required(login_url=settings.LOGIN_URL)
-def populate_upload_page(request):
+def populate_upload_page(request, testmode=False):
     """
     formats the main uploader page with authorized user metadata
     """
@@ -130,8 +130,13 @@ def populate_upload_page(request):
     return render_to_response('home/uploader.html',
                               {'data_root': configuration.data_dir,
                                'site_version': VERSION,
-                               'metaList': metadata.meta_list},
+                               'metaList': metadata.meta_list,
+                               'testmode': testmode},
                               RequestContext(request))
+
+def test(request):
+    """ render the page in test mode """
+    return populate_upload_page(request, testmode=True)
 
 def show_initial_status(request):
     """
@@ -183,14 +188,25 @@ def set_data_root(request):
         return report_err(ex)
 
 def current_time():
-    return datetime.datetime.now().strftime('%m.%d.%Y.%H.%M.%S')
+    return datetime.datetime.now().strftime('%m.%d.%Y.%H.%M.%S.%f')
 
 def show_status_insert(request, message):
     """
     show the status of the existing upload task
     """
-    bundle_size_str = request.session['bundle_size_str']
-    free_size_str = request.session['free_size_str']
+
+    # this is occasionally throwing a key error and I don't know why
+    try:
+        bundle_size_str = request.session['bundle_size_str']
+    except KeyError:
+        bundle_size_str = 'key error'
+
+    # this is occasionally throwing a key error and I don't know why
+    try:
+        free_size_str = request.session['free_size_str']
+    except KeyError:
+        free_size_str = 'key error'
+
     return render_to_response('home/status_insert.html',
                               {'status': message,
                                'bundle_size': bundle_size_str,
@@ -205,23 +221,23 @@ def post_upload_metadata(request):
     set_uploading(request, True)
 
     print 'post meta'
-
+    # stubbed out
     return HttpResponse(json.dumps('success'), content_type='application/json')
 
-    # do this here because the async call from the browser
-    # may call for a status before spin_off_upload is started
-    set_uploading(request, True)
+    ## do this here because the async call from the browser
+    ## may call for a status before spin_off_upload is started
+    #set_uploading(request, True)
 
-    data = request.POST.get('form')
-    try:
-        form = json.loads(data)
+    #data = request.POST.get('form')
+    #try:
+    #    form = json.loads(data)
 
-        metadata.populate_metadata_from_form(form)
+    #    metadata.populate_metadata_from_form(form)
 
-        return
+    #    return
 
-    except Exception, ex:
-        return report_err(ex)
+    #except Exception, ex:
+    #    return report_err(ex)
 
 # pylint: disable=too-many-return-statements
 # justification: disagreement with style
@@ -267,20 +283,12 @@ def spin_off_upload(request):
         file_manager.archive_path = request.session['archive_path']
         tuples = file_manager.get_bundle_files(files)
 
-        bundle_filepath = os.path.join(
-            configuration.target_dir, current_time() + '.tar')
+        user = user_from_request(request)
+        bundle_filepath = user + current_time() + '.tar'
+        bundle_filepath = os.path.join(configuration.target_dir, bundle_filepath)
 
         # load the metadata object with the most recent updates
         metadata = fresh_meta_obj(request)
-
-        # fill the metadata object with the latest updates
-        data = request.POST.get('form')
-        try:
-            form = json.loads(data)
-            metadata.populate_metadata_from_form(form)
-
-        except Exception, ex:
-            return report_err(ex)
 
         meta_list = metadata.create_meta_upload_list()
 
@@ -295,6 +303,7 @@ def spin_off_upload(request):
                                auth=configuration.auth)
             request.session['upload_process'] = upload_process.task_id
             request.session.modified = True
+            print 'setting process id to:  ' + request.session['upload_process'];
         else:  # run local
             tasks.upload_files(ingest_server=configuration.ingest_server,
                                bundle_name=bundle_filepath,
@@ -400,8 +409,8 @@ def login(request):
     if err_str:
         return (err_str)
 
-    # did that work?
-    logged_in = request.user.is_authenticated
+    ## did that work?
+    #logged_in = request.user.is_authenticated
     logged_in = request.user.is_authenticated()
     if not request.user.is_authenticated():
         return ('Problem with local authentication')
@@ -410,16 +419,6 @@ def login(request):
     request.session.modified = True
 
     # ok, passed all local authorization tests, valid user data is loaded
-
-    #try:
-    #    tasks.clean_target_directory(configuration.target_dir,
-    #                                 configuration.server_path,
-    #                                 session.current_user,
-    #                                 session.password)
-    #except:
-    #    return login_error(request, "failed to clear tar directory")
-
-    #return HttpResponseRedirect(reverse('home.views.populate_upload_page'))
     return
 
 # pylint: disable=unused-argument
@@ -434,30 +433,19 @@ def logout(request):
 
 # pylint: disable=unused-argument
 # justification: django required
-def logged_in(request):
-    """
-    logs the user out and returns to the main page
-    which will bounce to the login page
-    """
+#def logged_in(request):
+#    """
+#    logs the user out and returns to the main page
+#    which will bounce to the login page
+#    """
 
-    return HttpResponse('TRUE')
+#    return HttpResponse('TRUE')
 
 def fresh_meta_obj(request):
     metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
     metadata.load_meta()
 
     network_id = user_from_request(request)
-
-    # get the Pacifica user, hopefully just once
-    if 'metaStr' in request.session:
-        unicode_string = request.session['metaStr']
-        meta_string = unicode_string.encode('ascii','ignore')
-        meta_list = pickle.loads(meta_string)
-        metadata.meta_list = meta_list
-    else:
-        meta_string = pickle.dumps(metadata.meta_list)
-        request.session['metaStr'] = meta_string
-        request.session.modified = True
 
     # get the Pacifica user, hopefully just once
     if 'PacificaUser' in request.session:
@@ -468,6 +456,17 @@ def fresh_meta_obj(request):
         request.session.modified = True
 
     metadata.user = pacifica_user
+
+    # fill the metadata object with the latest updates
+    try:
+        data = request.POST.get('form')
+        if data:
+            form = json.loads(data)
+            metadata.populate_metadata_from_form(form)
+
+    except Exception, ex:
+        return report_err(ex)
+
     return metadata
 
 # pylint: disable=unused-argument
@@ -493,11 +492,6 @@ def initialize_fields(request):
     # so that our header isn't freaking huge
     for meta in metadata.meta_list:
         meta.browser_field_population['selection_list'] = []
-
-    # set the metadata string variable to pass metadata state back to the browser
-    list_string = pickle.dumps(metadata.meta_list)
-    request.session['metaStr'] = list_string;
-    request.session.modified = True
 
     return HttpResponse(retval, content_type='application/json')
 
@@ -745,6 +739,9 @@ def get_bundle(request):
     tree = []
 
     try:
+
+        tar_man.clean_target_directory(configuration.target_dir)
+
         files.error_string = ''
 
         print 'get pseudo directory'
@@ -796,35 +793,13 @@ def get_bundle(request):
         return return_bundle(request, tree, 'get_bundle failed:  ' + ex.message)
 
 def get_celery_process(request):
+    """ retrieves the celery process id from the session """
     try:
         id = request.session['upload_process']
         res = AsyncResult(id)
         return res
     except:
         return None
-
-# pylint: disable=unused-argument
-# justification: django required
-def xxxget_state(request):
-    """
-    returns the status of the uploader
-        logged_in
-        uploading
-        idle
-    """
-
-    upload_process = get_celery_process(request)
-
-    state = 'idle'
-
-    if upload_process:
-        print upload_process.task_id
-        res = AsyncResult(upload_process.task_id)
-        if not res.ready():
-            state += 'uploading'
-
-    retval = json.dumps({'state': state})
-    return HttpResponse(retval)
 
 def get_status(upload_process):
     """    get status from backend    """
@@ -835,18 +810,44 @@ def get_status(upload_process):
 
         state = upload_process.state
         result = upload_process.result
+
+        # every nth time, an standard error slips through with a PROGRESS state
+        # kludging a filter for now, need to track down why (dfh)
+        try:
+            message = result.message
+            state = 'FAILURE'
+        except:
+            pass
+
         if state == 'FAILURE':
-            # we fail to succeed, expecting an error object
+            # we throw a standard error on completion, expecting an error object
+            # this needs to be revisited, was done to keep the task alive long enough to read 
+            # the final state.  may not be needed anymore (dfh)
             try:
+                # for debug purposes
+                error = result
+
                 result = result.args[0]
-                #val = json.loads(result)
-                #val['job_id']
-                state = 'DONE'
+                try:
+                    val = json.loads(result)
+                    val['job_id']
+                    state = 'DONE'
+                except Exception:
+                    # must be a real error
+                    print result
             except KeyError:
                 # if this isn't a successful upload (no job_id) then just return the args.
                 pass
     else:
         state, result = TaskComm.get_state()
+
+    # error check
+    try:
+        err = json.dumps({'state': state, 'result': result})
+    except Exception, ex:
+        print ex.message
+        result = 'could not convert to json: ' + str(result)
+
 
     return state, result
 
@@ -865,6 +866,8 @@ def incremental_status(request):
     upload_process = None
 
     if TaskComm.USE_CELERY:
+        print 'getting process id:  ' + request.session['upload_process'];
+
         upload_process = get_celery_process(request)
         if not upload_process:
             retval = json.dumps({'state': 'WAITING', 'result': 'waiting for upload to spin up'})
@@ -886,9 +889,17 @@ def incremental_status(request):
                 retval = json.dumps({'state': state, 'result': result})
                 return HttpResponse(retval)
         
-        state, result = get_status(upload_process)
+        try:
+            state, result = get_status(upload_process)
+        except Exception, ex:
+            state, result = get_status(upload_process)
+            retval = json.dumps({'state': 'ERROR', 'result': ex.message})
+            return HttpResponse(retval)
 
         if state is not None:
+            if state == 'REVOKED':
+                result = ''
+
             if state == 'DONE':
                 ingest_result = json.loads(result)
                 job_id = ingest_result['job_id']
@@ -906,5 +917,5 @@ def incremental_status(request):
 
     except Exception, ex:
         print_err(ex)
-        retval = json.dumps({'state': 'Status Error', 'result': ex.message})
+        retval = json.dumps({'state': 'Status Error', 'result': ex.message + ':  ' + result})
         return HttpResponse(retval)

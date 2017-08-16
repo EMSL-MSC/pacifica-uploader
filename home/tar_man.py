@@ -5,6 +5,10 @@ manages the tar directory to keep it from overflowing
 import os
 import time
 import json
+import traceback
+
+monitor = False
+CLEAN_TAR = True
 
 
 def job_list_from_dir(directory):
@@ -37,23 +41,19 @@ def rename_tar_file(directory, old_name, job_id):
     """
     rename tar files with a job id so that we can start tracking status in the archive
     """
-    new_name = str(job_id) + '_uploaded.tar'
-    new_name = os.path.join(directory, new_name)
+    try:
+        new_name = str(job_id) + '_uploaded.tar'
+        new_name = os.path.join(directory, new_name)
 
-    print old_name
-    print new_name
+        print old_name
+        print new_name
 
-    if os.path.isfile(old_name):
-        os.rename(old_name, new_name)
-
-# pylint: disable=unused-argument
-def job_status(job_list=None):
-    """
-    checks the status of existing job
-    tbd
-    """
-    return []
-# pylint: enable=unused-argument
+        if os.path.isfile(old_name):
+            os.rename(old_name, new_name)
+    except Exception, ex:
+        print ex.message
+        print traceback.format_exc()
+        raise Exception (ex.message + ':  ' + traceback.format_exc());
 
 
 def remove_orphans(directory):
@@ -80,33 +80,35 @@ def clean_target_directory(target_dir=''):
     """
     deletes local files that have made it to the archive
     """
+    global CLEAN_TAR
+    global monitor
 
-    # remove old files that were not uploaded
-    remove_orphans(target_dir)
-
-    # get job list from file
-    jobs = job_list_from_dir(target_dir)
-
-    if not jobs:
+    if not CLEAN_TAR:
         return
 
-    # get jobs state from database
-    jobs_state = job_status(job_list=jobs)
-
-    if not jobs_state:
+    # prevent re-entrance if the directory is already being cleaned by another user
+    if monitor:
         return
 
-    info = json.loads(jobs_state)
+    monitor = True
 
-    for job in jobs:
-        try:
-            job_state = info[job]
-            if job_state is not None:
-                state_index = job_state['state']
-                val = int(state_index)
-                if val > 4:
-                    remove_tar_file(target_dir, job)
-        # pylint: disable=broad-except
-        except Exception:
+    try:
+        # remove old files that were not uploaded
+        remove_orphans(target_dir)
+
+        # get job list from file
+        jobs = job_list_from_dir(target_dir)
+
+        if not jobs:
+            monitor = False
+            return
+
+        for job in jobs:
             remove_tar_file(target_dir, job)
-        # pylint: enable=broad-except
+
+    except Exception:
+        monitor = False
+        return
+            # pylint: enable=broad-except
+
+    monitor = False

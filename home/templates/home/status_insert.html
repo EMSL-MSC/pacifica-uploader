@@ -25,6 +25,7 @@ $.ajaxSetup({cache:false});
 
                 if (dataObj.state == 'DONE') {
                     var statusPage = dataObj.result;
+
                     window.open(statusPage, '_blank');
 
                     $('#status_info_container').dialog('close');

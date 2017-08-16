@@ -13,17 +13,6 @@ from bundler import bundle
 from home.tar_man import rename_tar_file
 from home.task_comm import TaskComm, task_error
 
-CLEAN_TAR = True
-
-
-def job_status():
-    """
-    checks the status of existing job
-    tbd
-    """
-    return []
-
-
 # tag to show this def as a celery task
 @shared_task
 def ping():
@@ -64,10 +53,6 @@ def upload_files(ingest_server='',
 
         TaskComm.set_state("PROGRESS", "Cleaning previous uploads")
 
-        # clean tar directory
-        #if CLEAN_TAR:
-        #   clean_target_directory(target_dir)
-
         # initial state pushed through celery
         TaskComm.set_state("PROGRESS", "Starting Bundle/Upload Process")
 
@@ -106,9 +91,18 @@ def upload_files(ingest_server='',
 
         status = json.loads(result)
 
+         # check for a valid job id.  Ingest error should return -99
+        job_id = status['job_id']
+        if job_id < 0:
+            task_error(err)
+            raise Exception('Upload error:  ' + bundle_name)
+
         TaskComm.set_state("PROGRESS", "Rename Tar File")
 
-        rename_tar_file(target_dir, bundle_name, status['job_id'])
+        try:
+            rename_tar_file(target_dir, bundle_name, job_id)
+        except Exception, ex:
+            raise Exception(ex.message + ':  ' + bundle_name + ':  ' + str(job_id))
 
         print status
 
@@ -129,7 +123,8 @@ def upload_files(ingest_server='',
         traceback.print_exc(file=sys.stderr)
         print >> sys.stderr, '-'*60
 
-        task_error('tasks: upload_files :' + str(ex.message))
-        print 'Task exception: ' + str(ex.message)
+        err = 'Task exception: upload_files :' + str(ex.message) + ':  ' + result  + ':  ' + traceback.format_exc() 
+        task_error(err)
+        print err
 
-        raise ex
+        raise Exception(err)

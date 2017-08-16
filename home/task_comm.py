@@ -2,6 +2,9 @@
 provides a generic way to communicate from the background task
 without the task knowing if celery is running
 """
+
+import traceback
+
 from celery import current_task
 
 import json
@@ -47,13 +50,13 @@ class TaskComm(object):
             info = cls.state['TASK_INFO']
             ret = {'state':state, 'info':info}
             current_task.info = json.dumps(ret)
-        else:
-            print '%s:  %s' % (t_state, t_msg)
+        
+        print '%s:  %s' % (t_state, t_msg)
 
 def task_error(t_msg):
     """
     sets the task state to FAILURE
     also log the error here
     """
-    # print 'FAILURE: ' + t_msg
-    TaskComm.set_state('FAILURE', t_msg)
+    print 'ERROR: ' + t_msg + ':  ' + traceback.format_exc()
+    TaskComm.set_state('ERROR', t_msg + ':  ' + traceback.format_exc())
