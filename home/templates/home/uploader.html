@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-	    <title>MyEMSL Instrument Data Uploader</title>
+	    <title>EMSL Instrument Data Uploader</title>
 
         {% include "includes/global_styles.html" %}
         <link rel="stylesheet" href="{{ MEDIA_URL }}stylesheets/upload_style.css">
@@ -17,7 +17,7 @@
 
 
             <div id="header_container">
-                <h1 class="underline">MyEMSL File Upload (Version {{site_version}})</h1>
+                <h1 class="underline">Instrument Data Uploader (Version {{site_version}})</h1>
                 <div id="login_id_container">
                      {% for meta in metaList %}
                           {% if meta.display_type == 'logged_on'  %}
