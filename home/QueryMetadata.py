@@ -360,7 +360,10 @@ class QueryMetadata(object):
             return id
 
         except Exception, ex:
-            err = str(ex.message) + ': query result: ' + reply.content + ':  ' + traceback.format_exc()
+            if (reply):
+                err = str(ex.message) + ': query result: ' + reply.content + ':  ' + traceback.format_exc()
+            else:
+                err = str(ex.message) + ':  ' + traceback.format_exc()
             print err
             raise Exception (err)
 
