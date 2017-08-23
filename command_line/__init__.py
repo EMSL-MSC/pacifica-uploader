@@ -17,6 +17,7 @@ from home import session_data
 from home import instrument_server
 from home import QueryMetadata
 from home import task_comm
+from home import tar_man
 
 from home import file_tools
 
