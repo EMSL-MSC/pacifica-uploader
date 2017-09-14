@@ -211,7 +211,7 @@ def upload_from_options(parser):
 
     # populate metadata.  Command line arguments override hard-coded config file arguments
     metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
-    metadata.load_meta()
+    metadata.load_meta(configdir)
 
     check_options(parser, configuration, metadata)
 
