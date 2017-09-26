@@ -169,13 +169,11 @@ def check_options(parser, config, metadata):
     if parser.values.tar_dir == 'NONE':
         parser.values.tar_dir = parser.values.work_dir
 
-    if parser.values.certification == '':
-        parser.error('missing authorization certification')
+    if parser.values.certification == '' or parser.values.auth_key == '':
+        auth = []
+    else:
+        auth = '{\"cert\":  [\"%s\", \"%s\"]}' % (parser.values.certification, parser.values.auth_key)
 
-    if parser.values.auth_key == '':
-        parser.error('missing authorization key')
-
-    auth = '{\"cert\":  [\"%s\", \"%s\"]}' % (parser.values.certification, parser.values.auth_key)
     config.auth = json.loads(auth)
     metadata.auth = json.loads(auth)
 
