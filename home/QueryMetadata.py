@@ -337,6 +337,8 @@ class QueryMetadata(object):
             user specific to this instance of Pacifica
         """
 
+        reply = None
+
         try:
             headers = {'content-type': 'application/json'}
             url = self.host + '/status/users/search/' + network_id + '/simple'
