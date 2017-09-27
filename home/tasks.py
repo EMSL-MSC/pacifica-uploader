@@ -89,7 +89,12 @@ def upload_files(ingest_server='',
 
         TaskComm.set_state("PROGRESS", "Finished Upload")
 
-        status = json.loads(result)
+        try:
+            status = json.loads(result)
+        except Exception, e:
+            print 'Upload Error'
+            print result
+            print 'End Upload Error'
 
          # check for a valid job id.  Ingest error should return -99
         job_id = status['job_id']
