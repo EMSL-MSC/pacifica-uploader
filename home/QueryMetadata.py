@@ -355,8 +355,13 @@ class QueryMetadata(object):
                 print 'getting without auth'
                 reply = requests.get(url, headers=headers, verify=False)
 
-                
-            data = json.loads(reply.content)
+            try:
+                data = json.loads(reply.content)
+            except Exception, e:
+                print 'Policy server error:'
+                print reply.content
+                print 'End policy server error'
+
             record = data[0]            
             id = record['person_id']
             return id
