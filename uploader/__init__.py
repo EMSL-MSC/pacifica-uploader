@@ -63,7 +63,13 @@ class Uploader(object):
         headers['Content-Length'] = size_str
 
         TaskComm.set_state("PROGRESS", 'Uploader Request')
-        status = requests.post(url, headers=headers, data=self, **self.auth)
+
+        if self.auth != None:
+            status = requests.post(url, headers=headers, data=self, **self.auth)
+        else:
+            print 'posting without auth'
+            status = requests.post(url, headers=headers, data=self)
+
         TaskComm.set_state("PROGRESS", 'Uploader End Request')
 
         self.fileobj.close()

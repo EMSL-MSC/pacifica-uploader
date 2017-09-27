@@ -68,8 +68,6 @@ class QueryMetadata(object):
     meta_list = []
     auth = {}
 
-    auth = {}
-
     def __init__(self, host, config_dir = ''):
         """
         constructor for Query class
@@ -136,10 +134,6 @@ class QueryMetadata(object):
         read by the metadata archive
         """
         configuration = read_config(config_path)
-
-        # get authorization
-
-        self.set_if_there(configuration, 'auth', self, 'auth')
 
         # create a list of metadata entries to pass to the list upload page
         try:
@@ -347,13 +341,19 @@ class QueryMetadata(object):
             headers = {'content-type': 'application/json'}
             url = self.host + '/status/users/search/' + network_id + '/simple'
 
-            certlist = self.auth['cert']
-            for path in certlist:
-                exists = os.path.isfile(path)
-                if not exists:
-                    raise Exception('Authorization file not found')
+            if self.auth != None:
+                certlist = self.auth['cert']
+                for path in certlist:
+                    exists = os.path.isfile(path)
+                    if not exists:
+                        raise Exception('Authorization file not found')
 
-            reply = requests.get(url, headers=headers,**self.auth)
+                reply = requests.get(url, headers=headers,**self.auth)
+            else:
+                print 'getting without auth'
+                reply = requests.get(url, headers=headers)
+
+                
             data = json.loads(reply.content)
             record = data[0]            
             id = record['person_id']
@@ -376,7 +376,11 @@ class QueryMetadata(object):
             headers = {'content-type': 'application/json'}
             url = self.host + '/uploader'
 
-            reply = requests.post(url, headers=headers, data=query, **self.auth)
+            if self.auth != None:
+                reply = requests.post(url, headers=headers, data=query, **self.auth)
+            else:
+                print 'posting without auth'
+                reply = requests.post(url, headers=headers, data=query)
 
             data = json.loads(reply.content)
 
