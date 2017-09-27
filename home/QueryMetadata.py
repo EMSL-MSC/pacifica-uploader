@@ -353,7 +353,7 @@ class QueryMetadata(object):
                 reply = requests.get(url, headers=headers,**self.auth)
             else:
                 print 'getting without auth'
-                reply = requests.get(url, headers=headers)
+                reply = requests.get(url, headers=headers, verify=False)
 
                 
             data = json.loads(reply.content)
@@ -382,7 +382,7 @@ class QueryMetadata(object):
                 reply = requests.post(url, headers=headers, data=query, **self.auth)
             else:
                 print 'posting without auth'
-                reply = requests.post(url, headers=headers, data=query)
+                reply = requests.post(url, headers=headers, data=query, verify=False)
 
             data = json.loads(reply.content)
 

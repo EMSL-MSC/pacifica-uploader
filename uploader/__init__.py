@@ -68,7 +68,7 @@ class Uploader(object):
             status = requests.post(url, headers=headers, data=self, **self.auth)
         else:
             print 'posting without auth'
-            status = requests.post(url, headers=headers, data=self)
+            status = requests.post(url, headers=headers, data=self, verify=False)
 
         TaskComm.set_state("PROGRESS", 'Uploader End Request')
 
