@@ -19,13 +19,15 @@ class Uploader(object):
     total_uploaded = 0
     total_size = 0
     auth = {}
+    verify = True
 
-    def __init__(self, bundle_name='', ingest_server='', auth=None):
+    def __init__(self, bundle_name='', ingest_server='', auth={}, verify=True):
         """Constructor for FileIngester class."""
         self.ingest_server = ingest_server
         self.bundle_name = bundle_name
         self.total_size = os.path.getsize(bundle_name)
         self.auth = auth
+        self.verify = verify
 
         TaskComm.set_state("PROGRESS", 'Uploader Initialized')
 
@@ -64,11 +66,7 @@ class Uploader(object):
 
         TaskComm.set_state("PROGRESS", 'Uploader Request')
 
-        if self.auth != None:
-            status = requests.post(url, headers=headers, data=self, **self.auth)
-        else:
-            print 'posting without auth'
-            status = requests.post(url, headers=headers, data=self, verify=False)
+        status = requests.post(url, headers=headers, data=self, verify=self.verify, **self.auth)
 
         TaskComm.set_state("PROGRESS", 'Uploader End Request')
 

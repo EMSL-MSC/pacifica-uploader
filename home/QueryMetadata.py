@@ -67,6 +67,7 @@ class QueryMetadata(object):
     user = ''
     meta_list = []
     auth = {}
+    verify = True
 
     def __init__(self, host, config_dir = ''):
         """
@@ -343,17 +344,14 @@ class QueryMetadata(object):
             headers = {'content-type': 'application/json'}
             url = self.host + '/status/users/search/' + network_id + '/simple'
 
-            if self.auth != None:
-                certlist = self.auth['cert']
-                for path in certlist:
-                    exists = os.path.isfile(path)
-                    if not exists:
-                        raise Exception('Authorization file not found')
+            
+            certlist = self.auth['cert']
+            for path in certlist:
+                exists = os.path.isfile(path)
+                if not exists:
+                    raise Exception('Authorization file not found')
 
-                reply = requests.get(url, headers=headers,**self.auth)
-            else:
-                print 'getting without auth'
-                reply = requests.get(url, headers=headers, verify=False)
+            reply = requests.get(url, headers=headers, verify=self.verify, **self.auth)
 
             try:
                 data = json.loads(reply.content)
@@ -383,11 +381,7 @@ class QueryMetadata(object):
             headers = {'content-type': 'application/json'}
             url = self.host + '/uploader'
 
-            if self.auth != None:
-                reply = requests.post(url, headers=headers, data=query, **self.auth)
-            else:
-                print 'posting without auth'
-                reply = requests.post(url, headers=headers, data=query, verify=False)
+            reply = requests.post(url, headers=headers, data=query, verify=self.verify, **self.auth)
 
             data = json.loads(reply.content)
 
