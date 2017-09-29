@@ -183,16 +183,18 @@ def check_options(parser, config, metadata):
     config.auth = json.loads(auth)
     metadata.auth = json.loads(auth)
 
-    verify = True
+    verify = 'True'
     if parser.values.verify == 'True':
         verify = True
     elif parser.values.verify == 'False':
-        verify == false
+        verify == False
     else: # fmust be a filename
         verify = parser.values.verify
         if not os.path.isfile(verify):
             raise (Exception('verify path not found:  ' + verify))
 
+    parser.values.verify = verify
+    metadata.verify = verify
     
 
     current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
