@@ -95,6 +95,7 @@ def upload_files(ingest_server='',
         except Exception, e:
             print 'Upload Error'
             print result
+            raise Exception('Upload error:  ' + result)
             print 'End Upload Error'
 
          # check for a valid job id.  Ingest error should return -99
