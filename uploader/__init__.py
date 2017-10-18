@@ -56,7 +56,7 @@ class Uploader(object):
         self.fileobj.seek(0)
 
         # adding unique data string to hopefully avoid cache issues
-        url = self.ingest_server + '/upload?' + self.bundle_name
+        url = self.ingest_server + '/upload'
 
         headers = {}
         headers['Content-Type'] = 'application/octet-stream'
