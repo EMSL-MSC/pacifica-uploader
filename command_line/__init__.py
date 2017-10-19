@@ -174,7 +174,7 @@ def check_options(parser, config, metadata):
     if parser.values.tar_dir == 'NONE':
         parser.values.tar_dir = parser.values.work_dir
 
-    auth = '{}'
+    auth = '{\"cert\": []}'
 
     if  os.path.isfile(parser.values.certification) and os.path.isfile(parser.values.auth_key):
         
