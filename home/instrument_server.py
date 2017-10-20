@@ -64,7 +64,7 @@ class UploaderConfiguration(object):
                     # must be a filename
                     if not os.path.isfile(self.verify):
                         raise (Exception('verify path not found:  ' + self.verify))
-            print "verify:  " + str(verify)
+            print "verify:  " + str(self.verify)
 
             self.set_if_there(configuration, 'policyServer', self, 'policy_server', err_list)
 

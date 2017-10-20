@@ -152,7 +152,7 @@ class QueryMetadata(object):
                     if not os.path.isfile(self.verify):
                         raise (Exception('verify path not found:  ' + self.verify))
 
-            print "verify:  " + str(verify)
+            print "verify:  " + str(self.verify)
 
             self.meta_list = []
             for meta in configuration['metadata']:
