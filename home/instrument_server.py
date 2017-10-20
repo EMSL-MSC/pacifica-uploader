@@ -27,6 +27,7 @@ class UploaderConfiguration(object):
     timeout = 30
 
     auth = {}
+    verify = True
 
     @staticmethod
     def set_if_there(config, key, obj, attr, err_list):
@@ -52,6 +53,18 @@ class UploaderConfiguration(object):
                 err_list.append('target directory unmounted')
 
             self.set_if_there(configuration, 'auth', self, 'auth', err_list)
+
+            if 'verify' in configuration:
+                if configuration['verify'] == 'True':
+                    self.verify = True
+                elif configuration['verify'] == 'False':
+                    self.verify = False
+                else:
+                    self.verify = configuration['verify']
+                    # must be a filename
+                    if not os.path.isfile(self.verify):
+                        raise (Exception('verify path not found:  ' + self.verify))
+            print "verify:  " + str(verify)
 
             self.set_if_there(configuration, 'policyServer', self, 'policy_server', err_list)
 

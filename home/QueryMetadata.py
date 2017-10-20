@@ -141,6 +141,19 @@ class QueryMetadata(object):
             # get authorization
             self.set_if_there(configuration, 'auth', self, 'auth')
 
+            if 'verify' in configuration:
+                if configuration['verify'] == 'True':
+                    self.verify = True
+                elif configuration['verify'] == 'False':
+                    self.verify = False
+                else:
+                    self.verify = configuration['verify']
+                    # must be a filename
+                    if not os.path.isfile(self.verify):
+                        raise (Exception('verify path not found:  ' + self.verify))
+
+            print "verify:  " + str(verify)
+
             self.meta_list = []
             for meta in configuration['metadata']:
 
