@@ -357,7 +357,7 @@ class QueryMetadata(object):
             headers = {'content-type': 'application/json'}
             url = self.host + '/status/users/search/' + network_id + '/simple'
 
-            if len(auth) > 0:
+            if len(self.auth) > 0:
                 certlist = self.auth['cert']
                 for path in certlist:
                     exists = os.path.isfile(path)
