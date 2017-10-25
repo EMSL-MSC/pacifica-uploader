@@ -19,13 +19,15 @@ class Uploader(object):
     total_uploaded = 0
     total_size = 0
     auth = {}
+    verify = True
 
-    def __init__(self, bundle_name='', ingest_server='', auth=None):
+    def __init__(self, bundle_name='', ingest_server='', auth={}, verify=True):
         """Constructor for FileIngester class."""
         self.ingest_server = ingest_server
         self.bundle_name = bundle_name
         self.total_size = os.path.getsize(bundle_name)
         self.auth = auth
+        self.verify = verify
 
         TaskComm.set_state("PROGRESS", 'Uploader Initialized')
 
@@ -56,14 +58,18 @@ class Uploader(object):
         self.fileobj.seek(0)
 
         # adding unique data string to hopefully avoid cache issues
-        url = self.ingest_server + '/upload?' + self.bundle_name
+        #url = self.ingest_server + '/upload?name=' + self.bundle_name
+        # dave changed the ingest api, it aint like that 
+        url = self.ingest_server + '/upload'
 
         headers = {}
         headers['Content-Type'] = 'application/octet-stream'
         headers['Content-Length'] = size_str
 
         TaskComm.set_state("PROGRESS", 'Uploader Request')
-        status = requests.post(url, headers=headers, data=self, **self.auth)
+
+        status = requests.post(url, headers=headers, data=self, verify=self.verify, **self.auth)
+
         TaskComm.set_state("PROGRESS", 'Uploader End Request')
 
         self.fileobj.close()

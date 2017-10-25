@@ -300,7 +300,8 @@ def spin_off_upload(request):
                                file_list=tuples,
                                bundle_size=file_manager.bundle_size,
                                meta_list=meta_list,
-                               auth=configuration.auth)
+                               auth=configuration.auth,
+                               verify=configuration.verify)
             request.session['upload_process'] = upload_process.task_id
             request.session.modified = True
             print 'setting process id to:  ' + request.session['upload_process'];

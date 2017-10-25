@@ -160,6 +160,11 @@ def add_options(parser):
                       dest='auth_key', default='',
                       help='authorization key AK', metavar='AK')
 
+    # verify auth
+    parser.add_option('-v', '--verify', type='string', action='store',
+                      dest='verify', default='True',
+                      help='verify V', metavar='V')
+
 
 def check_options(parser, config, metadata):
     """
@@ -169,15 +174,28 @@ def check_options(parser, config, metadata):
     if parser.values.tar_dir == 'NONE':
         parser.values.tar_dir = parser.values.work_dir
 
-    if parser.values.certification == '':
-        parser.error('missing authorization certification')
+    auth = '{\"cert\": []}'
 
-    if parser.values.auth_key == '':
-        parser.error('missing authorization key')
+    if  os.path.isfile(parser.values.certification) and os.path.isfile(parser.values.auth_key):
+        
+        auth = '{\"cert\":  [\"%s\", \"%s\"]}' % (parser.values.certification, parser.values.auth_key)
 
-    auth = '{\"cert\":  [\"%s\", \"%s\"]}' % (parser.values.certification, parser.values.auth_key)
     config.auth = json.loads(auth)
     metadata.auth = json.loads(auth)
+
+    verify = 'True'
+    if parser.values.verify == 'True':
+        verify = True
+    elif parser.values.verify == 'False':
+        verify == False
+    else: # fmust be a filename
+        verify = parser.values.verify
+        if not os.path.isfile(verify):
+            raise (Exception('verify path not found:  ' + verify))
+
+    parser.values.verify = verify
+    metadata.verify = verify
+    
 
     current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
     parser.values.bundle_name = os.path.join(
@@ -282,6 +300,7 @@ def upload_from_options(parser):
                  bundle_size=file_manager.bundle_size,
                  meta_list=meta_list,
                  auth=configuration.auth,
+                 verify = parser.values.verify,
                  tartar=tartar)
     # pylint: enable=unexpected-keyword-arg
 

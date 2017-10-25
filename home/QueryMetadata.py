@@ -67,8 +67,7 @@ class QueryMetadata(object):
     user = ''
     meta_list = []
     auth = {}
-
-    auth = {}
+    verify = True
 
     def __init__(self, host, config_dir = ''):
         """
@@ -137,14 +136,23 @@ class QueryMetadata(object):
         """
         configuration = read_config(config_path)
 
-        # get authorization
-
-        self.set_if_there(configuration, 'auth', self, 'auth')
-
         # create a list of metadata entries to pass to the list upload page
         try:
             # get authorization
             self.set_if_there(configuration, 'auth', self, 'auth')
+
+            if 'verify' in configuration:
+                if configuration['verify'] == 'True':
+                    self.verify = True
+                elif configuration['verify'] == 'False':
+                    self.verify = False
+                else:
+                    self.verify = configuration['verify']
+                    # must be a filename
+                    if not os.path.isfile(self.verify):
+                        raise (Exception('verify path not found:  ' + self.verify))
+
+            print "verify:  " + str(self.verify)
 
             self.meta_list = []
             for meta in configuration['metadata']:
@@ -343,18 +351,28 @@ class QueryMetadata(object):
             user specific to this instance of Pacifica
         """
 
+        reply = None
+
         try:
             headers = {'content-type': 'application/json'}
             url = self.host + '/status/users/search/' + network_id + '/simple'
 
-            certlist = self.auth['cert']
-            for path in certlist:
-                exists = os.path.isfile(path)
-                if not exists:
-                    raise Exception('Authorization file not found')
+            if len(self.auth) > 0:
+                certlist = self.auth['cert']
+                for path in certlist:
+                    exists = os.path.isfile(path)
+                    if not exists:
+                        raise Exception('Authorization file not found')
 
-            reply = requests.get(url, headers=headers,**self.auth)
-            data = json.loads(reply.content)
+            reply = requests.get(url, headers=headers, verify=self.verify, **self.auth)
+
+            try:
+                data = json.loads(reply.content)
+            except Exception, e:
+                print 'Policy server error:'
+                print reply.content
+                print 'End policy server error'
+
             record = data[0]            
             id = record['person_id']
             return id
@@ -376,9 +394,15 @@ class QueryMetadata(object):
             headers = {'content-type': 'application/json'}
             url = self.host + '/uploader'
 
-            reply = requests.post(url, headers=headers, data=query, **self.auth)
+            reply = requests.post(url, headers=headers, data=query, verify=self.verify, **self.auth)
 
-            data = json.loads(reply.content)
+            try:
+                data = json.loads(reply.content)
+            except Exception, e:
+                print 'Policy server error:'
+                print reply.content
+                print 'End policy server error'
+                raise Exception(reply.content)
 
             return data
 
