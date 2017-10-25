@@ -357,12 +357,12 @@ class QueryMetadata(object):
             headers = {'content-type': 'application/json'}
             url = self.host + '/status/users/search/' + network_id + '/simple'
 
-            
-            certlist = self.auth['cert']
-            for path in certlist:
-                exists = os.path.isfile(path)
-                if not exists:
-                    raise Exception('Authorization file not found')
+            if len(auth) > 0:
+                certlist = self.auth['cert']
+                for path in certlist:
+                    exists = os.path.isfile(path)
+                    if not exists:
+                        raise Exception('Authorization file not found')
 
             reply = requests.get(url, headers=headers, verify=self.verify, **self.auth)
 
