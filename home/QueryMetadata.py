@@ -396,7 +396,13 @@ class QueryMetadata(object):
 
             reply = requests.post(url, headers=headers, data=query, verify=self.verify, **self.auth)
 
-            data = json.loads(reply.content)
+            try:
+                data = json.loads(reply.content)
+            except Exception, e:
+                print 'Policy server error:'
+                print reply.content
+                print 'End policy server error'
+                raise Exception(reply.content)
 
             return data
 
