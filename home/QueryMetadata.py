@@ -38,6 +38,8 @@ class MetaData(object):
     query_dependencies = None
     # type of display (select, entry, etc.)
     display_type = ''
+    # display sub type (list, date, etc.)
+    display_subtype = ''
     # title of field in the browser client
     display_title = ''
     # format of the displayed data
@@ -165,6 +167,7 @@ class QueryMetadata(object):
                 self.set_if_there(meta, 'destinationTable', meta_entry, 'destination_table')
                 self.set_if_there(meta, 'metaID', meta_entry, 'meta_id')
                 self.set_if_there(meta, 'displayType', meta_entry, 'display_type')
+                self.set_if_there(meta, 'displaySubType', meta_entry, 'display_subtype')
                 self.set_if_there(meta, 'displayTitle', meta_entry, 'display_title')
                 self.set_if_there(meta, 'queryDependency', meta_entry, 'query_dependencies')
                 self.set_if_there(meta, 'valueField', meta_entry, 'value_field')

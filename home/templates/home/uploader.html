@@ -57,7 +57,15 @@
                                 {% if meta.display_type == 'enter'  %}
                                     <li>
                                        <label for="{{meta.meta_id}}" style="display:block;">{{meta.display_title}}</label>
-                                       <input type="text" id="{{meta.meta_id}}" style="width:80%;border-width:1px;" name="{{meta.meta_id}}" value = "{{meta.value}}">
+                                        {% if meta.display_subtype == 'list' %}
+                                            <select id="{{meta.meta_id}}" name="{{meta.meta_id}}" class="main_page_selector">
+                                                {% for opt in  meta.value %}
+                                                    <option value="{{opt}}"> {{opt}} </option>
+                                                {% endfor %}
+                                            </select>
+                                        {% else %}
+                                            <input type="text" id="{{meta.meta_id}}" style="width:80%;border-width:1px;" name="{{meta.meta_id}}" value = "{{meta.value}}">
+                                        {% endif %}
                                     </li>
                                 {% endif %}
                             {% endfor %}
