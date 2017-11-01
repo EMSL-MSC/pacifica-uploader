@@ -314,6 +314,7 @@ def spin_off_upload(request):
                                auth=configuration.auth)
     except Exception, ex:
         set_uploading(request, False)
+        return HttpResponseBadRequest(json.dumps(ex.message), content_type='application/json')
 
     return HttpResponse(json.dumps('success'), content_type='application/json')
 

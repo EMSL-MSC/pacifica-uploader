@@ -144,7 +144,9 @@ $(window).on("load", function () { initializeFields() });
             }
         });
 
-        $('select').select2({width:'resolve'});
+        $('select').select2({ width: 'resolve' });
+
+        $('select.defaultEmpty').select2({ width: 'resolve', placeholder: 'Please select an option' });
 
         function loadError(e, data) {
             var error = data.error;

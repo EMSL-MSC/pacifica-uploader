@@ -58,7 +58,8 @@
                                     <li>
                                        <label for="{{meta.meta_id}}" style="display:block;">{{meta.display_title}}</label>
                                         {% if meta.display_subtype == 'list' %}
-                                            <select id="{{meta.meta_id}}" name="{{meta.meta_id}}" class="main_page_selector">
+                                            <select id="{{meta.meta_id}}" name="{{meta.meta_id}}" class="main_page_selector defaultEmpty" >
+                                                <option></option>
                                                 {% for opt in  meta.value %}
                                                     <option value="{{opt}}"> {{opt}} </option>
                                                 {% endfor %}

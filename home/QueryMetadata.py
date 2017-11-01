@@ -45,6 +45,9 @@ class MetaData(object):
     # format of the displayed data
     display_format = "%s"
 
+    # is the key/value field required?
+    required = False
+
     # format of the artificial directory name (if any) for searching the
     # archive
     directory_order = None
@@ -131,6 +134,17 @@ class QueryMetadata(object):
         if meta_key in meta:
             setattr(obj, attr, meta[meta_key])
 
+    @staticmethod
+    def set_bool_if_there(meta, meta_key, obj, attr):
+        """ kludge to avoid too many conditionals """
+        if meta_key in meta:
+            if meta[meta_key] == 'True':
+                value = True
+            else:
+                value = False
+            setattr(obj, attr, value)
+
+
     def load_meta(self, config_path = ''):
         """
         puts the metadata into a format that can eventually be
@@ -169,6 +183,9 @@ class QueryMetadata(object):
                 self.set_if_there(meta, 'displayType', meta_entry, 'display_type')
                 self.set_if_there(meta, 'displaySubType', meta_entry, 'display_subtype')
                 self.set_if_there(meta, 'displayTitle', meta_entry, 'display_title')
+
+                self.set_bool_if_there(meta, 'required', meta_entry, 'required')
+
                 self.set_if_there(meta, 'queryDependency', meta_entry, 'query_dependencies')
                 self.set_if_there(meta, 'valueField', meta_entry, 'value_field')
                 self.set_if_there(meta, 'queryFields', meta_entry, 'columns')
@@ -438,7 +455,12 @@ class QueryMetadata(object):
 
                 if meta.meta_id != 'logon':
                     value = form[meta.meta_id]
-                    if value:
+
+                    # if required, load empties
+                    if meta.required: 
+                        meta.value = value
+                    #otherwise, skip them
+                    elif value:
                         meta.value = value
                 else:
                     # special case, set this to the Pacifica user instead of the Network ID
@@ -453,6 +475,9 @@ def create_meta_upload(meta):
     """
     if meta.destination_table == '':
         return None
+
+    if meta.required and not meta.value:
+        raise (Exception(meta.display_title + " is a required field"))
 
     meta_obj = {}
     meta_obj['destinationTable'] = meta.destination_table
