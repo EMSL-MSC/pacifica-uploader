@@ -456,12 +456,8 @@ class QueryMetadata(object):
                 if meta.meta_id != 'logon':
                     value = form[meta.meta_id]
 
-                    # if required, load empties
-                    if meta.required: 
-                        meta.value = value
-                    #otherwise, skip them
-                    elif value:
-                        meta.value = value
+                    # load empties always, filter in create_meta_upload
+                    meta.value = value
                 else:
                     # special case, set this to the Pacifica user instead of the Network ID
                     meta.value = self.user
@@ -478,6 +474,10 @@ def create_meta_upload(meta):
 
     if meta.required and not meta.value:
         raise (Exception(meta.display_title + " is a required field"))
+
+    # checked the required filter, throw away any other empties
+    if not meta.value:
+        return None
 
     meta_obj = {}
     meta_obj['destinationTable'] = meta.destination_table
