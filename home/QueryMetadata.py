@@ -423,6 +423,9 @@ class QueryMetadata(object):
                 print reply.content
                 print 'End policy server error'
                 raise Exception(reply.content)
+            
+            if not data:
+                raise Exception ('Empty list returned')
 
             return data
 
@@ -430,7 +433,6 @@ class QueryMetadata(object):
             err = str(ex.message) + ': query: ' + query + ': result: ' + reply.content + ':  ' + traceback.format_exc()
             print err
             raise Exception (err)
-
 
     def get_display(self, meta):
         """

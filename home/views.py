@@ -486,16 +486,21 @@ def initialize_fields(request):
     # start from scratch on first load and subsequent reloads of page
     metadata = fresh_meta_obj(request)
 
-    updates = metadata.initial_population(network_id)
+    try:
+        updates = metadata.initial_population(network_id)
 
-    retval = json.dumps(updates)
+        retval = json.dumps(updates)
 
-    # clean the selection lists from the metadata list
-    # so that our header isn't freaking huge
-    for meta in metadata.meta_list:
-        meta.browser_field_population['selection_list'] = []
+        # clean the selection lists from the metadata list
+        # so that our header isn't freaking huge
+        for meta in metadata.meta_list:
+            meta.browser_field_population['selection_list'] = []
 
-    return HttpResponse(retval, content_type='application/json')
+        return HttpResponse(retval, content_type='application/json')
+    except Exception, ex:
+        return HttpResponseBadRequest(json.dumps(ex.message),
+                                          content_type='application/json')
+        
 
 
 def select_changed(request):

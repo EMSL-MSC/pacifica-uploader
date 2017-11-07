@@ -80,8 +80,9 @@ var testCount = 0
                     test_upload();
             })
         .fail(function (xhr, textStatus, errorThrown) {
-            errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
-            window.open(errtext, '_blank');
+            //errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
+            //window.open(errtext, '_blank');
+            alert(xhr.responseText);
         });
     }
 
