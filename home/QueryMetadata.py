@@ -70,6 +70,7 @@ class QueryMetadata(object):
 
     host = ''
     user = ''
+    network_id = ''
     meta_list = []
     auth = {}
     verify = True
@@ -273,8 +274,7 @@ class QueryMetadata(object):
         # once the dependencies are filled we can create the query and populate
         # the list
         query = self.build_query(meta)
-
-        query_result = self.get_list(query)
+        query_result = self.get_list(query, meta)
 
         # validate that we have a valid json return value
         # will throw an error to the base level if not
@@ -301,6 +301,8 @@ class QueryMetadata(object):
 
         node = self.get_node('logon')
         node.value = network_id
+
+        self.network_id = network_id
 
         init_fields = []
 
@@ -359,7 +361,7 @@ class QueryMetadata(object):
 
         for child in children:
             query = self.build_query(child)
-            query_result = self.get_list(query)
+            query_result = self.get_list(query, child)
             self.build_selection_list(child, query_result)
             if any(child.browser_field_population):
                 update_fields.append(child.browser_field_population)
@@ -405,7 +407,7 @@ class QueryMetadata(object):
             print err
             raise Exception (err)
 
-    def get_list(self, query):
+    def get_list(self, query, meta):
         """
             gets a list of items based on the json query structure
         """
@@ -430,8 +432,28 @@ class QueryMetadata(object):
             return data
 
         except Exception, ex:
+            # log for debug
             err = str(ex.message) + ': query: ' + query + ': result: ' + reply.content + ':  ' + traceback.format_exc()
             print err
+
+            # pretty english output for manager types
+            err = str(ex.message) + ': query: ' + query + ': result: ' + reply.content + ':  ' + traceback.format_exc()
+            
+            err = 'For user ' + str(self.network_id) + ', there are no values in ' + meta.source_table + ' where '
+
+            where_count = 0
+            # loop over the dependency list
+            for column, meta_id in meta.query_dependencies.iteritems():
+                # meta_id is the where we are getting the actual value from the populated meta
+                # column is the field , for instance "_id"
+                for check_obj in self.meta_list:
+                    if meta_id == check_obj.meta_id:
+                        if where_count > 0:
+                            err = err + ', '
+                        err = err + column + ' = ' + check_obj.value
+                        
+                        break
+
             raise Exception (err)
 
     def get_display(self, meta):
@@ -439,7 +461,7 @@ class QueryMetadata(object):
         gets the display value for a meta node
         """
         query = self.build_query(meta)
-        query_result = self.get_list(query)
+        query_result = self.get_list(query, meta)
         self.build_selection_list(meta, query_result)
 
         selection_list = meta.browser_field_population['selection_list']
