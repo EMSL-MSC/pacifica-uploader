@@ -98,6 +98,13 @@ def initialize_config():
     if err != '[]':
         return err
 
+def init_error(request):
+    """
+    error in initialization
+    """
+
+    return login_error(request, "Error in Page initialization, contact Administrator")
+
 # @login_required(login_url=settings.LOGIN_URL)
 def populate_upload_page(request, testmode=False):
     """
@@ -289,8 +296,12 @@ def spin_off_upload(request):
 
         # load the metadata object with the most recent updates
         metadata = fresh_meta_obj(request)
-
+        
         meta_list = metadata.create_meta_upload_list()
+        meta_str = json.dumps(meta_list)
+        success, exception = metadata.validate_meta(meta_str)
+        if not success:
+            raise(exception)
 
         # spin this off as a background process and load the status page
         if TaskComm.USE_CELERY:

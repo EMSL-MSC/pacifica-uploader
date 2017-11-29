@@ -407,6 +407,25 @@ class QueryMetadata(object):
             print err
             raise Exception (err)
 
+    def validate_meta(self, meta_str):
+        """Validate metadata."""
+        try:
+
+            url = self.host + '/ingest'
+
+            headers = {'content-type': 'application/json'}
+
+            req = requests.post(url, headers=headers, data=meta_str, **self.auth)
+
+            req_json = req.json()
+            if req_json['status'] == 'success':
+                return True, ''
+            return False, Exception(req_json['message'])
+        # pylint: disable=broad-except
+        except Exception as ex:
+            return False, ex
+        # pylint: enable=broad-except
+
     def get_list(self, query, meta):
         """
             gets a list of items based on the json query structure
