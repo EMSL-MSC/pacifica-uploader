@@ -415,7 +415,7 @@ class QueryMetadata(object):
 
             headers = {'content-type': 'application/json'}
 
-            req = requests.post(url, headers=headers, data=meta_str, **self.auth)
+            req = requests.post(url, headers=headers, data=meta_str, verify=self.verify, **self.auth)
 
             req_json = req.json()
             if req_json['status'] == 'success':
