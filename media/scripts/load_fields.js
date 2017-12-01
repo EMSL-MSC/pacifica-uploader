@@ -83,6 +83,7 @@ var testCount = 0
             //errtext = 'data:text/html;base64,' + window.btoa(xhr.responseText);
             //window.open(errtext, '_blank');
             alert(xhr.responseText);
+            window.location.href = '/logout';
         });
     }
 
