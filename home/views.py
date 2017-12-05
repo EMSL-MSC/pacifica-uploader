@@ -54,7 +54,7 @@ configuration = instrument_server.UploaderConfiguration()
 # pylint: disable=global-variable-not-assigned
 
 # development VERSION
-VERSION = '2.2.7, 10.27.17'
+VERSION = '2.2.9, 12.05.17'
 
 
 def ping_celery():
