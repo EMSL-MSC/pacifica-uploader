@@ -54,7 +54,7 @@ configuration = instrument_server.UploaderConfiguration()
 # pylint: disable=global-variable-not-assigned
 
 # development VERSION
-VERSION = '2.2.9, 12.05.17'
+VERSION = '2.2.10, 12.06.17'
 
 
 def ping_celery():
@@ -564,12 +564,14 @@ def get_children(request):
 
             # folders first
             for item in filtered:
+
                 itempath = os.path.join(parent, item)
-                time = os.path.getmtime(itempath)
-                mod_time = datetime.datetime.fromtimestamp(
-                    time).strftime('%m/%d/%Y %I:%M%p')
 
                 if files.accessible(itempath):
+                    time = os.path.getmtime(itempath)
+                    mod_time = datetime.datetime.fromtimestamp(
+                                                        time).strftime('%m/%d/%Y %I:%M%p')
+
                     if os.path.isfile(itempath):
                         title = \
                             ('%s <span class="fineprint"> [Last Modified %s ]</span>') % \
