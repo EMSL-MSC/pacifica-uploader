@@ -185,33 +185,38 @@ class FileManager(object):
         """
         retval = True
 
-        if os.path.islink(path):
-            retval = False
-        elif os.path.isfile(path):
-            try:
-                # this doesn't work, at least in windows.  A file may be readable
-                # by _someone_ and this will return true, but fail on reading
-                # if os.access(path, os.R_OK):
-                #    size = os.path.getsize(path)
-                # else:
-                #    return false;
-                with open(path) as temp_file:
-                    temp_file.close()
-            except OSError as ex:
-                print ex
+        try:
+            if os.path.islink(path):
+                retval = False
+            elif os.path.isfile(path):
+                try:
+                    # this doesn't work, at least in windows.  A file may be readable
+                    # by _someone_ and this will return true, but fail on reading
+                    # if os.access(path, os.R_OK):
+                    #    size = os.path.getsize(path)
+                    # else:
+                    #    return false;
+                    with open(path) as temp_file:
+                        temp_file.close()
+                except OSError as ex:
+                    print ex
+                    retval = False
+
+            elif os.path.isdir(path):
+                try:
+                    os.listdir(path)
+                except OSError:
+                    retval = False
+            # we only support files and directories
+            else:
                 retval = False
 
-        elif os.path.isdir(path):
-            try:
-                os.listdir(path)
-            except OSError:
-                retval = False
-        # we only support files and directories
-        else:
+        except Exception, ex:
+            print str(ex)
             retval = False
 
         if not retval:
-            self.error_string = 'Unaccessible files were skipped'
+            self.error_string = 'Unaccessible path was skipped:  ' + path
 
         return retval
 
