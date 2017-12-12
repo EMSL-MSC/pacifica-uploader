@@ -53,7 +53,7 @@ def rename_tar_file(directory, old_name, job_id):
     except Exception, ex:
         print ex.message
         print traceback.format_exc()
-        raise Exception (ex.message + ':  ' + traceback.format_exc());
+        raise Exception(ex.message + ':  ' + traceback.format_exc())
 
 
 def remove_orphans(directory):
@@ -109,6 +109,6 @@ def clean_target_directory(target_dir=''):
     except Exception:
         monitor = False
         return
-            # pylint: enable=broad-except
+        # pylint: enable=broad-except
 
     monitor = False

@@ -1,70 +1,69 @@
 {
-    "dataRoot": "S:\\7_Representative_Data",
-    "target": "E:\\tar",
+    "dataRoot": "/srv/Data",
+    "target": "/srv/Target",
     "timeout": "1",
-    "statusServer": "https://statusdev.my.emsl.pnl.gov:/status_api/view/",
-    "policyServer": "https://policydev.my.emsl.pnl.gov",
-	"ingestServer": "https://ingestdev.my.emsl.pnl.gov",
+    "statusServer": "http://status.local/view/",
+    "policyServer": "http://policyserver:8181",
+	"ingestServer": "http://ingest:8066",
 	"timezone":  "",
     "use_celery": "True",
-		
-	"auth" : {"cert": ["auth/intermediate/certs/d3e889.cert.pem", "auth/intermediate/private/d3e889-nopassword.key.pem"]},
 
+    "auth" : {},
 
     "metadata": [
 		{
 			"metaID": "logon",
 			"sourceTable": "users",
 			"destinationTable": "Transactions.submitter",
-			"value": "d3e889",
+			"value": "",
 			"displayType": "logged_on",
-			"displayTitle": "Currently Logged On",			
+			"displayTitle": "Currently Logged On",
 			"valueField": "_id",
             "queryFields": [ "first_name", "last_name", "_id"],
 			"queryDependency": { "network_id": "logon" },
 			"diplayFormat": "%(first_name)s %(last_name)s"
 		},
-        {		
+        {
             "metaID": "instrumentByID",
             "sourceTable": "instruments",
 			"destinationTable": "Transactions.instrument",
             "displayType": "select",
 			"displayTitle": "Instrument",
-            "value": "34176",
+            "value": "34075",
 			"valueField": "_id",
             "queryDependency": { "_id": "instrumentByID" },
             "queryFields": ["_id",  "name_short", "display_name" ],
 			"diplayFormat": "%(_id)s %(name_short)s - %(display_name)s"
-        },		
+        },
 		{
             "sourceTable": "instruments",
             "metaID": "instrumentDirectory",
-            "displayType": "directoryTree", 
+            "displayType": "directoryTree",
 			"directoryOrder": 1,
 			"diplayFormat": "%(name_short)s",
 			"valueField": "_id",
             "queryDependency": { "_id": "instrumentByID" },
             "queryFields": ["_id", "name_short"]
-        },		
-        {		
-            "metaID": "ProposalByInstrument",
+        },
+        {
             "sourceTable": "proposals",
+            "metaID": "ProposalByInstrument",
             "value": "",
 			"destinationTable": "Transactions.proposal",
             "displayTitle": "Proposal",
             "displayType": "select",
-            "queryDependency": { "_id": "ProposalByInstrument" },
+            "queryDependency": { "instrument_id": "instrumentByID" },
 			"valueField": "_id",
             "queryFields": [ "_id", "title" ],
 			"diplayFormat": "%(_id)s %(title)s"
-        },		
+        },
         {
             "sourceTable": "proposals",
             "metaID": "ProposalDirectory",
-            "value": "45796",
+            "value": "",
             "displayType": "directoryTree",
-			"diplayFormat": "Dave is a twit %(_id)s", 
-			"directoryOrder": 0,		
+			"diplayFormat": "Proposal %(_id)s",
+			"directoryOrder": 0,
             "queryDependency": { "_id": "ProposalByInstrument" },
 			"valueField": "_id",
             "queryFields": [ "_id"]
@@ -76,16 +75,16 @@
             "displayTitle": "EMSL User",
             "displayType": "select",
 			"key": "User of Record",
-			"value": "34002",
+			"value": "",
             "queryDependency": { "proposal_id": "ProposalByInstrument" },
 			"valueField": "_id",
             "queryFields": [ "first_name", "last_name", "_id"],
 			"diplayFormat": "%(first_name)s %(last_name)s"
         },
-        {            
+        {
 			"destinationTable": "TransactionKeyValue",
             "metaID": "tag1",
-			"key": "Tag",			
+			"key": "Tag",
             "value": "",
             "displayTitle": "Tag",
             "displayType": "enter"

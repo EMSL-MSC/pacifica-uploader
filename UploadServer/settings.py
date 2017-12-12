@@ -118,19 +118,18 @@ USE_L10N = True
 
 USE_TZ = True
 
-#Session stuff
-#SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+# Session stuff
+# SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-#SESSION_COOKIE_AGE = 3 * 30
+# SESSION_COOKIE_AGE = 3 * 30
 
 # see if this gets rid of sqlite lockup
 SESSION_SAVE_EVERY_REQUEST = False
-#SESSION_SAVE_EVERY_REQUEST = True
+# SESSION_SAVE_EVERY_REQUEST = True
 
 # added to make admin work?
 SESSION_COOKIE_SECURE = False
-
 
 
 # Static files (CSS, JavaScript, Images)
@@ -139,4 +138,4 @@ SESSION_COOKIE_SECURE = False
 MEDIA_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'media')
 MEDIA_URL = '/media/'
 
-STATIC_URL = "c:/static/"
+STATIC_URL = "static/"

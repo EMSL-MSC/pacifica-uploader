@@ -8,6 +8,7 @@ from django import forms
 # pylint: disable=too-few-public-methods
 # justification: django
 
+
 class DocumentForm(forms.Form):
     """
     Django boilerplate

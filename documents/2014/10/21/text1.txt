@@ -1,3 +1,0 @@
-this is a text file.  It contains text.
-
-textity textity text.

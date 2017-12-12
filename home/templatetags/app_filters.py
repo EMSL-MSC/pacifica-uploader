@@ -1,5 +1,5 @@
-#pylint: disable=invalid-name
-#justification: because pylint doesn't get celery
+# pylint: disable=invalid-name
+# justification: because pylint doesn't get celery
 
 '''
 Created on Dec 3, 2014
@@ -9,6 +9,7 @@ Created on Dec 3, 2014
 from django import template
 
 register = template.Library()
+
 
 @register.filter
 def get_at_index(items, index):

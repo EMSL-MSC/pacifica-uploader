@@ -13,6 +13,7 @@ from bundler import bundle
 from home.tar_man import rename_tar_file
 from home.task_comm import TaskComm, task_error
 
+
 # tag to show this def as a celery task
 @shared_task
 def ping():
@@ -38,7 +39,7 @@ def upload_files(ingest_server='',
                  bundle_size=0,
                  meta_list=None,
                  auth={},
-                 verify = True,
+                 verify=True,
                  tartar=False):
     """
     task created on a separate Celery process to bundle and upload in the background
@@ -58,7 +59,7 @@ def upload_files(ingest_server='',
         TaskComm.set_state("PROGRESS", "Starting Bundle/Upload Process")
 
         bundle(bundle_name=bundle_name,
-               file_list=file_list,               meta_list=meta_list,
+               file_list=file_list, meta_list=meta_list,
                bundle_size=bundle_size)
 
         TaskComm.set_state("PROGRESS", "Completed Bundling")
@@ -98,7 +99,7 @@ def upload_files(ingest_server='',
             raise Exception('Upload error:  ' + result)
             print 'End Upload Error'
 
-         # check for a valid job id.  Ingest error should return -99
+        # check for a valid job id.  Ingest error should return -99
         job_id = status['job_id']
         if job_id < 0:
             task_error(err)
@@ -114,7 +115,7 @@ def upload_files(ingest_server='',
         print status
 
         if TaskComm.USE_CELERY:
-            #set job ID here
+            # set job ID here
             print 'exit with deliberate error'
             print result
             raise StandardError(result)
@@ -126,11 +127,11 @@ def upload_files(ingest_server='',
 
     except Exception, ex:
         print >> sys.stderr, "Exception in upload_files:"
-        print >> sys.stderr, '-'*60
+        print >> sys.stderr, '-' * 60
         traceback.print_exc(file=sys.stderr)
-        print >> sys.stderr, '-'*60
+        print >> sys.stderr, '-' * 60
 
-        err = 'Task exception: upload_files :' + str(ex.message) + ':  ' + result  + ':  ' + traceback.format_exc() 
+        err = 'Task exception: upload_files :' + str(ex.message) + ': ' + result + ': ' + traceback.format_exc()
         task_error(err)
         print err
 

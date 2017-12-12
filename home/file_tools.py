@@ -7,6 +7,7 @@ import os
 # pylint: disable=too-few-public-methods
 # justification: perfect amount of methods, possibly look at using "collection"
 
+
 class FolderMeta(object):
     """
     meta data about a folder, including filecount, directory count, and the total bytes.
