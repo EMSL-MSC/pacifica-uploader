@@ -1,6 +1,6 @@
-#pylint: disable=no-member
-#pylint: disable=invalid-name
-#justification: because pylint doesn't get celery
+# pylint: disable=no-member
+# pylint: disable=invalid-name
+# justification: because pylint doesn't get celery
 
 """
 Celery properties
@@ -25,6 +25,7 @@ app = Celery('UploadServer')
 # pickle the object when using Windows.
 app.config_from_object('django.conf:settings')
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
+
 
 @app.task(bind=True)
 def debug_task(self):
