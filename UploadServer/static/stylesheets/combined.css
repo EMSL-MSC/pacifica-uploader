@@ -37,12 +37,12 @@ body {
     margin-right: 5px;
 }
 
-.smallprint a {
+.login_id_container a {
     color: #fff;
     text-decoration: none;
 }
 
-.smallprint a:hover {
+.login_id_container a:hover {
     text-decoration: underline;
 }
 
@@ -273,7 +273,7 @@ button:hover, .buttons input[type="button"]:hover {
     position: relative;
 }
 
-.graphic_logo {
+.logo_image {
     display:none;
 }
 
@@ -292,7 +292,7 @@ button:hover, .buttons input[type="button"]:hover {
     background-color: #efefef;
 }
 
-.text_logo {
+.logo_container {
     color: white;
     font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 2em;
@@ -304,7 +304,7 @@ button:hover, .buttons input[type="button"]:hover {
 .underline {
     color: white;
     padding: 0.25em;
-    padding-left: 0.5em;
+    padding-left: 1.0em;
     background-color: rgb(42, 70, 103);
     margin-top: 0px;
     font-weight: normal;
@@ -470,7 +470,7 @@ dl.metadata_description_list {
     .site_slogan {
         display:none;
     }
-    .text_logo {
+    .logo_container {
         font-size: 1.25em;
     }
     .metadata_container {

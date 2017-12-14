@@ -1,0 +1,8 @@
+<footer class="short">
+    <section id="contact_info" class="contact_info">
+        {% block test_mode_indicator %}<div id="test_mode_indicator"></div>{% endblock %}
+        <div id="last_update_timestamp" style="">
+            Version {% block site_version_display %}unknown{% endblock %} / Updated {% block last_update_time %}at some generic time{% endblock %}
+        </div>
+    </section>
+</footer>

@@ -392,8 +392,9 @@ class QueryMetadata(object):
                 print 'End policy server error'
 
             record = data[0]
-            id = record['person_id']
-            return id
+            # id = record['person_id']
+            # return id
+            return record
 
         except Exception, ex:
             if (reply):

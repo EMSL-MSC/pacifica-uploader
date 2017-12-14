@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>MyEMSL Instrument Data Uploader</title>
+    
+    {% include "includes/global_styles.html" %}
+    <link rel="stylesheet" href="{{ MEDIA_URL }}stylesheets/status_style.css">
+
+    <script type="text/javascript">
+    var url = '/incStatus';
+       
+        function worker() {
+            var jqobject = $.ajax(url)
+                .done(function (data) {
+                    
+                    var dataObj = $.parseJSON(data);
+                    var state = dataObj.state;
+                    var result = JSON.stringify(dataObj.result);
+                    var stateStr = state.concat(': ');
+                    stateStr = stateStr.concat(result);
+                    $('#currState').html(stateStr);
+                        debugger;
+
+                    if (dataObj.state == 'DONE') {
+
+
+                        var statusPage = dataObj.result;
+                        //var win = window.open(statusPage, '_blank');
+                        window.open(statusPage, '_blank');
+
+                        // close this window
+                       // $(this).closest('.ui-dialog-content').dialog('close');
+                    }
+
+                    // restart timer
+                    setTimeout(worker, 1000);
+                })
+                .fail(function(obj, textStatus, error){
+                    $('#currState').html('Unknown');
+                })
+
+        };
+        $(function () {
+            $.ajaxSetup({ cache: false });
+            debugger;
+            worker();
+        });
+    </script>
+</head>
+    <body>
+        <div class="page_content">
+            {% include "includes/view_header.html" %}
+            <div id="header_container">
+                <h1 class="underline">MyEMSL File Upload</h1>
+                <div id="login_id_container">
+                    <p><em>{{user}}</em></p>
+                    <p class="smallprint"><a href="/login">Not You? Click here to Logout</a></p>
+                </div>
+            </div>
+            <section id="main_content" class="themed">
+                <fieldset>
+                    <legend>Current Upload Status</legend>
+                    <div class="full_width_block">
+                        <dl>
+                            <dt>Date of Upload:</dt>
+                                <dd>{{current_time}}</dd>
+                            <dt>Current Status:</dt>
+                                <dd><span id="currState">Unknown</span></dd>
+                            <dt>Bundle Size:</dt>
+                                <dd>{{bundle_size}}</dd>
+                            <dt>Available Free Space:</dt>
+                                <dd>{{free_size}}</dd>
+                        </dl>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Metadata Tags</legend>
+                    <dl>
+                        {% for meta in metaList %}
+                        <dt>{{meta.display_title}}</dt>
+                           <dd>{{meta.value}}</dd> 
+                        {% endfor %}
+                    </dl>
+                </fieldset>
+
+            </section>
+
+                <form  action="{% url "incStatus" %}" method="post" enctype="multipart/form-data">
+			    {% csrf_token %}			
+			        <div style="text-align: center; position: relative; margin-top: 2em;">	
+                        <input type="submit" name = "Cancel Upload" value="Cancel Upload" />            
+                    </div>
+                </form>
+
+            {% include "includes/view_footer_short.html" %}
+        </div>
+    </body>
+</html>

@@ -20,10 +20,11 @@ import sys
 import traceback
 import cPickle as pickle
 import psutil
+import pprint
 
 from django.conf import settings
 from django.shortcuts import render_to_response
-from django.template import RequestContext
+from django.template import RequestContext, Context
 
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
@@ -132,17 +133,25 @@ def populate_upload_page(request, testmode=False):
     metadata = fresh_meta_obj(request)
 
     # get the Pacifica user
-    pacifica_user = metadata.get_Pacifica_user(network_user)
-
+    user_record = metadata.get_Pacifica_user(network_user)
+    pacifica_user = user_record['person_id']
+    # print(user_record)
+    # logging.debug(metadata.meta_list.__dict__)
     if not pacifica_user:
         return login_error(request, "Pacifica user is not found")
-
+    print configuration.theming
     # Render the upload page with the meta (just the render format) and the default root directory
-    return render_to_response('home/uploader.html',
-                              {'data_root': configuration.data_dir,
-                               'site_version': VERSION,
-                               'metaList': metadata.meta_list,
-                               'testmode': testmode},
+    template_name = 'themes/{0}/uploader.html'.format(configuration.theming.get('theme_name'))
+    theming = configuration.theming
+    # if(configuration.theme_name):
+    #     template_name = 'home/themes/{0}/uploader.html'.format(configuration.theme_name)
+    return render_to_response(template_name,
+                              Context({'data_root': configuration.data_dir,
+                                       'site_version': VERSION,
+                                       'theming': theming,
+                                       'metaList': metadata.meta_list,
+                                       'testmode': testmode,
+                                       'user_info': user_record}),
                               RequestContext(request))
 
 
@@ -224,7 +233,7 @@ def show_status_insert(request, message):
     except KeyError:
         free_size_str = 'key error'
 
-    return render_to_response('home/status_insert.html',
+    return render_to_response('status_insert.html',
                               {'status': message,
                                'bundle_size': bundle_size_str,
                                'free_size': free_size_str},
@@ -470,7 +479,8 @@ def fresh_meta_obj(request):
     if 'PacificaUser' in request.session:
         pacifica_user = request.session['PacificaUser']
     else:
-        pacifica_user = metadata.get_Pacifica_user(network_id)
+        user_record = metadata.get_Pacifica_user(network_id)
+        pacifica_user = user_record['person_id']
         request.session['PacificaUser'] = pacifica_user
         request.session.modified = True
 

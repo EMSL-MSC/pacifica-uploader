@@ -1,0 +1,49 @@
+﻿<div style="font-size:0.80em;">
+    <div class="full_width_block"><strong>Bundle Size:</strong> {{bundle_size}}</div>
+    <div class="full_width_block"><strong>Available Free Space:</strong> {{free_size}}</div>
+    <div class="full_width_block" style="margin-top:10px;">
+        <div><strong>Current Upload Processing Status:</strong></div>
+        <div><span id="currState"></span></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    var url = '/incStatus';
+    var statusTimeoutHandler;
+       
+$.ajaxSetup({cache:false});
+    function worker() {
+        var jqobject = $.ajax(url)
+            .done(function (data) {
+                    
+                var dataObj = $.parseJSON(data);
+                var state = dataObj.state;
+                var result = JSON.stringify(dataObj.result);
+                var stateStr = state.concat(': ');
+                stateStr = stateStr.concat(result);
+                $('#currState').html(stateStr);
+
+                if (dataObj.state == 'DONE') {
+                    var statusPage = dataObj.result;
+
+                    window.open(statusPage, '_blank');
+
+                    $('#status_info_container').dialog('close');
+
+                }
+                else if (dataObj.state == 'CANCELLED') {
+                    $('#status_info_container').dialog('close');
+                }
+                else {
+                    statusTimeoutHandler = setTimeout(worker, 1000);
+                }
+            })
+            .fail(function(obj, textStatus, error){
+                $('#currState').html(textStatus);
+            })
+
+    };
+    $(function () {
+        worker();
+    });
+</script>
