@@ -194,6 +194,7 @@ def check_options(parser, config, metadata):
             raise (Exception('verify path not found:  ' + verify))
 
     parser.values.verify = verify
+    config.verify = verify
     metadata.verify = verify
     
 
