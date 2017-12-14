@@ -23,7 +23,7 @@
                   <div id="login_id_container">
                     {% for meta in metaList %}
                     {% if meta.display_type == 'logged_on'  %}
-                    <em><span id="{{meta.meta_id}}"></span></em>
+                    <em><span id="{{meta.meta_id}}">{{user_info.display_name}} ({{user_info.person_id}})</span></em>
                     {% endif %}
                     {% endfor %}
                     <p class="smallprint"><a href="/logout">Not You? Click here to Logout</a></p>
