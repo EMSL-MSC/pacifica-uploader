@@ -75,6 +75,8 @@ class UploaderConfiguration(object):
 
             self.set_if_there(configuration, 'timeout', self, 'timeout', err_list)
 
+            self.set_if_there(configuration, 'theming', self, 'theming', err_list)
+
             if 'use_celery' in configuration:
                 TaskComm.USE_CELERY = (configuration['use_celery'] == 'True')
             else:

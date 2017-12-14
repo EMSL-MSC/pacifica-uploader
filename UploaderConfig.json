@@ -8,7 +8,14 @@
 	"timezone":  "",
     "use_celery": "True",
 
-    "auth" : {},
+    "theming": {
+        "theme_name": "myemsl",
+        "site_name": "MyEMSL",
+        "site_slogan": "Data Management for Science"
+    },
+
+
+    "auth": {},
 
     "metadata": [
 		{
@@ -91,4 +98,4 @@
         }
     ]
 
-        }
+}
