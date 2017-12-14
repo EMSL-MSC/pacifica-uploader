@@ -81,7 +81,8 @@ def upload_files(ingest_server='',
                    meta_list=meta_list,
                    bundle_size=bundle_size)
 
-        TaskComm.set_state("PROGRESS", "Starting Uploady: " + str(bundle_name) + ": " + ingest_server + ": " + str(auth))
+        TaskComm.set_state("PROGRESS",
+                           "Starting Uploady: " + str(bundle_name) + ": " + ingest_server + ": " + str(auth))
 
         uploader = Uploader(bundle_name, ingest_server, auth, verify)
 

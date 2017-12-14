@@ -20,6 +20,7 @@ import traceback
 
 from home.task_comm import task_error, TaskComm
 
+
 class FileBundler(object):
     """
     An 'Abstract' Base Class that provide a template by which bundlers using
@@ -106,7 +107,6 @@ class FileBundler(object):
 
         # linuxfy the directory
         file_dir = file_dir.replace('\\', '/')
-
 
         info = {}
         info['size'] = os.path.getsize(file_path)
@@ -284,7 +284,6 @@ def bundle(bundle_name='', file_list=None, bundle_size=0, meta_list=None):
     meta_str = json.dumps(meta_list)
     bundler.bundle_metadata(meta_str)
 
-    #print >> sys.stderr, "Finished bundling"
     TaskComm.set_state('PROGRESS', 'Bundling complete')
 
 
