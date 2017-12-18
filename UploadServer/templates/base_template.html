@@ -20,8 +20,8 @@
                 <div class="page_header">
                   <div class="logo_container">
                     <div class="logo_image">&nbsp;</div>
-                    <span class="site_name">{% block site_name %}[* * * site_name goes here * * *]{% endblock %}</span>
-                    <span class="site_slogan">{% block site_slogan %}[* * * site_slogan goes here * * *]{% endblock %}</span>
+                    <span class="site_name">{% block site_name %}Pacifica{% endblock %}</span>
+                    <span class="site_slogan">{% block site_slogan %}Scientific Data Curation{% endblock %}</span>
                 </div>
             </header>
             <div id="container">
@@ -32,7 +32,7 @@
                             {% for meta in metaList %}
                                 {% if meta.display_type == "logged_on" %}
                                     <span id="{{ meta.meta_id }}">
-                                        <em><a href="/logout" title="Not You? Click here to Logout">{{user_info.display_name}} ({{user_info.person_id}})</a></em>
+                                        <em>{{user_info.display_name}} ({{user_info.person_id}})</em>
                                     </span>
                                 {% endif %}
                             {% endfor %}

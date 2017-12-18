@@ -66,8 +66,8 @@ class Uploader(object):
         self.fileobj.seek(0)
 
         # adding unique data string to hopefully avoid cache issues
-        #url = self.ingest_server + '/upload?name=' + self.bundle_name
-        # dave changed the ingest api, it aint like that 
+        # url = self.ingest_server + '/upload?name=' + self.bundle_name
+        # dave changed the ingest api, it aint like that
         url = self.ingest_server + '/upload'
 
         headers = {}
@@ -83,6 +83,7 @@ class Uploader(object):
         self.fileobj.close()
 
         return status.content
+
 
 def main():
     """

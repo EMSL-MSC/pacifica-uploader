@@ -9,13 +9,17 @@
     "use_celery": "True",
 
     "theming": {
-        "theme_name": "demos",
-        "site_name": "Dēmos",
-        "site_slogan": "Data Management for Science",
-        "archive_repository_name": "Pithos Archive",
-        "upload_data_source_name": "a Dēmos Instrument",
-        "uploader_page_name": "instrument data uploader"
+        "theme_name": "myemsl",
+        "site_name": "EMSL Data Repository",
+        "site_slogan": "Scientific Data Curation",
+        "archive_repository_name": "EMSL Data Repository",
+        "upload_data_source_name": "EMSL Instrument",
+        "uploader_page_name": "EMSL Instrument Data Uploader",
+        "extra_stylesheets": [
+            "stylesheets/themes/myemsl/theme.css"
+        ]
     },
+
 
     "auth": {},
 
@@ -81,7 +85,7 @@
             "sourceTable": "users",
             "metaID": "EmslUserOfRecord",
 			"destinationTable": "TransactionKeyValue",
-            "displayTitle": "Person of Record",
+            "displayTitle": "EMSL User",
             "displayType": "select",
 			"key": "User of Record",
 			"value": "",

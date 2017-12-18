@@ -2,10 +2,14 @@
 {% load staticfiles %}
 {% block stylesheets %}
     {{ block.super }}
-    <link href="{% static "stylesheets/combined.css" %}" rel="stylesheet" type="text/css" />
-    <link rel="stylesheet" href="{% static "stylesheets/upload_style.css" %}" rel="stylesheet" type="text/css" />
-    <link rel="stylesheet" href="{% static "stylesheets/file_directory_styling.css" %}" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="{% static "stylesheets/combined.css" %}" type="text/css" />
+    <link rel="stylesheet" href="{% static "stylesheets/upload_style.css" %}" type="text/css" />
+    <link rel="stylesheet" href="{% static "stylesheets/file_directory_styling.css" %}" type="text/css" />
+    {% for css_entry in theming.extra_stylesheets %}
+        <link rel="stylesheet" href="{% static css_entry %}" type="text/css" rel="stylesheet" />
+    {% endfor %}
 {% endblock %}
+
 
 {% block javascript %}
     {{ block.super }}
@@ -13,7 +17,8 @@
     <script src="{% static "scripts/load_fields.js" %}" type="text/javascript"></script>
 {% endblock %}
 
-{% block page_name %}Unthemed Pacifica Uploader{% endblock %}
+{% block site_version_display %}{{ site_version.version_string }}{% endblock %}
+{% block last_update_time %}{{ site_version.last_updated|date:"M d, Y" }}{% endblock %}
 
 {% block content %}
 <form method="post" enctype="multipart/form-data">
@@ -56,7 +61,7 @@
   </fieldset>
 
   <fieldset style="margin-top:1em;padding: 1em;">
-    <legend>Files to be Uploaded to the EMSL Archive</legend>
+    <legend>Files to be Uploaded to the {% block archive_repository_name %}Pacifica Data Archive{% endblock %}</legend>
     <div class="full_width_block">
       <div id="uploadFiles" style="width: 75%;">
         <ul id="load" style="display:none;" class="ui-fancytree-source ui-helper-hidden">
@@ -76,7 +81,7 @@
     </div>
   </fieldset>
   <fieldset style="margin-top:1em;padding: 1em;">
-    <legend>Choose Files to Upload from the EMSL Instrument</legend>
+    <legend>Choose Files to Upload from {% block upload_data_source_name %}an EMSL Instrument{% endblock %}</legend>
     <div class="full_width_block">
       <div id="tree">
         <ul id="root" style="display:none;" class="ui-fancytree-source ui-helper-hidden">

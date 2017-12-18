@@ -1,0 +1,12 @@
+{% extends "base_template.html" %}
+{% load staticfiles %}
+{% block stylesheets %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static "stylesheets/combined.css" %}" type="text/css" />
+{% endblock %}
+
+{% block content %}
+    <fieldset style="width:75%;margin: 2em auto;">
+        <div class="info_message" style="margin-bottom:1em;">{{ message }}</div>
+    </fieldset>
+{% endblock %}

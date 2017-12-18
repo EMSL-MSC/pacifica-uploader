@@ -55,7 +55,10 @@ configuration = instrument_server.UploaderConfiguration()
 # pylint: disable=global-variable-not-assigned
 
 # development VERSION
-VERSION = '2.2.10, 12.06.17'
+VERSION = {
+    'version_string': '2.2.10',
+    'last_updated': datetime.datetime.strptime('12.06.17', '%m.%d.%y')
+}
 
 
 def ping_celery():
@@ -87,7 +90,6 @@ def user_from_request(request):
             raise ValueError('Unknown auth scheme \"%s\"' % scheme)
         user = base64.b64decode(creds).split(':', 1)[0]
 
-        print 'user_from_request: ' + user
         return user
     else:
         return None
@@ -135,13 +137,12 @@ def populate_upload_page(request, testmode=False):
     # get the Pacifica user
     user_record = metadata.get_Pacifica_user(network_user)
     pacifica_user = user_record['person_id']
-    # print(user_record)
-    # logging.debug(metadata.meta_list.__dict__)
     if not pacifica_user:
         return login_error(request, "Pacifica user is not found")
-    print configuration.theming
     # Render the upload page with the meta (just the render format) and the default root directory
-    template_name = 'themes/{0}/uploader.html'.format(configuration.theming.get('theme_name'))
+    # template_name = 'themes/{0}/uploader.html'.format(configuration.theming.get('theme_name'))
+    template_name = 'base_uploader.html'
+
     theming = configuration.theming
     # if(configuration.theme_name):
     #     template_name = 'home/themes/{0}/uploader.html'.format(configuration.theme_name)
@@ -374,7 +375,7 @@ def login_error(request, error_string):
     returns page with an error message
     """
 
-    return render_to_response(settings.LOGIN_VIEW,
+    return render_to_response('error_page.html',
                               {'site_version': VERSION,
                                'message': error_string},
                               RequestContext(request))
@@ -466,7 +467,7 @@ def logout(request):
     which will bounce to the login page
     """
 
-    return login_error(request, "Logged out")
+    return login_error(request, "You have been logged out of the system")
 
 
 def fresh_meta_obj(request):
@@ -848,7 +849,7 @@ def get_status(upload_process):
 
     if TaskComm.USE_CELERY:
         if upload_process is None:
-            return 'Initializing', ''
+            return 'Initializing', 'Configuring the upload process'
 
         state = upload_process.state
         result = upload_process.result
@@ -910,41 +911,45 @@ def incremental_status(request):
     upload_process = None
 
     if TaskComm.USE_CELERY:
-        print 'getting process id:  ' + request.session['upload_process']
-
+        # print 'getting process id:  ' + request.session['upload_process']
         upload_process = get_celery_process(request)
         if not upload_process:
-            retval = json.dumps({'state': 'WAITING', 'result': 'waiting for upload to spin up'})
-            return HttpResponse(retval)
+            retval = json.dumps({'state': 'waiting', 'result': 'Waiting on a response from the server...'})
+            return HttpResponse(retval, content_type='application/json')
 
     try:
         if request.POST:
             if upload_process:
                 upload_process.revoke(terminate=True)
-            state = 'CANCELLED'
-            result = ''
+            state = 'cancelled'
+            result = 'Upload Request Cancelled by User'
             set_uploading(request, False)
 
-            print state
+            retval = json.dumps({'state': state, 'result': result})
+            return HttpResponse(retval, content_type='application/json')
         else:
             if not get_uploading(request):
-                state = 'CANCELLED'
-                result = ''
+                state = 'cancelled'
+                result = 'Upload Request Cancelled by User'
                 retval = json.dumps({'state': state, 'result': result})
-                return HttpResponse(retval)
+                return HttpResponse(retval, content_type='application/json')
 
         try:
             state, result = get_status(upload_process)
         except Exception, ex:
             state, result = get_status(upload_process)
-            retval = json.dumps({'state': 'ERROR', 'result': ex.message})
-            return HttpResponse(retval)
+            retval = json.dumps({
+                'state': 'error',
+                'extended_result': ex.message,
+                'result': 'The upload process returned an error'
+            })
+            return HttpResponse(retval, content_type='application/json')
 
         if state is not None:
-            if state == 'REVOKED':
-                result = ''
+            if state.lower() == 'revoked':
+                result = 'Upload Request Cancelled by the Server'
 
-            if state == 'DONE':
+            if state.lower() == 'done':
                 ingest_result = json.loads(result)
                 job_id = ingest_result['job_id']
                 print 'completed job ', job_id

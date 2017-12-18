@@ -1,0 +1,16 @@
+{% extends "base_uploader.html" %}
+
+{% block title %}{{ theming.uploader_page_name|title }}{% endblock %}
+
+{% block page_name %}{{ theming.uploader_page_name|title }}{% endblock %}
+
+{% block site_name %}{{ theming.site_name }}{% endblock %}
+
+{% block site_slogan %}{{ theming.site_slogan }}{% endblock %}
+
+{% block instrument_type_name %}{{ theming.instument_type_name|title }}{% endblock %}
+{% block proposal_type_name %}{{ theming.proposal_type_name|title }}{% endblock %}
+
+{% comment %}Capitalize these next two exactly how you want them to appear on the page{% endcomment %}
+{% block archive_repository_name %}{{ theming.archive_repository_name }}{% endblock %}
+{% block upload_data_source_name %}{{ theming.upload_data_source_name }}{% endblock %}

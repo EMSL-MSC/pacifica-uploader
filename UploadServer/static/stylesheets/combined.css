@@ -675,3 +675,8 @@ div.form_container td {
     vertical-align: middle;
     text-align: center;
 }
+
+.main_page_selector {
+  width:100%;
+  font-size:1em !important;
+}

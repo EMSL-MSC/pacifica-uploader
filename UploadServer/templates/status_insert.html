@@ -10,39 +10,38 @@
 <script type="text/javascript">
     var url = '/incStatus';
     var statusTimeoutHandler;
-       
+
 $.ajaxSetup({cache:false});
-    function worker() {
-        var jqobject = $.ajax(url)
-            .done(function (data) {
-                    
-                var dataObj = $.parseJSON(data);
-                var state = dataObj.state;
-                var result = JSON.stringify(dataObj.result);
-                var stateStr = state.concat(': ');
-                stateStr = stateStr.concat(result);
-                $('#currState').html(stateStr);
 
-                if (dataObj.state == 'DONE') {
-                    var statusPage = dataObj.result;
+function worker() {
+    var jqobject = $.ajax(url)
+        .done(function (data) {
+            var dataObj = $.parseJSON(data);
+            var state = dataObj.state;
+            var result = JSON.stringify(dataObj.result);
+            var stateStr = state.concat(': ');
+            stateStr = stateStr.concat(result);
+            $('#currState').html(stateStr);
 
-                    window.open(statusPage, '_blank');
+            if (dataObj.state.toLowerCase == 'done') {
+                var statusPage = dataObj.result;
 
-                    $('#status_info_container').dialog('close');
+                window.open(statusPage, '_blank');
 
-                }
-                else if (dataObj.state == 'CANCELLED') {
-                    $('#status_info_container').dialog('close');
-                }
-                else {
-                    statusTimeoutHandler = setTimeout(worker, 1000);
-                }
-            })
-            .fail(function(obj, textStatus, error){
-                $('#currState').html(textStatus);
-            })
+                $('#status_info_container').dialog('close');
 
-    };
+            }
+            else if (dataObj.state.toLowerCase() == 'cancelled') {
+                $('#status_info_container').dialog('close');
+            }
+            else {
+                statusTimeoutHandler = setTimeout(worker, 500);
+            }
+        })
+        .fail(function(obj, textStatus, error){
+            $('#currState').html(textStatus);
+        })
+};
     $(function () {
         worker();
     });

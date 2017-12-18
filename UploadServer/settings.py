@@ -159,6 +159,6 @@ SESSION_COOKIE_SECURE = False
 MEDIA_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'media')
 MEDIA_URL = '/media/'
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 
 DJANGO_LOG_LEVEL = DEBUG

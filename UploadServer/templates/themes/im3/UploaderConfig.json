@@ -9,13 +9,14 @@
     "use_celery": "True",
 
     "theming": {
-        "theme_name": "demos",
-        "site_name": "Dēmos",
-        "site_slogan": "Data Management for Science",
-        "archive_repository_name": "Pithos Archive",
-        "upload_data_source_name": "a Dēmos Instrument",
-        "uploader_page_name": "instrument data uploader"
+        "theme_name": "im3",
+        "site_name": "IM3",
+        "site_slogan": "Dēmos Data Management Repository",
+        "archive_repository_name": "IM3 Archive",
+        "upload_data_source_name": "an IM3 Model",
+        "uploader_page_name": "model data uploader"
     },
+
 
     "auth": {},
 
@@ -37,7 +38,7 @@
             "sourceTable": "instruments",
 			"destinationTable": "Transactions.instrument",
             "displayType": "select",
-			"displayTitle": "Instrument",
+			"displayTitle": "Model",
             "value": "34075",
 			"valueField": "_id",
             "queryDependency": { "_id": "instrumentByID" },
@@ -59,7 +60,7 @@
             "metaID": "ProposalByInstrument",
             "value": "",
 			"destinationTable": "Transactions.proposal",
-            "displayTitle": "Proposal",
+            "displayTitle": "Thrust Area",
             "displayType": "select",
             "queryDependency": { "instrument_id": "instrumentByID" },
 			"valueField": "_id",

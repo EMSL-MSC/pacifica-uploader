@@ -1,33 +1,20 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>MyEMSL Instrument Data Uploader</title>
-    {% include "includes/global_styles.html" %}
-</head>
+{% extends "base_template.html" %}
+{% load staticfiles %}
+{% block stylesheets %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static "stylesheets/combined.css" %}" type="text/css" />
+{% endblock %}
 
-<body>
-    <div class="page_content">
-        {% include "includes/view_header.html" %}
-
-
-        {% block main %}
-        <div id="login" class="page_content">
-          <div id="header_container">
-            <h1 class="underline">MyEMSL Login</h1>
-          </div>
-            <form class="form-horizontal themed" name="LoginForm" action="/login/" method="post">
-                {% csrf_token %}
-                {% if next %}
-                <input type="hidden" name="next" value="{{ next }}" />
-                {% endif %}
-
-            </form>
-            <section class="warning_messages">
-                <span id="warning_message">{{message}}</span>
-            </section>
-        </div>
-        {% endblock %}
-        {% include "includes/view_footer_short.html" %}
+{% block content %}
+<div id="login" class="page_content">
+  <form class="form-horizontal themed" name="LoginForm" action="/login/" method="post">
+    {% csrf_token %}
+    {% if next %}
+    <input type="hidden" name="next" value="{{ next }}" />
+    {% endif %}
+  </form>
+    <div class="warning_messages">
+      <span id="warning_message">{{ message }}</span>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}
