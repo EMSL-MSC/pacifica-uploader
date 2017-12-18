@@ -75,7 +75,7 @@ class QueryMetadata(object):
     auth = {}
     verify = True
 
-    def __init__(self, host, config_dir = ''):
+    def __init__(self, host, config_dir=''):
         """
         constructor for Query class
         """
@@ -114,7 +114,6 @@ class QueryMetadata(object):
 
         return ret_val
 
-
     def create_meta_upload_list(self):
         """
         creates list of objects that ultimately the metadata server will be able to
@@ -145,8 +144,7 @@ class QueryMetadata(object):
                 value = False
             setattr(obj, attr, value)
 
-
-    def load_meta(self, config_path = ''):
+    def load_meta(self, config_path=''):
         """
         puts the metadata into a format that can eventually be
         read by the metadata archive
@@ -253,7 +251,7 @@ class QueryMetadata(object):
         except Exception, ex:
             err = str(ex.message) + ': query result: ' + str(query_result) + ':  ' + traceback.format_exc()
             print err
-            raise Exception (err)
+            raise Exception(err)
 
     def update_parents(self, meta):
         """
@@ -288,14 +286,13 @@ class QueryMetadata(object):
                 if sel_list:
                     meta.value = sel_list[0]['id']
 
-
     def initial_population(self, network_id):
         """
         populate all the lists from the policy server for the first time
         """
 
-        # this is a special case, self-referential node that replaces the network id 
-        # with the pacifica id.  We have other ways of getting the pacifica id, but 
+        # this is a special case, self-referential node that replaces the network id
+        # with the pacifica id.  We have other ways of getting the pacifica id, but
         # leaving this in for now as it follows the basic model for transfering metadata
         # to the metadata archive.  Refer back to this in time. (dfh)
 
@@ -312,9 +309,8 @@ class QueryMetadata(object):
                 self.update_parents(meta)
                 if any(meta.browser_field_population):
                     init_fields.append(meta.browser_field_population)
-        
-        return init_fields
 
+        return init_fields
 
     def populate_dependencies(self, form):
         """
@@ -395,9 +391,10 @@ class QueryMetadata(object):
                 print reply.content
                 print 'End policy server error'
 
-            record = data[0]            
-            id = record['person_id']
-            return id
+            record = data[0]
+            # id = record['person_id']
+            # return id
+            return record
 
         except Exception, ex:
             if (reply):
@@ -405,7 +402,7 @@ class QueryMetadata(object):
             else:
                 err = str(ex.message) + ':  ' + traceback.format_exc()
             print err
-            raise Exception (err)
+            raise Exception(err)
 
     def validate_meta(self, meta_str):
         """Validate metadata."""
@@ -444,9 +441,8 @@ class QueryMetadata(object):
                 print reply.content
                 print 'End policy server error'
                 raise Exception(reply.content)
-            
             if not data:
-                raise Exception ('Empty list returned')
+                raise Exception('Empty list returned')
 
             return data
 
@@ -457,7 +453,7 @@ class QueryMetadata(object):
 
             # pretty english output for manager types
             err = str(ex.message) + ': query: ' + query + ': result: ' + reply.content + ':  ' + traceback.format_exc()
-            
+
             err = 'For user ' + str(self.network_id) + ', there are no values in ' + meta.source_table + ' where '
 
             where_count = 0
@@ -470,10 +466,10 @@ class QueryMetadata(object):
                         if where_count > 0:
                             err = err + ', '
                         err = err + column + ' = ' + check_obj.value
-                        
+
                         break
 
-            raise Exception (err)
+            raise Exception(err)
 
     def get_display(self, meta):
         """
@@ -507,6 +503,7 @@ class QueryMetadata(object):
             except KeyError:
                 pass
 
+
 def create_meta_upload(meta):
     """
     creates an object that ultimately the metadata server will be able to
@@ -531,13 +528,13 @@ def create_meta_upload(meta):
     return meta_obj
 
 
-def read_config(config_path = ''):
+def read_config(config_path=''):
     """
     read the configuration file
     """
     config_file = 'UploaderConfig.json'
 
-    if config_path!='':
+    if config_path != '':
         config_file = os.path.join(config_path, config_file)
 
     if not os.path.isfile(config_file):

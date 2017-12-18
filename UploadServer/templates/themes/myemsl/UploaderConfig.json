@@ -1,0 +1,107 @@
+{
+    "dataRoot": "/srv/Data",
+    "target": "/srv/Target",
+    "timeout": "1",
+    "statusServer": "http://status.local/view/",
+    "policyServer": "http://policyserver:8181",
+	"ingestServer": "http://ingest:8066",
+	"timezone":  "",
+    "use_celery": "True",
+
+    "theming": {
+        "theme_name": "myemsl",
+        "site_name": "EMSL Data Repository",
+        "site_slogan": "Scientific Data Curation",
+        "archive_repository_name": "EMSL Data Repository",
+        "upload_data_source_name": "EMSL Instrument",
+        "uploader_page_name": "EMSL Instrument Data Uploader",
+        "extra_stylesheets": [
+            "stylesheets/themes/myemsl/theme.css"
+        ]
+    },
+
+
+    "auth": {},
+
+    "metadata": [
+		{
+			"metaID": "logon",
+			"sourceTable": "users",
+			"destinationTable": "Transactions.submitter",
+			"value": "",
+			"displayType": "logged_on",
+			"displayTitle": "Currently Logged On",
+			"valueField": "_id",
+            "queryFields": [ "first_name", "last_name", "_id"],
+			"queryDependency": { "network_id": "logon" },
+			"diplayFormat": "%(first_name)s %(last_name)s"
+		},
+        {
+            "metaID": "instrumentByID",
+            "sourceTable": "instruments",
+			"destinationTable": "Transactions.instrument",
+            "displayType": "select",
+			"displayTitle": "Instrument",
+            "value": "34075",
+			"valueField": "_id",
+            "queryDependency": { "_id": "instrumentByID" },
+            "queryFields": ["_id",  "name_short", "display_name" ],
+			"diplayFormat": "%(_id)s %(name_short)s - %(display_name)s"
+        },
+		{
+            "sourceTable": "instruments",
+            "metaID": "instrumentDirectory",
+            "displayType": "directoryTree",
+			"directoryOrder": 1,
+			"diplayFormat": "%(name_short)s",
+			"valueField": "_id",
+            "queryDependency": { "_id": "instrumentByID" },
+            "queryFields": ["_id", "name_short"]
+        },
+        {
+            "sourceTable": "proposals",
+            "metaID": "ProposalByInstrument",
+            "value": "",
+			"destinationTable": "Transactions.proposal",
+            "displayTitle": "Proposal",
+            "displayType": "select",
+            "queryDependency": { "instrument_id": "instrumentByID" },
+			"valueField": "_id",
+            "queryFields": [ "_id", "title" ],
+			"diplayFormat": "%(_id)s %(title)s"
+        },
+        {
+            "sourceTable": "proposals",
+            "metaID": "ProposalDirectory",
+            "value": "",
+            "displayType": "directoryTree",
+			"diplayFormat": "Proposal %(_id)s",
+			"directoryOrder": 0,
+            "queryDependency": { "_id": "ProposalByInstrument" },
+			"valueField": "_id",
+            "queryFields": [ "_id"]
+        },
+        {
+            "sourceTable": "users",
+            "metaID": "EmslUserOfRecord",
+			"destinationTable": "TransactionKeyValue",
+            "displayTitle": "EMSL User",
+            "displayType": "select",
+			"key": "User of Record",
+			"value": "",
+            "queryDependency": { "proposal_id": "ProposalByInstrument" },
+			"valueField": "_id",
+            "queryFields": [ "first_name", "last_name", "_id"],
+			"diplayFormat": "%(first_name)s %(last_name)s"
+        },
+        {
+			"destinationTable": "TransactionKeyValue",
+            "metaID": "tag1",
+			"key": "Tag",
+            "value": "",
+            "displayTitle": "Tag",
+            "displayType": "enter"
+        }
+    ]
+
+}

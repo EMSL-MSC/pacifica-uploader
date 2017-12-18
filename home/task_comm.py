@@ -9,6 +9,7 @@ from celery import current_task
 
 import json
 
+
 class TaskComm(object):
     """
     essentially static class that provides a single conduit from the backend
@@ -19,7 +20,7 @@ class TaskComm(object):
     # aren't updated by the config file, it is in the right state
     USE_CELERY = True
 
-    state = {'TASK_STATE':'', 'TASK_INFO':''}
+    state = {'TASK_STATE': '', 'TASK_INFO': ''}
 
     @classmethod
     def get_state(cls):
@@ -48,10 +49,11 @@ class TaskComm(object):
 
             state = cls.state['TASK_STATE']
             info = cls.state['TASK_INFO']
-            ret = {'state':state, 'info':info}
+            ret = {'state': state, 'info': info}
             current_task.info = json.dumps(ret)
-        
+
         print '%s:  %s' % (t_state, t_msg)
+
 
 def task_error(t_msg):
     """

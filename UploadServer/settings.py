@@ -53,9 +53,29 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 SECRET_KEY = '_u)@b5#$b7l$z87+0_k_+ux*77kyevk_bf$q7!%w5ff_3%%du#'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-TEMPLATE_DEBUG = True
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+        ],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                # Insert your TEMPLATE_CONTEXT_PROCESSORS here or use this
+                # list if you haven't customized them:
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
 
 ALLOWED_HOSTS = ['*']
 
@@ -65,7 +85,7 @@ LOGIN_URL = '/login/'
 LOGOUT_URL = '/login/'
 
 # login view
-LOGIN_VIEW = 'home/login.html'
+LOGIN_VIEW = 'login.html'
 
 # Application definition
 
@@ -77,6 +97,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'home',
+    'UploadServer',
     'home.templatetags.app_filters',
 )
 
@@ -118,19 +139,18 @@ USE_L10N = True
 
 USE_TZ = True
 
-#Session stuff
-#SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+# Session stuff
+# SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-#SESSION_COOKIE_AGE = 3 * 30
+# SESSION_COOKIE_AGE = 3 * 30
 
 # see if this gets rid of sqlite lockup
 SESSION_SAVE_EVERY_REQUEST = False
-#SESSION_SAVE_EVERY_REQUEST = True
+# SESSION_SAVE_EVERY_REQUEST = True
 
 # added to make admin work?
 SESSION_COOKIE_SECURE = False
-
 
 
 # Static files (CSS, JavaScript, Images)
@@ -139,4 +159,6 @@ SESSION_COOKIE_SECURE = False
 MEDIA_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'media')
 MEDIA_URL = '/media/'
 
-STATIC_URL = "c:/static/"
+STATIC_URL = "/static/"
+
+DJANGO_LOG_LEVEL = DEBUG

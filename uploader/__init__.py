@@ -7,6 +7,14 @@ import os
 import sys
 import requests
 from home.task_comm import task_error, TaskComm
+import logging
+from django.conf import settings
+
+fmt = getattr(settings, 'LOG_FORMAT', None)
+lvl = getattr(settings, 'LOG_LEVEL', logging.DEBUG)
+
+logging.basicConfig(format=fmt, level=lvl)
+logging.debug("Logging started on %s for %s" % (logging.root.name, logging.getLevelName(lvl)))
 
 
 class Uploader(object):
@@ -58,8 +66,8 @@ class Uploader(object):
         self.fileobj.seek(0)
 
         # adding unique data string to hopefully avoid cache issues
-        #url = self.ingest_server + '/upload?name=' + self.bundle_name
-        # dave changed the ingest api, it aint like that 
+        # url = self.ingest_server + '/upload?name=' + self.bundle_name
+        # dave changed the ingest api, it aint like that
         url = self.ingest_server + '/upload'
 
         headers = {}
@@ -75,6 +83,7 @@ class Uploader(object):
         self.fileobj.close()
 
         return status.content
+
 
 def main():
     """

@@ -7,57 +7,58 @@
 
     "logon_info": {
         "ORMobjid": "Users",
-        "metaID":  "logon",
+        "metaID": "logon",
         "displayType": "logged_on",
-        "queryFields": [ "first_name", "last_name" ],
+        "queryFields": ["first_name", "last_name"],
         "diplayFormat": "%s %s"
     },
-
-    "metadata": [
-        {
+    "theming": {
+        "theme_name": "myemsl"
+    },
+    "metadata": [{
             "ORMobjid": "Instruments",
-            "metaID":  "instrumentByUser",
+            "metaID": "instrumentByUser",
             "displayType": "static",
             "value": "34075",
-            "queryDependency": [ "id", "name_short", "display_name" ],
+            "queryDependency": ["id", "name_short", "display_name"],
             "diplayFormat": "%s %s %s"
         },
         {
             "ORMobjid": "Proposals",
-            "metaID":  "ProposalByInstrument",
+            "metaID": "ProposalByInstrument",
             "displayTitle": "Proposal",
             "displayType": "select",
-            "queryDependency": [ "Instrument" ],
-            "queryFields": [ "id", "title" ],
+            "queryDependency": ["Instrument"],
+            "queryFields": ["id", "title"],
             "diplayFormat": "%s %s"
         },
         {
-            "ORMobjid": "Users", 
-            "metaID":  "UserByProposal",
+            "ORMobjid": "Users",
+            "metaID": "UserByProposal",
             "displayTitle": "EMSL User",
             "displayType": "select",
-            "queryDependency": [ "Proposal" ],
-            "queryFields": [ "first_name", "last_name" ],
+            "queryDependency": ["Proposal"],
+            "queryFields": ["first_name", "last_name"],
             "diplayFormat": "%s %s"
         },
         {
             "ORMobjid": "TransactionKeyValue",
-            "metaID":  "tag1",
+            "metaID": "tag1",
             "displayTitle": "Tag",
             "displayType": "enter"
         },
         {
             "ORMobjid": "TransactionKeyValue",
-            "metaID":  "tag2",
+            "metaID": "tag2",
             "displayTitle": "Taggy",
             "displayType": "enter"
         },
         {
             "ORMobjid": "TransactionKeyValue",
-            "metaID":  "tag3",
+            "metaID": "tag3",
             "displayTitle": "Tagier",
             "displayType": "enter"
         }
     ]
 
-        }
+}

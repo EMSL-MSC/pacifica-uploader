@@ -10,20 +10,21 @@ Django views, handle requests from the client side pages
 
 from __future__ import absolute_import
 
-import psutil
-import json
-import datetime
-import os
 import base64
+import datetime
+import json
+import os
+from time import sleep
 import re
 import sys
 import traceback
 import cPickle as pickle
-from time import sleep
+import psutil
+import pprint
 
 from django.conf import settings
 from django.shortcuts import render_to_response
-from django.template import RequestContext
+from django.template import RequestContext, Context
 
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
@@ -54,7 +55,10 @@ configuration = instrument_server.UploaderConfiguration()
 # pylint: disable=global-variable-not-assigned
 
 # development VERSION
-VERSION = '2.2.10, 12.06.17'
+VERSION = {
+    'version_string': '2.2.10',
+    'last_updated': datetime.datetime.strptime('12.06.17', '%m.%d.%y')
+}
 
 
 def ping_celery():
@@ -75,20 +79,21 @@ def ping_celery():
 
     return False
 
+
 def user_from_request(request):
     """ returns the user if in meta """
 
     if 'HTTP_AUTHORIZATION' in request.META:
-        auth = request.META['HTTP_AUTHORIZATION']
-        scheme, creds = re.split(r'\s+', auth)
+        myauth = request.META['HTTP_AUTHORIZATION']
+        scheme, creds = re.split(r'\s+', myauth)
         if scheme.lower() != 'basic':
             raise ValueError('Unknown auth scheme \"%s\"' % scheme)
         user = base64.b64decode(creds).split(':', 1)[0]
 
-        print 'user_from_request: ' + user
         return user
     else:
         return None
+
 
 def initialize_config():
     """ load configuration if not currently loaded """
@@ -98,12 +103,14 @@ def initialize_config():
     if err != '[]':
         return err
 
+
 def init_error(request):
     """
     error in initialization
     """
 
     return login_error(request, "Error in Page initialization, contact Administrator")
+
 
 # @login_required(login_url=settings.LOGIN_URL)
 def populate_upload_page(request, testmode=False):
@@ -125,25 +132,34 @@ def populate_upload_page(request, testmode=False):
             return login_error(request, 'faulty configuration:  ' + err)
 
     # metadata to initialize the layout of the main page
-    metadata = fresh_meta_obj(request);
+    metadata = fresh_meta_obj(request)
 
     # get the Pacifica user
-    pacifica_user = metadata.get_Pacifica_user(network_user)
-
+    user_record = metadata.get_Pacifica_user(network_user)
+    pacifica_user = user_record['person_id']
     if not pacifica_user:
         return login_error(request, "Pacifica user is not found")
-
     # Render the upload page with the meta (just the render format) and the default root directory
-    return render_to_response('home/uploader.html',
-                              {'data_root': configuration.data_dir,
-                               'site_version': VERSION,
-                               'metaList': metadata.meta_list,
-                               'testmode': testmode},
+    # template_name = 'themes/{0}/uploader.html'.format(configuration.theming.get('theme_name'))
+    template_name = 'base_uploader.html'
+
+    theming = configuration.theming
+    # if(configuration.theme_name):
+    #     template_name = 'home/themes/{0}/uploader.html'.format(configuration.theme_name)
+    return render_to_response(template_name,
+                              Context({'data_root': configuration.data_dir,
+                                       'site_version': VERSION,
+                                       'theming': theming,
+                                       'metaList': metadata.meta_list,
+                                       'testmode': testmode,
+                                       'user_info': user_record}),
                               RequestContext(request))
+
 
 def test(request):
     """ render the page in test mode """
     return populate_upload_page(request, testmode=True)
+
 
 def show_initial_status(request):
     """
@@ -152,13 +168,15 @@ def show_initial_status(request):
 
     return show_status_insert(request, '')
 
+
 def print_err(ex):
     """ prints error """
     ex = ex
-    print >> sys.stderr, '-'*60
+    print >> sys.stderr, '-' * 60
     print >> sys.stderr, 'Exception:'
     traceback.print_exc(file=sys.stderr)
-    print >> sys.stderr, '-'*60
+    print >> sys.stderr, '-' * 60
+
 
 def report_err(ex):
     """ consolidates error reporting code """
@@ -194,8 +212,10 @@ def set_data_root(request):
     except Exception, ex:
         return report_err(ex)
 
+
 def current_time():
     return datetime.datetime.now().strftime('%m.%d.%Y.%H.%M.%S.%f')
+
 
 def show_status_insert(request, message):
     """
@@ -214,11 +234,12 @@ def show_status_insert(request, message):
     except KeyError:
         free_size_str = 'key error'
 
-    return render_to_response('home/status_insert.html',
+    return render_to_response('status_insert.html',
                               {'status': message,
                                'bundle_size': bundle_size_str,
                                'free_size': free_size_str},
                               RequestContext(request))
+
 
 def post_upload_metadata(request):
     """
@@ -231,20 +252,21 @@ def post_upload_metadata(request):
     # stubbed out
     return HttpResponse(json.dumps('success'), content_type='application/json')
 
-    ## do this here because the async call from the browser
-    ## may call for a status before spin_off_upload is started
-    #set_uploading(request, True)
+    # do this here because the async call from the browser
+    # may call for a status before spin_off_upload is started
+    # set_uploading(request, True)
+    #
+    # data = request.POST.get('form')
+    # try:
+    #     form = json.loads(data)
+    #
+    #     metadata.populate_metadata_from_form(form)
+    #
+    #     return
+    #
+    # except Exception, ex:
+    #     return report_err(ex)
 
-    #data = request.POST.get('form')
-    #try:
-    #    form = json.loads(data)
-
-    #    metadata.populate_metadata_from_form(form)
-
-    #    return
-
-    #except Exception, ex:
-    #    return report_err(ex)
 
 # pylint: disable=too-many-return-statements
 # justification: disagreement with style
@@ -296,26 +318,26 @@ def spin_off_upload(request):
 
         # load the metadata object with the most recent updates
         metadata = fresh_meta_obj(request)
-        
+
         meta_list = metadata.create_meta_upload_list()
         meta_str = json.dumps(meta_list)
         success, exception = metadata.validate_meta(meta_str)
         if not success:
-            raise(exception)
+            raise exception
 
         # spin this off as a background process and load the status page
         if TaskComm.USE_CELERY:
             upload_process = \
                 tasks.upload_files.delay(ingest_server=configuration.ingest_server,
-                               bundle_name=bundle_filepath,
-                               file_list=tuples,
-                               bundle_size=file_manager.bundle_size,
-                               meta_list=meta_list,
-                               auth=configuration.auth,
-                               verify=configuration.verify)
+                                         bundle_name=bundle_filepath,
+                                         file_list=tuples,
+                                         bundle_size=file_manager.bundle_size,
+                                         meta_list=meta_list,
+                                         auth=configuration.auth,
+                                         verify=configuration.verify)
             request.session['upload_process'] = upload_process.task_id
             request.session.modified = True
-            print 'setting process id to:  ' + request.session['upload_process'];
+            print 'setting process id to:  ' + request.session['upload_process']
         else:  # run local
             tasks.upload_files(ingest_server=configuration.ingest_server,
                                bundle_name=bundle_filepath,
@@ -353,10 +375,11 @@ def login_error(request, error_string):
     returns page with an error message
     """
 
-    return render_to_response(settings.LOGIN_VIEW,
-                                {'site_version': VERSION,
-                                'message': error_string},
-                                RequestContext(request))
+    return render_to_response('error_page.html',
+                              {'site_version': VERSION,
+                               'message': error_string},
+                              RequestContext(request))
+
 
 def login_user_locally(request):
     """
@@ -365,7 +388,7 @@ def login_user_locally(request):
     """
 
     # check to see if the user is already logged in
-    #if (request.user.is_authenticated()):
+    # if (request.user.is_authenticated()):
     #    return
 
     username = user_from_request(request)
@@ -381,7 +404,7 @@ def login_user_locally(request):
         user = None
 
     if user is None:
-        #create a new user
+        # create a new user
         user = User.objects.create_user(username=username, password=password)
     else:
         # set default password, overwriting and dangling users in database
@@ -398,6 +421,7 @@ def login_user_locally(request):
     else:
         return "Unable to create user"
 
+
 def login(request):
     """
     Logs the user in
@@ -406,33 +430,34 @@ def login(request):
     Otherwise, gets the user data to populate the main page
     """
 
-    logged_in = request.user.is_authenticated()
+    # logged_in = request.user.is_authenticated()
 
     # initialize server settings if they are not
     if not configuration.initialized:
         err = configuration.initialize_settings()
         if err != '[]':
-            return ('faulty configuration:  ' + err)
+            return 'faulty configuration:  ' + err
 
     # timeout
-    #SESSION_COOKIE_AGE = configuration.timeout * 60
+    # SESSION_COOKIE_AGE = configuration.timeout * 60
 
     # the user has passed Pacifica authentication so log them in locally for a session
     err_str = login_user_locally(request)
     if err_str:
-        return (err_str)
+        return err_str
 
-    ## did that work?
-    #logged_in = request.user.is_authenticated
-    logged_in = request.user.is_authenticated()
+    # did that work?
+    # logged_in = request.user.is_authenticated
+    # logged_in = request.user.is_authenticated()
     if not request.user.is_authenticated():
-        return ('Problem with local authentication')
+        return 'Problem with local authentication'
 
     request.session['data_dir'] = configuration.data_dir
     request.session.modified = True
 
     # ok, passed all local authorization tests, valid user data is loaded
     return
+
 
 # pylint: disable=unused-argument
 # justification: django required'
@@ -442,17 +467,8 @@ def logout(request):
     which will bounce to the login page
     """
 
-    return login_error(request, "Logged out")
+    return login_error(request, "You have been logged out of the system")
 
-# pylint: disable=unused-argument
-# justification: django required
-#def logged_in(request):
-#    """
-#    logs the user out and returns to the main page
-#    which will bounce to the login page
-#    """
-
-#    return HttpResponse('TRUE')
 
 def fresh_meta_obj(request):
     metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
@@ -464,7 +480,8 @@ def fresh_meta_obj(request):
     if 'PacificaUser' in request.session:
         pacifica_user = request.session['PacificaUser']
     else:
-        pacifica_user = metadata.get_Pacifica_user(network_id)
+        user_record = metadata.get_Pacifica_user(network_id)
+        pacifica_user = user_record['person_id']
         request.session['PacificaUser'] = pacifica_user
         request.session.modified = True
 
@@ -481,6 +498,7 @@ def fresh_meta_obj(request):
         return report_err(ex)
 
     return metadata
+
 
 # pylint: disable=unused-argument
 # justification: django required
@@ -510,8 +528,7 @@ def initialize_fields(request):
         return HttpResponse(retval, content_type='application/json')
     except Exception, ex:
         return HttpResponseBadRequest(json.dumps(ex.message),
-                                          content_type='application/json')
-        
+                                      content_type='application/json')
 
 
 def select_changed(request):
@@ -527,7 +544,7 @@ def select_changed(request):
 
     # fill in the dependencies for changed fields
     updates = metadata.populate_dependencies(form)
-    
+
     retval = json.dumps(updates)
 
     return HttpResponse(retval, content_type='application/json')
@@ -546,7 +563,7 @@ def get_children(request):
         parent = request.GET.get('parent')
         if not parent:
             return retval
-        
+
         files = FileManager()
         if not files.accessible(parent):
             return retval
@@ -559,7 +576,7 @@ def get_children(request):
 
             # simple filter for hidden files in linux
             # replace with configurable regex later
-            #regex  = re.compile('\.(.+?)')
+            # regex  = re.compile('\.(.+?)')
             filtered = [i for i in lazy_list if not i[0] == '.']
 
             # folders first
@@ -569,8 +586,8 @@ def get_children(request):
 
                 if files.accessible(itempath):
                     time = os.path.getmtime(itempath)
-                    mod_time = datetime.datetime.fromtimestamp(
-                                                        time).strftime('%m/%d/%Y %I:%M%p')
+                    mod_time = (datetime.datetime.fromtimestamp(time)
+                                .strftime('%m/%d/%Y %I:%M%p'))
 
                     if os.path.isfile(itempath):
                         title = \
@@ -655,21 +672,22 @@ def make_tree(tree, subdirectories, partial_path, title, path, files):
     subdirectories.insert(0, tail)
     make_tree(tree, subdirectories, head, title, path, files)
 
-def update_free_space(request):
-        """
-        update the amount of free space currently available
-        this should go in file_tools
-        """
-        # get the disk usage
-        space = psutil.disk_usage(configuration.target_dir)
 
-        # give ourselves a cushion for other processes
-        free_space = int(.9 * space.free)
-        free_size_str = file_tools.size_string(free_space)
-        
-        request.session['free_space'] = free_space
-        request.session['free_size_str'] = free_size_str
-        request.session.modified = True
+def update_free_space(request):
+    """
+    update the amount of free space currently available
+    this should go in file_tools
+    """
+    # get the disk usage
+    space = psutil.disk_usage(configuration.target_dir)
+
+    # give ourselves a cushion for other processes
+    free_space = int(.9 * space.free)
+    free_size_str = file_tools.size_string(free_space)
+
+    request.session['free_space'] = free_space
+    request.session['free_size_str'] = free_size_str
+    request.session.modified = True
 
 
 def validate_space_available(request):
@@ -683,12 +701,13 @@ def validate_space_available(request):
         return True
     return request.session['bundle_size'] < request.session['free_space']
 
+
 def return_bundle(request, tree, message):
     """
     formats the return message from get_bundle
     """
     files = FileManager()
-    
+
     # validate that the currently selected bundle will fit in the target space
     upload_enabled = validate_space_available(request)
 
@@ -710,6 +729,7 @@ def return_bundle(request, tree, message):
 
     retval = json.dumps(tree)
     return HttpResponse(retval, content_type='application/json')
+
 
 def get_archive_tree(request):
     """
@@ -749,6 +769,7 @@ def get_archive_tree(request):
     request.session.modified = True
 
     return tree, lastnode
+
 
 def get_bundle(request):
     """
@@ -812,21 +833,23 @@ def get_bundle(request):
         print_err(ex)
         return return_bundle(request, tree, 'get_bundle failed:  ' + ex.message)
 
+
 def get_celery_process(request):
     """ retrieves the celery process id from the session """
     try:
-        id = request.session['upload_process']
-        res = AsyncResult(id)
+        process_id = request.session['upload_process']
+        res = AsyncResult(process_id)
         return res
     except:
         return None
 
+
 def get_status(upload_process):
     """    get status from backend    """
 
-    if (TaskComm.USE_CELERY):
-        if upload_process == None:
-            return 'Initializing', ''
+    if TaskComm.USE_CELERY:
+        if upload_process is None:
+            return 'Initializing', 'Configuring the upload process'
 
         state = upload_process.state
         result = upload_process.result
@@ -841,7 +864,7 @@ def get_status(upload_process):
 
         if state == 'FAILURE':
             # we throw a standard error on completion, expecting an error object
-            # this needs to be revisited, was done to keep the task alive long enough to read 
+            # this needs to be revisited, was done to keep the task alive long enough to read
             # the final state.  may not be needed anymore (dfh)
             try:
                 # for debug purposes
@@ -850,7 +873,7 @@ def get_status(upload_process):
                 result = result.args[0]
                 try:
                     val = json.loads(result)
-                    val['job_id']
+                    # val['job_id']
                     state = 'DONE'
                 except Exception:
                     # must be a real error
@@ -868,15 +891,17 @@ def get_status(upload_process):
         print ex.message
         result = 'could not convert to json: ' + str(result)
 
-
     return state, result
+
 
 def set_uploading(request, value):
     request.session['is_uploading'] = value
     request.session.modified = True
 
+
 def get_uploading(request):
     return request.session['is_uploading']
+
 
 def incremental_status(request):
     """
@@ -886,41 +911,45 @@ def incremental_status(request):
     upload_process = None
 
     if TaskComm.USE_CELERY:
-        print 'getting process id:  ' + request.session['upload_process'];
-
+        # print 'getting process id:  ' + request.session['upload_process']
         upload_process = get_celery_process(request)
         if not upload_process:
-            retval = json.dumps({'state': 'WAITING', 'result': 'waiting for upload to spin up'})
-            return HttpResponse(retval)
+            retval = json.dumps({'state': 'waiting', 'result': 'Waiting on a response from the server...'})
+            return HttpResponse(retval, content_type='application/json')
 
     try:
         if request.POST:
             if upload_process:
                 upload_process.revoke(terminate=True)
-            state = 'CANCELLED'
-            result = ''
+            state = 'cancelled'
+            result = 'Upload Request Cancelled by User'
             set_uploading(request, False)
 
-            print state
+            retval = json.dumps({'state': state, 'result': result})
+            return HttpResponse(retval, content_type='application/json')
         else:
             if not get_uploading(request):
-                state = 'CANCELLED'
-                result = ''
+                state = 'cancelled'
+                result = 'Upload Request Cancelled by User'
                 retval = json.dumps({'state': state, 'result': result})
-                return HttpResponse(retval)
-        
+                return HttpResponse(retval, content_type='application/json')
+
         try:
             state, result = get_status(upload_process)
         except Exception, ex:
             state, result = get_status(upload_process)
-            retval = json.dumps({'state': 'ERROR', 'result': ex.message})
-            return HttpResponse(retval)
+            retval = json.dumps({
+                'state': 'error',
+                'extended_result': ex.message,
+                'result': 'The upload process returned an error'
+            })
+            return HttpResponse(retval, content_type='application/json')
 
         if state is not None:
-            if state == 'REVOKED':
-                result = ''
+            if state.lower() == 'revoked':
+                result = 'Upload Request Cancelled by the Server'
 
-            if state == 'DONE':
+            if state.lower() == 'done':
                 ingest_result = json.loads(result)
                 job_id = ingest_result['job_id']
                 print 'completed job ', job_id

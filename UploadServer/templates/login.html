@@ -1,0 +1,20 @@
+{% extends "base_template.html" %}
+{% load staticfiles %}
+{% block stylesheets %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static "stylesheets/combined.css" %}" type="text/css" />
+{% endblock %}
+
+{% block content %}
+<div id="login" class="page_content">
+  <form class="form-horizontal themed" name="LoginForm" action="/login/" method="post">
+    {% csrf_token %}
+    {% if next %}
+    <input type="hidden" name="next" value="{{ next }}" />
+    {% endif %}
+  </form>
+    <div class="warning_messages">
+      <span id="warning_message">{{ message }}</span>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+# Pull base image.
+FROM docker.elastic.co/elasticsearch/elasticsearch:5.6.4
+
+# Deal with cross-site scripting issues
+RUN touch /usr/share/elasticsearch/config/elasticsearch.yml \
+    && echo "xpack.security.enabled: false" >> /usr/share/elasticsearch/config/elasticsearch.yml \
+    && echo "http.cors.enabled : true" >> /usr/share/elasticsearch/config/elasticsearch.yml \
+    && echo "http.cors.allow-origin: \"/.*/\"" >> /usr/share/elasticsearch/config/elasticsearch.yml \
+    && echo "http.cors.allow-methods : OPTIONS, HEAD, GET, POST, PUT, DELETE" >> /usr/share/elasticsearch/config/elasticsearch.yml \
+    && echo "http.cors.allow-headers : \"X-Requested-With,X-Auth-Token,Content-Type, Content-Length, Authorization\"" >> /usr/share/elasticsearch/config/elasticsearch.yml \
+    && echo "cluster.routing.allocation.disk.threshold_enabled : false" >> /usr/share/elasticsearch/config/elasticsearch.yml

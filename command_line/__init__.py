@@ -21,6 +21,7 @@ from home import tar_man
 
 from home import file_tools
 
+
 # pylint: disable=unused-argument
 def _parser_add_group(option, opt, value, parser):
     """
@@ -28,6 +29,7 @@ def _parser_add_group(option, opt, value, parser):
     """
     pass
 # pylint: enable=unused-argument
+
 
 def _add_file_cb(option, opt, value, parser):
     """
@@ -89,6 +91,7 @@ def add_usage(parser):
     parser.set_usage(
         "usage: %prog [options] [-c DIR1 -f FILE1 -f FILE2 -c DIR2 -f FILE3]...")
 
+
 def add_options(parser):
     """
     Adds custom command line options for this module to an OptionParser
@@ -148,7 +151,9 @@ def add_options(parser):
                       dest='userOfRecord', default='',
                       help='Upload as the user of record name USEROR', metavar='USEROR')
 
-    #	"auth" : {"cert": ["auth/intermediate/certs/d3e889.cert.pem", "auth/intermediate/private/d3e889-nopassword.key.pem"]},
+    # "auth": {"cert": ["auth/intermediate/certs/d3e889.cert.pem",
+    #                   "auth/intermediate/private/d3e889-nopassword.key.pem"
+    # ]},
 
     # auth cert
     parser.add_option('-c', '--cert', type='string', action='store',
@@ -176,8 +181,8 @@ def check_options(parser, config, metadata):
 
     auth = '{\"cert\": []}'
 
-    if  os.path.isfile(parser.values.certification) and os.path.isfile(parser.values.auth_key):
-        
+    if os.path.isfile(parser.values.certification) and os.path.isfile(parser.values.auth_key):
+
         auth = '{\"cert\":  [\"%s\", \"%s\"]}' % (parser.values.certification, parser.values.auth_key)
 
     config.auth = json.loads(auth)
@@ -187,8 +192,8 @@ def check_options(parser, config, metadata):
     if parser.values.verify == 'True':
         verify = True
     elif parser.values.verify == 'False':
-        verify == False
-    else: # fmust be a filename
+        verify = False
+    else:  # must be a filename
         verify = parser.values.verify
         if not os.path.isfile(verify):
             raise (Exception('verify path not found:  ' + verify))
@@ -196,11 +201,11 @@ def check_options(parser, config, metadata):
     parser.values.verify = verify
     config.verify = verify
     metadata.verify = verify
-    
 
     current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
     parser.values.bundle_name = os.path.join(
         parser.values.tar_dir, current_time + ".tar")
+
 
 def get_user_id(metadata, node, network_id):
     try:
@@ -245,15 +250,16 @@ def upload_from_options(parser):
     else:
         network_user = parser.values.userOfRecord
 
-    node.value = metadata.get_Pacifica_user(network_user)
+    user_record = metadata.get_Pacifica_user(network_user)
+    node.value = record['person_id']
 
     node = metadata.get_node('logon')
     if parser.values.user == '':
-         network_user = node.value
+        network_user = node.value
     else:
         network_user = parser.values.user
 
-    node.value = metadata.get_Pacifica_user(network_user)
+    node.value = record['person_id']
 
     node = metadata.get_node('instrumentByID')
     if parser.values.instrument == '':
@@ -296,13 +302,13 @@ def upload_from_options(parser):
 
     # pylint: disable=unexpected-keyword-arg
     tasks.upload_files(ingest_server=configuration.ingest_server,
-                 bundle_name=parser.values.bundle_name,
-                 file_list=tuples,
-                 bundle_size=file_manager.bundle_size,
-                 meta_list=meta_list,
-                 auth=configuration.auth,
-                 verify = parser.values.verify,
-                 tartar=tartar)
+                       bundle_name=parser.values.bundle_name,
+                       file_list=tuples,
+                       bundle_size=file_manager.bundle_size,
+                       meta_list=meta_list,
+                       auth=configuration.auth,
+                       verify=parser.values.verify,
+                       tartar=tartar)
     # pylint: enable=unexpected-keyword-arg
 
 
@@ -324,7 +330,7 @@ def main():
         print '%s:  %s' % (state, info)
 
     except Exception as err:
-        print >> sys.stderr, 'Command Line Uploader error: %s: %s' % (err,  traceback.format_exc())
+        print >> sys.stderr, 'Command Line Uploader error: %s: %s' % (err, traceback.format_exc())
     # pylint: enable=broad-except
 
 

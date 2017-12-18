@@ -10,6 +10,7 @@ from home.task_comm import TaskComm
 
 from home import file_tools
 
+
 class UploaderConfiguration(object):
     """
     meta data about for a session
@@ -37,7 +38,7 @@ class UploaderConfiguration(object):
         else:
             err_list.append('Missing ' + key)
 
-    def initialize_settings(self, config_path = ''):
+    def initialize_settings(self, config_path=''):
         """
         if the system hasn't been initialized, do so
         """
@@ -74,6 +75,8 @@ class UploaderConfiguration(object):
 
             self.set_if_there(configuration, 'timeout', self, 'timeout', err_list)
 
+            self.set_if_there(configuration, 'theming', self, 'theming', err_list)
+
             if 'use_celery' in configuration:
                 TaskComm.USE_CELERY = (configuration['use_celery'] == 'True')
             else:
@@ -93,7 +96,6 @@ class UploaderConfiguration(object):
 
         return err_str
 
-
     def update_free_space(self):
         """
         update the amount of free space currently available
@@ -108,7 +110,7 @@ class UploaderConfiguration(object):
         self.free_size_str = file_tools.size_string(self.free_space)
 
 
-def read_config_file(config_path = ''):
+def read_config_file(config_path=''):
     """
     read the configuration file
     """

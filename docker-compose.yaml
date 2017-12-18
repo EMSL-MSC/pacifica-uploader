@@ -1,38 +1,84 @@
 version: '2'
 services:
-  baseimage:
-    build:
-      context: .
-    image: pacifica/uploader:latest
-
   uploadamqp:
     image: rabbitmq:latest
 
   uploaddjango:
+    container_name: uploader_django
     build:
       context: .
       dockerfile: Dockerfile.django
     volumes:
-      - /srv:/srv
+      - /Users/d3k857/Downloads/srv:/srv
+      - ./UploadServer/static:/static
+      - ./:/src
     links:
      - uploadamqp
+     - policyserver
+     - metadataserver
     environment:
       AMQP_PORT_5672_TCP_ADDR: uploadamqp
       AMQP_PORT_5672_TCP_PORT: 5672
     ports:
      - 8000:8000
 
-  uploadcelery:
-    build:
-      context: .
-      dockerfile: Dockerfile.celery
-    volumes:
-      - /srv:/srv
+
+  proxydjango:
+    container_name: uploader_proxy
+    image: nginx:alpine
     links:
-     - uploadamqp
-    environment:
-      AMQP_PORT_5672_TCP_ADDR: uploadamqp
-      AMQP_PORT_5672_TCP_PORT: 5672
+      - uploaddjango:uploader
+      - uploadstatus:statusbackend
+    volumes:
+      - ./proxy_config/proxy_conf:/etc/nginx/conf.d
+      - ./UploadServer/static:/static
+      - ./resources:/resources
+    ports:
+      - 80:80
+
+  # uploadcelery:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.celery
+  #   volumes:
+  #     - /srv:/srv
+  #   links:
+  #    - uploadamqp
+  #   environment:
+  #     AMQP_PORT_5672_TCP_ADDR: uploadamqp
+  #     AMQP_PORT_5672_TCP_PORT: 5672
+
+
+
+  # metadataserver:
+  #   container_name: uploader_metadataserver
+  #   image: cagataygurturk/docker-ssh-tunnel
+  #   volumes:
+  #     - $HOME/.ssh/tunnel-config:/root/.ssh/config:ro
+  #     - $HOME/.ssh/tunnel_id_ecdsa:/root/.ssh/tunnel_id_ecdsa:ro
+  #   ports:
+  #     - 8121:8121
+  #   environment:
+  #     ELASTICDB_PORT: tcp://elasticdb:9200
+  #     TUNNEL_HOST: mysql-tunnel
+  #     REMOTE_HOST: core-0-dev.my.emsl.pnl.gov
+  #     LOCAL_PORT: 8121
+  #     REMOTE_PORT: 7121
+  #
+  # policyserver:
+  #   container_name: uploader_policyserver
+  #   image: cagataygurturk/docker-ssh-tunnel
+  #   volumes:
+  #     - $HOME/.ssh/tunnel-config:/root/.ssh/config:ro
+  #     - $HOME/.ssh/tunnel_id_ecdsa:/root/.ssh/tunnel_id_ecdsa:ro
+  #   ports:
+  #     - 8181:8181
+  #   environment:
+  #     # ELASTICDB_PORT: tcp://elasticdb:9200
+  #     TUNNEL_HOST: mysql-tunnel
+  #     REMOTE_HOST: in-0-dev.my.emsl.pnl.gov
+  #     LOCAL_PORT: 8181
+  #     REMOTE_PORT: 8181
 
   policyserver:
     image: pacifica/policy
@@ -44,20 +90,39 @@ services:
       METADATA_PORT: tcp://metadata:8121
 
   elasticdb:
-    image: elasticsearch:2.4
-    container_name: elasticdb
+    build:
+      context: .
+      dockerfile: Dockerfile.elastic
+    container_name: uploader_elasticdb
+    ports:
+      - 9200:9200
+      - 9300:9300
+    environment:
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      mem_limit: 1g
 
   metadatadb:
     image: postgres
-    container_name: metadatadb
+    container_name: uploader_metadatadb
     environment:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: pacifica_metadata
       POSTGRES_USER: metadata
+    ports:
+      - 5432:5432
+
 
   metadataserver:
-    image: pacifica/metadata
-    container_name: metadataserver
+    # image: pacifica/metadata
+    build:
+        context: ../metadata
+    container_name: uploader_metadataserver
     links:
       - metadatadb:postgres
       - elasticdb:elasticdb
@@ -70,3 +135,60 @@ services:
       POSTGRES_PORT_5432_TCP_ADDR: postgres
       POSTGRES_PORT_5432_TCP_PORT: 5432
       POSTGRES_ENV_POSTGRES_PASSWORD: password
+
+  uploadstatus:
+    container_name: uploader_uploadstatus
+    build:
+      context: ../upload-status
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ../upload-status/:/var/www/html
+    links:
+      - metadataserver:metadata
+      - policyserver:policy
+      - uploadstatusdb:cartdb
+      - archiveinterface:archivei
+      - ingestserver:ingest
+    environment:
+      METADATA_PORT: tcp://metadata:8121
+      POLICY_PORT: tcp://policy:8181
+      ARCHIVE_PORT: tcp://archivei:8080
+      CART_PORT: tcp://cart:8081
+      INGESTER_PORT: tcp://ingest
+      CARTDB_ADDR: cartdb
+      CARTDB_PORT: 5432
+      CARTDB_USER: pacifica
+      CARTDB_PASSWORD: pacifica
+      CARTDB_DB_NAME: pacifica_upload_status
+      CARTDB_DBDRIVER: postgre
+      CART_DOWNLOAD_PORT: tcp://cartng.emsl.pnl.gov:8443
+      FILE_DOWNLOAD_PORT: tcp://filesng.emsl.pnl.gov:8443
+      SITE_NAME: status.local
+
+  uploadstatusdb:
+    container_name: uploader_uploadstatusdb
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: pacifica
+      POSTGRES_DB: pacifica_upload_status
+      POSTGRES_USER: pacifica
+    ports:
+      - 45432:5432
+
+  ingestserver:
+    container_name: uploader_ingest
+    image: nginx:alpine
+    volumes:
+      - ../reporting/ingest_data:/usr/share/nginx/html
+      - ../reporting/auth/ingest_conf:/etc/nginx/conf.d
+    ports:
+      - 9080:80
+
+  archiveinterface:
+    image: pacifica/archiveinterface
+    container_name: uploader_archiveinterface
+    ports:
+      - 8080:8080
+    volumes:
+      # - /srv:/srv
+      - /Users/d3k857/Downloads/srv:/srv

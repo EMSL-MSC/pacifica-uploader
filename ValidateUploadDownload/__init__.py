@@ -11,6 +11,7 @@ import time
 import os.path
 import hashlib
 
+
 def hash_file(file_path):
     """
     Bundle in a file or directory
@@ -47,6 +48,7 @@ def hash_file(file_path):
 
     return file_hash
 
+
 def accessible(path):
     retval = True
 
@@ -71,6 +73,7 @@ def accessible(path):
 
     return retval
 
+
 def file_list(start_path):
     """
     get all valid files in a directory
@@ -83,8 +86,8 @@ def file_list(start_path):
                 filelist.append(filepath)
     return filelist
 
+
 def main():
-    
     updir = "E:\\InstrumentData\\test1"
     downdir = "E:\\InstrumentData\\download"
     tarfile = ""
@@ -93,7 +96,7 @@ def main():
     upfiles = file_list(updir)
     downfiles = file_list(downdir)
 
-    # if we have the same directory structure and files then 
+    # if we have the same directory structure and files then
     # we should get the same relative file lists
     for i in range(len(upfiles)):
         if hash_file(upfiles[i]) == hash_file(downfiles[i]):
