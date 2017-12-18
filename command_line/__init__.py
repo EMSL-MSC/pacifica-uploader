@@ -199,6 +199,7 @@ def check_options(parser, config, metadata):
             raise (Exception('verify path not found:  ' + verify))
 
     parser.values.verify = verify
+    config.verify = verify
     metadata.verify = verify
 
     current_time = datetime.datetime.now().strftime("%m.%d.%Y.%H.%M.%S")
