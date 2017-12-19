@@ -66,12 +66,6 @@ function loadUploadTree(selected) {
     var upload = $("#uploadFiles").fancytree("getTree");
     var root = $("#uploadFiles").fancytree("getRootNode");
 
-    while (root.hasChildren()) {
-        child = root.getFirstChild();
-        child.remove();
-    }
-
-    //instNode.addChildren(selected);
     var fileList = [];
 
     if (selected != null)
@@ -87,7 +81,7 @@ function loadUploadTree(selected) {
     var posted = { packet: pkt , form: JSON.stringify(frm)};
     $.post("/getBundle/", posted,
         function (data) {
-            //alert('success');
+            root.removeChildren();
             root.addChildren(data);
 
             // update bundle size
