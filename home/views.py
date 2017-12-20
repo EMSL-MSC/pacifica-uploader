@@ -141,7 +141,7 @@ def populate_upload_page(request, testmode=False):
         return login_error(request, "Pacifica user is not found")
     # Render the upload page with the meta (just the render format) and the default root directory
     # template_name = 'themes/{0}/uploader.html'.format(configuration.theming.get('theme_name'))
-    template_name = 'base_uploader.html'
+    template_name = 'uploader.html'
 
     theming = configuration.theming
     # if(configuration.theme_name):
