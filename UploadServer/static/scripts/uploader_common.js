@@ -138,9 +138,13 @@ $(function () {
         }
     });
 
-    $("select").select2({ width: "resolve" });
+    $("select").select2({ width: "resolve", containerCssClass: ":all:"});
 
-    $("select.defaultEmpty").select2({ width: "resolve", placeholder: "Please select an option" });
+    $("select.defaultEmpty").select2({
+        width: "resolve",
+        placeholder: "Please select an option",
+        containerCssClass: ":all:"
+    });
 
     function loadError(e, data) {
         var error = data.error;
