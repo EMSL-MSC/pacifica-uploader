@@ -81,7 +81,10 @@ services:
   #     REMOTE_PORT: 8181
 
   policyserver:
-    image: pacifica/policy
+    # image: pacifica/policy
+    build:
+        context: ../policy
+    container_name: uploader_policyserver
     links:
       - metadataserver:metadata
     ports:
