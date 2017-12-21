@@ -2,17 +2,18 @@
 <html>
 <head>
 	<title>MyEMSL Instrument Data Uploader</title>
-    
-    {% include "includes/global_styles.html" %}
-    <link rel="stylesheet" href="{{ MEDIA_URL }}stylesheets/status_style.css">
+
+  {% load staticfiles %}
+  {% include "includes/global_styles.html" %}
+  <link rel="stylesheet" href="{% static "stylesheets/status_style.css" %}" type="text/css" />
 
     <script type="text/javascript">
     var url = '/incStatus';
-       
+
         function worker() {
             var jqobject = $.ajax(url)
                 .done(function (data) {
-                    
+
                     var dataObj = $.parseJSON(data);
                     var state = dataObj.state;
                     var result = JSON.stringify(dataObj.result);
@@ -78,7 +79,7 @@
                     <dl>
                         {% for meta in metaList %}
                         <dt>{{meta.display_title}}</dt>
-                           <dd>{{meta.value}}</dd> 
+                           <dd>{{meta.value}}</dd>
                         {% endfor %}
                     </dl>
                 </fieldset>
@@ -86,9 +87,9 @@
             </section>
 
                 <form  action="{% url "incStatus" %}" method="post" enctype="multipart/form-data">
-			    {% csrf_token %}			
-			        <div style="text-align: center; position: relative; margin-top: 2em;">	
-                        <input type="submit" name = "Cancel Upload" value="Cancel Upload" />            
+			    {% csrf_token %}
+			        <div style="text-align: center; position: relative; margin-top: 2em;">
+                        <input type="submit" name = "Cancel Upload" value="Cancel Upload" />
                     </div>
                 </form>
 

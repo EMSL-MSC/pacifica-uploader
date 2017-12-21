@@ -3,8 +3,9 @@
 <head>
 	<title>MyEMSL Data Upload Status</title>
 
+    {% load staticfiles %}
     {% include "includes/global_styles.html" %}
-    <link rel="stylesheet" href="{{ MEDIA_URL }}stylesheets/status_style.css">
+    <link rel="stylesheet" href="{% static "stylesheets/status_style.css" %}" type="text/css" />
 </head>
     <body>
         <div class="page_content">
