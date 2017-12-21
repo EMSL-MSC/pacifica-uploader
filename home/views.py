@@ -818,7 +818,13 @@ def get_bundle(request):
             item = os.path.basename(itempath)
 
             # tree structure
-            clipped_path = itempath.replace(common_path, '')
+            # handle rood directory slightly differently
+            if configuration.data_dir == itempath:
+                head, tail = os.path.split(itempath)
+                clipped_path = tail
+            else:
+                clipped_path = itempath.replace(common_path, '')
+
             subdirs = []
             make_tree(lastnode, subdirs, clipped_path, item, itempath, files)
 
