@@ -388,7 +388,7 @@ $(function () {
         return o;
     };
 
-    $("form").submit(function (event) {
+    $("#upload_btn").on("click", function (event) {
 
         event.preventDefault();
 
