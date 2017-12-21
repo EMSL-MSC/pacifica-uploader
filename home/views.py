@@ -56,8 +56,8 @@ configuration = instrument_server.UploaderConfiguration()
 
 # development VERSION
 VERSION = {
-    'version_string': '2.2.10',
-    'last_updated': datetime.datetime.strptime('12.06.17', '%m.%d.%y')
+    'version_string': '2.2.11',
+    'last_updated': datetime.datetime.strptime('12.21.17', '%m.%d.%y')
 }
 
 
