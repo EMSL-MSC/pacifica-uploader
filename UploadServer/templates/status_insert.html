@@ -22,8 +22,8 @@ function worker() {
             var stateStr = state.concat(': ');
             stateStr = stateStr.concat(result);
             $('#currState').html(stateStr);
-
-            if (dataObj.state.toLowerCase == 'done') {
+            debugger;
+            if (dataObj.state.toLowerCase() == 'done') {
                 var statusPage = dataObj.result;
 
                 window.open(statusPage, '_blank');
