@@ -31,9 +31,9 @@
                         <div class="login_id_container" id="login_id_container">
                             {% for meta in metaList %}
                                 {% if meta.display_type == "logged_on" %}
-                                    <span id="{{ meta.meta_id }}">
-                                        <em>{{user_info.display_name}} ({{user_info.person_id}})</em>
-                                    </span>
+                                    <em><span id="{{ meta.meta_id }}">
+                                        {{user_info.display_name}} ({{user_info.person_id}})
+                                    </span></em>
                                 {% endif %}
                             {% endfor %}
                         </div>
