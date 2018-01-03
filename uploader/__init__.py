@@ -12,7 +12,8 @@ from django.conf import settings
 
 # fmt = getattr(settings, 'LOG_FORMAT', None)
 fmt = ('%(asctime)s %(name)s:%(levelname)s %(message)s :%(pathname)s:%(lineno)s')
-lvl = getattr(settings, 'LOG_LEVEL', logging.DEBUG)
+lvl = logging.INFO
+# lvl = getattr(settings, 'LOG_LEVEL', logging.DEBUG)
 
 logging.basicConfig(format=fmt, level=lvl)
 logging.debug("Logging started on %s for %s" % (logging.root.name, logging.getLevelName(lvl)))
