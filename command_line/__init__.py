@@ -251,7 +251,7 @@ def upload_from_options(parser):
         network_user = parser.values.userOfRecord
 
     user_record = metadata.get_Pacifica_user(network_user)
-    node.value = record['person_id']
+    node.value = user_record['person_id']
 
     node = metadata.get_node('logon')
     if parser.values.user == '':
@@ -259,7 +259,7 @@ def upload_from_options(parser):
     else:
         network_user = parser.values.user
 
-    node.value = record['person_id']
+    node.value = user_record['person_id']
 
     node = metadata.get_node('instrumentByID')
     if parser.values.instrument == '':
