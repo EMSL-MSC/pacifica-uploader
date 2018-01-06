@@ -9,7 +9,7 @@ used to route to the appropriate view to handle the request
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from django.conf import settings
-import django.views
+from django.views.static import serve
 import home.views
 
 # from filebrowser.sites import site
@@ -29,6 +29,8 @@ urlpatterns = [
     url(r'^selectChanged/', home.views.select_changed, name='selectChanged'),
     url(r'^login/$', home.views.login),
     url(r'^logout/$', home.views.logout),
-    url(r'^test/$', home.views.test)  # ,
-    # url(r'^media/(?P<path>.*)$', django.views.static.serve, {'document_root': settings.MEDIA_ROOT})
+    url(r'^test/$', home.views.test),
+    url(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+    url(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
+    url(r'^resources/(?P<path>.*)$', serve, {'document_root': settings.RESOURCES_ROOT})
 ]

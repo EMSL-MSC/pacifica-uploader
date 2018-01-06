@@ -16,6 +16,7 @@ services:
      - uploadamqp
      - policyserver
      - metadataserver
+     - ingestserver
     environment:
       AMQP_PORT_5672_TCP_ADDR: uploadamqp
       AMQP_PORT_5672_TCP_PORT: 5672

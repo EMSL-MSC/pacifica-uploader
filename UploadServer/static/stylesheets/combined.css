@@ -324,9 +324,9 @@ button:hover, .buttons input[type="button"]:hover {
     padding: 0px 0.5em;
 }
 
-.select2-container {
-    width: 900px !important;
-}
+/* .select2-container {
+    width: 900px;
+} */
 
 .metadata_container {
     padding: 0.5em 0 0 2em;
@@ -408,9 +408,9 @@ dl.metadata_description_list {
         border-radius: 0;
         transition: all 0.5s;
     }
-    .select2-container {
+    /* .select2-container {
         width: 650px;
-    }
+    } */
     .menu_separator {
         padding: 0px 0.35em;
     }

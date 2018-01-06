@@ -15,11 +15,18 @@ header.secondary .page_header{
 
 .underline {
   color:#fefefe;
+  padding:0.25em;
   background-color: #53682B;
   margin-top:0;
   font-weight:normal;
   border-radius:0 0 8px 8px;
   font-size:1.35em;
+}
+
+@media (max-width: 960px) {
+    .underline {
+        border-radius: 0;
+    }
 }
 
 .loading_status span {
@@ -36,7 +43,6 @@ header.secondary .page_header{
 }
 
 header.secondary .logo_container {
-    height: 36px;
     width: 100%;
     margin-left: 15px;
     margin-right: 10px;

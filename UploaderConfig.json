@@ -14,7 +14,7 @@
         "site_slogan": "Data Management for Science",
         "archive_repository_name": "Pithos Archive",
         "upload_data_source_name": "a Dēmos Instrument",
-        "uploader_page_name": "instrument data uploader"
+        "uploader_page_name": "Instrument Data Uploader"
     },
 
     "auth": {},
@@ -30,7 +30,7 @@
 			"valueField": "_id",
             "queryFields": [ "first_name", "last_name", "_id"],
 			"queryDependency": { "network_id": "logon" },
-			"diplayFormat": "%(first_name)s %(last_name)s (%(_id)s)"
+			"diplayFormat": "%(first_name)s %(last_name)s"
 		},
         {
             "metaID": "instrumentByID",
