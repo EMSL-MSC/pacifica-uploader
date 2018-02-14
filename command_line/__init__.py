@@ -318,7 +318,7 @@ def main():
     uploads files from the command line
     """
     try:
-        print 'MyEmsl Uploader, Version 1.0.0'
+        print 'MyEmsl Uploader, Version 1.0.1'
 
         parser = OptionParser()
         add_usage(parser)
