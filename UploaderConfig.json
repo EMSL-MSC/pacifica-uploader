@@ -9,11 +9,11 @@
     "use_celery": "True",
 
     "theming": {
-        "theme_name": "demos",
-        "site_name": "Dēmos",
+        "theme_name": "datahub",
+        "site_name": "Data Hub",
         "site_slogan": "Data Management for Science",
         "archive_repository_name": "Pithos Archive",
-        "upload_data_source_name": "a Dēmos Instrument",
+        "upload_data_source_name": "a Data Hub Instrument",
         "uploader_page_name": "Instrument Data Uploader"
     },
 
