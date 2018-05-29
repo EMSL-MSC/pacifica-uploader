@@ -4,3 +4,4 @@ requests
 celery==4.0.2
 pysqlite
 gunicorn~=19.3
+kombu<4.1
