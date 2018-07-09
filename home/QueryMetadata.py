@@ -225,7 +225,7 @@ class QueryMetadata(object):
         """
         try:
             print 'build_selection_list, query_result is'
-            print query_result
+            # print query_result
 
             meta.browser_field_population['meta_id'] = meta.meta_id
 
@@ -427,6 +427,8 @@ class QueryMetadata(object):
         """
             gets a list of items based on the json query structure
         """
+
+        reply = None
 
         try:
             headers = {'content-type': 'application/json'}
