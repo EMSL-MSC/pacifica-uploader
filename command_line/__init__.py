@@ -259,6 +259,7 @@ def upload_from_options(parser):
     else:
         network_user = parser.values.user
 
+    user_record = metadata.get_Pacifica_user(network_user)
     node.value = user_record['person_id']
 
     node = metadata.get_node('instrumentByID')
@@ -317,7 +318,7 @@ def main():
     uploads files from the command line
     """
     try:
-        print 'MyEmsl Uploader, Version 1.0.0'
+        print 'MyEmsl Uploader, Version 1.0.1'
 
         parser = OptionParser()
         add_usage(parser)
