@@ -3,7 +3,7 @@ billiard==3.5.0.5
 celery==4.0.2
 certifi==2018.11.29
 chardet==3.0.4
-Django==1.9.13
+Django==1.11.29
 gunicorn==19.9.0
 idna==2.8
 kombu==4.0.2
