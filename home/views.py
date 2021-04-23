@@ -82,8 +82,10 @@ def ping_celery():
 
 def user_from_request(request):
     """ returns the user if in meta """
-
-    if 'HTTP_AUTHORIZATION' in request.META:
+    
+    if 'HTTP_OIDC_CLAIM_PREFERRED_USERNAME' in request.META:
+        return request.META['HTTP_OIDC_CLAIM_PREFERRED_USERNAME']
+    elif 'HTTP_AUTHORIZATION' in request.META:
         myauth = request.META['HTTP_AUTHORIZATION']
         scheme, creds = re.split(r'\s+', myauth)
         if scheme.lower() != 'basic':
