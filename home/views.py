@@ -473,6 +473,8 @@ def logout(request):
 
 
 def fresh_meta_obj(request):
+    if not configuration.initialized:
+        err = configuration.initialize_settings()
     metadata = QueryMetadata.QueryMetadata(configuration.policy_server)
     metadata.load_meta()
 
