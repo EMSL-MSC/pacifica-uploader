@@ -131,6 +131,7 @@ $(function () {
                 return cookieValue;
 
             }
+            settings.url=$(location).attr('pathname')+settings.url
             if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
                 // Only send the token to relative URLs i.e. locally.
                 xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
@@ -167,7 +168,7 @@ $(function () {
             var node = data.node;
             // Load child nodes via ajax GET /getTreeData?mode=children&parent=1234
             data.result = {
-                url: "/getChildren",
+                url: "getChildren/",
                 data: { mode: "children", parent: node.key },
                 cache: false
             };

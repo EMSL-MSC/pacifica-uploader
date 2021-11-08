@@ -82,7 +82,7 @@ def ping_celery():
 
 def user_from_request(request):
     """ returns the user if in meta """
-    
+
     if 'HTTP_OIDC_CLAIM_PREFERRED_USERNAME' in request.META:
         return request.META['HTTP_OIDC_CLAIM_PREFERRED_USERNAME']
     elif 'HTTP_AUTHORIZATION' in request.META:
@@ -93,6 +93,8 @@ def user_from_request(request):
         user = base64.b64decode(creds).split(':', 1)[0]
 
         return user
+    elif 'HTTP_X_FORWARDED_USER' in request.META:
+        return request.META['HTTP_X_FORWARDED_USER']
     else:
         return None
 
@@ -276,6 +278,9 @@ def spin_off_upload(request):
     """
     spins the upload process off to a background celery process
     """
+    #errgh.. we dont actually need the config, but this forces the TaskComm.USE_CELERY is set properly.
+    if not configuration.initialized:
+        err = configuration.initialize_settings()
 
     file_manager = FileManager()
 
@@ -917,6 +922,8 @@ def incremental_status(request):
     """
     updates the status page with the current status of the background upload process
     """
+    if not configuration.initialized:
+        err = configuration.initialize_settings()
 
     upload_process = None
 

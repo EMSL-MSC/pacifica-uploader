@@ -55,7 +55,7 @@ header.secondary .logo_container {
     display:block;
     width: 100%;
     height: 100%;
-    background: url("/resources/images/emsl_logos/emsl_logo_white.png") 0% 0% / 87px 36px no-repeat;
+    background: url("../../../../resources/images/emsl_logos/emsl_logo_white.png") 0% 0% / 87px 36px no-repeat;
     /*background-size: 174px 73px;*/
 }
 
@@ -124,14 +124,14 @@ button:hover, .buttons input[type="button"]:hover, .buttons a:hover{
 
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
     .logo_image {
-        background: url("/resources/images/emsl_logos/emsl_logo_white@2x.png") 0% 0% / 87px 36px no-repeat;
+        background: url("../../../../resources/images/emsl_logos/emsl_logo_white@2x.png") 0% 0% / 87px 36px no-repeat;
         /*background-size: 174px 73px;*/
     }
 }
 
 @media (-webkit-min-device-pixel-ratio: 3), (min-resolution: 288dpi) {
     .logo_image {
-        background: url("/resources/images/emsl_logos/emsl_logo_white@3x.png") 0% 0% / 87px 36px no-repeat;
+        background: url("../../../../resources/images/emsl_logos/emsl_logo_white@3x.png") 0% 0% / 87px 36px no-repeat;
         /*background-size: 174px 73px;*/
     }
 }
